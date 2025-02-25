@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
+from core.model_fit_calculation import ModelFitCalculation
 from PyQt6.QtWidgets import QApplication
 
 from src.core.base_signals import BaseSignals
@@ -25,6 +26,7 @@ def main():
     calculations = Calculations(signals=signals)
     calculations_data_operations = CalculationsDataOperations(signals=signals)
     file_operations = ActiveFileOperations(signals=signals)  # noqa: F841
+    model_fit_calculations = ModelFitCalculation(signals=signals)  # noqa: F841
 
     window.main_tab.sidebar.load_button.file_selected.connect(file_data.load_file)
     window.main_tab.sidebar.chosen_experiment_signal.connect(file_data.plot_dataframe_copy)

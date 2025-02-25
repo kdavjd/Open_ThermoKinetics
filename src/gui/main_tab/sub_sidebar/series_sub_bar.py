@@ -200,7 +200,9 @@ class SeriesSubBar(QWidget):
             logger.error(f"Error loading file {load_file_name}: {e}")
             return {}
 
-    def _check_missing_reactions(self, deconvolution_results: dict, experimental_columns: list):
+    def check_missing_reactions(self, experimental_data: pd.DataFrame, deconvolution_results: dict):
+        experimental_columns = experimental_data.columns.tolist()
+        experimental_columns = [col for col in experimental_columns if col != "temperature"]
         reactions_per_key = {}
 
         for key in deconvolution_results:
@@ -252,7 +254,7 @@ class SeriesSubBar(QWidget):
 
         self.results_combobox.blockSignals(False)
 
-    def _get_series_dataframe(
+    def get_reaction_dataframe(
         self, experimental_data: pd.DataFrame, deconvolution_results: dict, reaction_n="reaction_0"
     ) -> pd.DataFrame:
         temperatures = experimental_data["temperature"]
@@ -300,13 +302,9 @@ class SeriesSubBar(QWidget):
 
         # 250 depends on cft.calculate_reaction
         fitted_data["temperature"] = np.linspace(np.min(temperatures), np.max(temperatures), 250)
-        series_df = pd.DataFrame(fitted_data)
-        logger.info(f"{series_df=}")
-        return series_df
+        reaction_df = pd.DataFrame(fitted_data)
+        return reaction_df
 
     def update_series_ui(self, experimental_data: pd.DataFrame, deconvolution_results: dict):
-        experimental_columns = experimental_data.columns.tolist()
-        experimental_columns = [col for col in experimental_columns if col != "temperature"]
-
-        common_reactions, _ = self._check_missing_reactions(deconvolution_results, experimental_columns)
+        common_reactions, _ = self.check_missing_reactions(experimental_data, deconvolution_results)
         self._update_table_with_reactions(common_reactions, deconvolution_results)

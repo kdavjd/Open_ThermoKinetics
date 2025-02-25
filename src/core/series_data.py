@@ -58,7 +58,7 @@ class SeriesData(BaseSlots):
             series_name = p.get("series_name")
             new_scheme = p.get("reaction_scheme", {})
             new_calculation_settings = p.get("calculation_settings", {})
-            success = self.update_series(series_name, new_scheme, new_calculation_settings)
+            success = self.update_series_cheme(series_name, new_scheme, new_calculation_settings)
             r["data"] = success
 
         def handle_load_deconvolution_results(p: dict, r: dict) -> None:
@@ -169,7 +169,7 @@ class SeriesData(BaseSlots):
 
         return True, name
 
-    def update_series(self, series_name: str, new_scheme: dict, new_settings: dict) -> bool:
+    def update_series_cheme(self, series_name: str, new_scheme: dict, new_settings: dict) -> bool:
         series_entry: dict = self.series.get(series_name)
         if not series_entry:
             logger.error(f"Series '{series_name}' not found; update failed.")

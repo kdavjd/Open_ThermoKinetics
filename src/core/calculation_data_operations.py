@@ -1,11 +1,3 @@
-"""
-This module provides the `CalculationsDataOperations` class for processing and handling
-reaction data, performing operations such as adding, removing, highlighting reactions,
-and managing deconvolution tasks. It integrates with a dispatcher for inter-component
-communication, uses a signal-based architecture for asynchronous updates, and interacts
-with other core functionalities like curve fitting.
-"""
-
 import time
 from itertools import product
 
@@ -20,23 +12,6 @@ from src.core.logger_console import LoggerConsole as console
 
 
 class CalculationsDataOperations(BaseSlots):
-    """
-    Handles calculations and data operations for reaction parameters and related actions.
-
-    This class processes requests such as adding or removing reactions,
-    updating values, performing deconvolution, and updating reaction parameters. It also
-    emits signals for GUI updates, including reaction plots and parameter emissions.
-
-    Attributes:
-        deconvolution_signal (pyqtSignal): Signal emitted with deconvolution result (dict).
-        plot_reaction (pyqtSignal): Signal emitted to plot a reaction curve (tuple, list).
-        reaction_params_to_gui (pyqtSignal): Signal emitted to send reaction parameters to the GUI.
-        last_plot_time (float): Timestamp of the last reaction plot update.
-        calculations_in_progress (bool): Indicates if a calculation process is ongoing.
-        reaction_variables (dict): Mapping of reaction names to sets of variable keys.
-        reaction_chosen_functions (dict[str, list]): Mapping of reaction names to chosen function types.
-    """
-
     deconvolution_signal = pyqtSignal(dict)
     plot_reaction = pyqtSignal(tuple, list)
     reaction_params_to_gui = pyqtSignal(dict)
@@ -98,7 +73,6 @@ class CalculationsDataOperations(BaseSlots):
             params (dict): Additional parameters.
         """
         if self.calculations_in_progress:
-            # If calculations are ongoing, we skip updating to prevent UI overload
             logger.debug("Skipping plot update as calculations are in progress.")
             return
         current_time = time.time()
@@ -193,8 +167,6 @@ class CalculationsDataOperations(BaseSlots):
             _params (dict): Additional parameters (unused directly).
         """
         file_name, reaction_name = path_keys
-
-        # Check if differential data is available before adding the reaction
         is_executed = self.handle_request_cycle("file_data", OperationType.CHECK_DIFFERENTIAL, file_name=file_name)
 
         if is_executed:
@@ -254,7 +226,6 @@ class CalculationsDataOperations(BaseSlots):
 
         reactions = data.keys()
 
-        # Initialize cumulative storage for the sum of all reactions' Y-values
         cumulative_y = {
             "upper_bound_coeffs": np.array([]),
             "lower_bound_coeffs": np.array([]),
@@ -262,24 +233,19 @@ class CalculationsDataOperations(BaseSlots):
         }
         x = None
 
-        # Iterate through reactions to plot and accumulate results
         for reaction_name in reactions:
             reaction_params = self._extract_reaction_params([file_name, reaction_name])
-            # Calculate and accumulate results for each bound type
             for bound_label, params in reaction_params.items():
                 if bound_label in cumulative_y:
-                    # Calculate Y-values for the current reaction and bound
                     y = cft.calculate_reaction(reaction_params.get(bound_label, []))
                     if x is None:
                         x_min, x_max = params[0]
                         x = np.linspace(x_min, x_max, 250)
                     cumulative_y[bound_label] = cumulative_y[bound_label] + y if cumulative_y[bound_label].size else y
 
-            # If reaction_name is specified in path_keys, treat it as highlighted
             if reaction_name in path_keys:
                 self.reaction_params_to_gui.emit(reaction_params)
                 logger.debug(f"Highlighting reaction: {reaction_name}")
-                # Plot the upper and lower bound curves explicitly for the highlighted reaction
                 self._plot_reaction_curve(
                     file_name, reaction_name, "upper_bound_coeffs", reaction_params.get("upper_bound_coeffs", [])
                 )
@@ -287,10 +253,8 @@ class CalculationsDataOperations(BaseSlots):
                     file_name, reaction_name, "lower_bound_coeffs", reaction_params.get("lower_bound_coeffs", [])
                 )
             else:
-                # For non-highlighted reactions, plot only the 'coeffs' curve
                 self._plot_reaction_curve(file_name, reaction_name, "coeffs", reaction_params.get("coeffs", []))
 
-        # Plot the cumulative curves once all reactions are processed
         if x is not None:
             for bound_label, y in cumulative_y.items():
                 self.plot_reaction.emit((file_name, f"cumulative_{bound_label}"), [x, y])
@@ -308,24 +272,19 @@ class CalculationsDataOperations(BaseSlots):
         bound_keys = ["upper_bound_coeffs", "lower_bound_coeffs"]
         for key in bound_keys:
             if key in path_keys:
-                # Identify the opposite bound key
                 opposite_key = bound_keys[1 - bound_keys.index(key)]
                 new_keys = path_keys.copy()
-                # Replace the current bound key with the opposite one to fetch its value
                 new_keys[new_keys.index(key)] = opposite_key
 
-                # Retrieve the opposite bound's value to compute the average
                 opposite_value = self.handle_request_cycle(
                     "calculations_data", OperationType.GET_VALUE, path_keys=new_keys
                 )
 
-                # Handle potential None or missing data gracefully
                 if opposite_value is None:
                     logger.warning(f"Opposite bound data not found at {new_keys}. Cannot update coeffs.")
                     return
 
                 average_value = (new_value + opposite_value) / 2
-                # Now update to 'coeffs'
                 new_keys[new_keys.index(opposite_key)] = "coeffs"
                 is_exist = self.handle_request_cycle(
                     "calculations_data", OperationType.SET_VALUE, path_keys=new_keys, value=average_value

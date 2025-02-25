@@ -17,6 +17,7 @@ from src.core.app_settings import MODEL_FIT_METHODS, NUC_MODELS_LIST, OperationT
 
 class ModelFitSubBar(QWidget):
     model_fit_calculation = pyqtSignal(dict)
+    reaction_combobox_text_changed_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -53,6 +54,20 @@ class ModelFitSubBar(QWidget):
         self.calculate_button.clicked.connect(self.on_calculate_clicked)
         self.layout.addWidget(self.calculate_button)
 
+        self.reaction_layout = QHBoxLayout()
+
+        # β combobox
+        self.beta_combobox = QComboBox(self)
+        self.beta_combobox.addItems(["β"])
+        self.reaction_layout.addWidget(self.beta_combobox)
+
+        # Reaction combobox
+        self.reaction_combobox = QComboBox(self)
+        self.reaction_combobox.addItems(["select reaction"])
+        self.reaction_layout.addWidget(self.reaction_combobox)
+
+        self.layout.addLayout(self.reaction_layout)
+
         # Table for results
         self.results_table = QTableWidget(self)
         self.results_table.setColumnCount(4)
@@ -69,6 +84,18 @@ class ModelFitSubBar(QWidget):
         self.layout.addLayout(self.plot_layout)
 
         self.setLayout(self.layout)
+
+        self.last_selected_reaction = None
+
+    def emit_combobox_text(self, text):
+        self.last_selected_reaction = text
+        self.reaction_combobox_text_changed_signal.emit(
+            {
+                "operation": OperationType.GET_MODEL_FIT_REACTION_DF,
+                "fit_method": self.model_combobox.currentText(),
+                "reaction_n": text,
+            }
+        )
 
     def on_calculate_clicked(self):
         try:
@@ -99,18 +126,53 @@ class ModelFitSubBar(QWidget):
         except ValueError as e:
             QMessageBox.warning(self, "Input Error", str(e))
 
-    def populate_table(self):
-        # Clear existing rows
-        self.results_table.setRowCount(0)
+    def _update_combobox_with_reactions(self, common_reactions: list[str]):
+        """Обновляет выпадающий список реакций."""
+        self.reaction_combobox.blockSignals(True)
+        self.reaction_combobox.clear()
 
-        # Example of adding some rows to the table
-        data = [
-            ("Model A", 0.85, 0.78, 1.23),
-            ("Model B", 0.90, 0.82, 1.18),
-            ("Model C", 0.88, 0.80, 1.25),
-        ]
-        for row_data in data:
+        selected_reaction = self.last_selected_reaction if self.last_selected_reaction in common_reactions else None
+
+        for reaction in common_reactions:
+            self.reaction_combobox.addItem(reaction)
+
+        if selected_reaction:
+            self.reaction_combobox.setCurrentText(selected_reaction)
+        else:
+            self.last_selected_reaction = None
+
+        self.reaction_combobox.blockSignals(False)
+
+    def update_reaction_combobox(self, reactions: list[str]):
+        self._update_combobox_with_reactions(reactions)
+
+    def update_beta_combobox(self, beta_values: list[str]):
+        self.beta_combobox.blockSignals(True)
+        self.beta_combobox.clear()
+        self.beta_combobox.addItems(beta_values)
+        self.beta_combobox.blockSignals(False)
+
+    def update_results_table(self, result_df):
+        self.results_table.setRowCount(0)
+        for row in result_df.itertuples(index=False):
             row_position = self.results_table.rowCount()
             self.results_table.insertRow(row_position)
-            for col, value in enumerate(row_data):
+            for col, value in enumerate(row):
                 self.results_table.setItem(row_position, col, QTableWidgetItem(str(value)))
+
+    def update_fit_results(self, fit_results: dict):
+        reaction_keys = list(fit_results.keys())
+        self.update_reaction_combobox(reaction_keys)
+        selected_reaction = (
+            self.last_selected_reaction if self.last_selected_reaction in reaction_keys else reaction_keys[0]
+        )
+
+        beta_dict = fit_results[selected_reaction]
+        beta_values = list(beta_dict.keys())
+        self.update_beta_combobox(beta_values)
+
+        selected_beta = beta_values[0] if beta_values else None
+
+        if selected_beta:
+            result_df = beta_dict[selected_beta]
+            self.update_results_table(result_df)

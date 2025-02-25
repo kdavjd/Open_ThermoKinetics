@@ -106,6 +106,7 @@ class MainWindow(QMainWindow):
             OperationType.MODEL_PARAMS_CHANGE: self._handle_model_params_change,
             OperationType.SELECT_SERIES: self._handle_select_series,
             OperationType.LOAD_DECONVOLUTION_RESULTS: self._handle_load_deconvolution_results,
+            OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
         }
 
         handler = operation_handlers.get(operation)
@@ -113,6 +114,39 @@ class MainWindow(QMainWindow):
             handler(params)
         else:
             logger.error(f"{self.actor_name} unknown operation: {operation},\n\n {params=}")
+
+    def _handle_model_fit_calculation(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nНеобходимо выбрать серию для расчёта\n")
+            return
+
+        series_entry = self.handle_request_cycle(
+            "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
+        )
+        experimental_df = series_entry.get("experimental_data")
+        deconvolution_results = series_entry.get("deconvolution_results", {})
+        if not deconvolution_results:
+            console.log(
+                f"\nСерия '{series_name}' должна быть разделена на реакции с помощью деконволюции.\n"
+                "Загрузите данные деконволюции для серии.\n"
+            )
+            return
+
+        reactions, _ = self.main_tab.sub_sidebar.series_sub_bar.check_missing_reactions(
+            experimental_df, deconvolution_results
+        )
+        params["reaction_data"] = {
+            reaction: self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
+                experimental_df, deconvolution_results, reaction_n=reaction
+            )
+            for reaction in reactions
+        }
+
+        fit_results = self.handle_request_cycle(
+            "model_fit_calculation", OperationType.MODEL_FIT_CALCULATION, calculation_params=params
+        )
+        self.main_tab.sub_sidebar.model_fit_sub_bar.update_fit_results(fit_results)
 
     def _handle_load_deconvolution_results(self, params: dict):
         deconvolution_results = params.get("deconvolution_results", {})
@@ -156,7 +190,7 @@ class MainWindow(QMainWindow):
             self.main_tab.plot_canvas.plot_data_from_dataframe(series_df)
         else:
             reaction_n = params.get("reaction_n", "reaction_0")
-            reaction_df = self.main_tab.sub_sidebar.series_sub_bar._get_series_dataframe(
+            reaction_df = self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
                 series_df, deconvolution_results, reaction_n
             )
             self.main_tab.plot_canvas.plot_data_from_dataframe(reaction_df)
