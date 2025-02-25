@@ -107,6 +107,7 @@ class MainWindow(QMainWindow):
             OperationType.SELECT_SERIES: self._handle_select_series,
             OperationType.LOAD_DECONVOLUTION_RESULTS: self._handle_load_deconvolution_results,
             OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
+            OperationType.GET_MODEL_FIT_REACTION_DF: self._handle_get_model_fit_reaction_df,
         }
 
         handler = operation_handlers.get(operation)
@@ -115,10 +116,22 @@ class MainWindow(QMainWindow):
         else:
             logger.error(f"{self.actor_name} unknown operation: {operation},\n\n {params=}")
 
+    def _handle_get_model_fit_reaction_df(self, params: dict):
+        series_name = params.get("series_name")
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+        beta = params.get("beta")
+
+        keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
+        logger.info(f"Запрос GET_MODEL_FIT_REACTION_DF с ключами: {keys}")
+
+        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        self.main_tab.sub_sidebar.model_fit_sub_bar.update_results_table(result_df)
+
     def _handle_model_fit_calculation(self, params: dict):
         series_name = params.get("series_name")
         if not series_name:
-            console.log("\nНеобходимо выбрать серию для расчёта\n")
+            console.log("\nIt is necessary to select a series for calculation\n")
             return
 
         series_entry = self.handle_request_cycle(
@@ -128,8 +141,8 @@ class MainWindow(QMainWindow):
         deconvolution_results = series_entry.get("deconvolution_results", {})
         if not deconvolution_results:
             console.log(
-                f"\nСерия '{series_name}' должна быть разделена на реакции с помощью деконволюции.\n"
-                "Загрузите данные деконволюции для серии.\n"
+                f"\nSeries '{series_name}' should be divided into reactions by deconvolution.\n"
+                "Load deconvolution data in series working space.\n"
             )
             return
 
@@ -142,27 +155,31 @@ class MainWindow(QMainWindow):
             )
             for reaction in reactions
         }
-
         fit_results = self.handle_request_cycle(
             "model_fit_calculation", OperationType.MODEL_FIT_CALCULATION, calculation_params=params
+        )
+        update_data = {"model_fit_results": {params["fit_method"]: fit_results}}
+        self.handle_request_cycle(
+            "series_data", OperationType.UPDATE_SERIES, series_name=series_name, update_data=update_data
         )
         self.main_tab.sub_sidebar.model_fit_sub_bar.update_fit_results(fit_results)
 
     def _handle_load_deconvolution_results(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            logger.error("No series_name provided for deconvolution results.")
+            return
+
         deconvolution_results = params.get("deconvolution_results", {})
-        for heating_rate, data in deconvolution_results.items():
-            series_name = params.get("series_name")
-            if series_name:
-                is_ok = self.handle_request_cycle(
-                    "series_data",
-                    OperationType.LOAD_DECONVOLUTION_RESULTS,
-                    series_name=series_name,
-                    deconvolution_results={heating_rate: data},
-                )
-                if not is_ok:
-                    logger.error(f"Failed to load deconvolution results for {series_name}.")
-            else:
-                logger.error("No series_name provided for deconvolution results.")
+        update_data = {"deconvolution_results": deconvolution_results}
+        is_ok = self.handle_request_cycle(
+            "series_data",
+            OperationType.UPDATE_SERIES,
+            series_name=series_name,
+            update_data=update_data,
+        )
+        if not is_ok:
+            logger.error(f"Failed to update deconvolution results for series '{series_name}'.")
         self._handle_select_series(params)
 
     def _handle_select_series(self, params: dict):

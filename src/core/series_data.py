@@ -1,3 +1,4 @@
+from functools import reduce
 from typing import Any, Optional
 
 from src.core.app_settings import MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS, OperationType
@@ -56,31 +57,26 @@ class SeriesData(BaseSlots):
 
         def handle_scheme_change(p: dict, r: dict):
             series_name = p.get("series_name")
-            new_scheme = p.get("reaction_scheme", {})
-            new_calculation_settings = p.get("calculation_settings", {})
-            success = self.update_series_cheme(series_name, new_scheme, new_calculation_settings)
+            update_data = {
+                "reaction_scheme": p.get("reaction_scheme", {}),
+                "calculation_settings": p.get("calculation_settings", {}),
+            }
+            success = self.update_series(series_name, update_data)
             r["data"] = success
 
-        def handle_load_deconvolution_results(p: dict, r: dict) -> None:
+        def handle_update_series(p: dict, r: dict) -> None:
             series_name = p.get("series_name")
-            deconvolution_results = p.get("deconvolution_results", {})
+            update_data = p.get("update_data", {})
+            success = self.update_series(series_name, update_data)
+            r["data"] = success
 
-            if series_name:
-                if series_name not in self.series:
-                    logger.error(f"Series '{series_name}' not found. Cannot store deconvolution results.")
-                    return
-
-                series_entry: dict = self.series[series_name]
-                existing_deconvolution_results: dict = series_entry.get("deconvolution_results", {})
-
-                existing_deconvolution_results.update(deconvolution_results)
-                series_entry["deconvolution_results"] = existing_deconvolution_results
-
-                r["data"] = True
-                logger.debug(f"Deconvolution results for {series_name} updated successfully.")
+        def handle_get_series_value(p: dict, r: dict) -> None:
+            keys = p.get("keys")
+            if not isinstance(keys, list):
+                logger.error("Operation GET_SERIES_VALUE requires passing the 'keys' as a list.")
+                r["data"] = {}
             else:
-                logger.error("No series_name provided for loading deconvolution results.")
-                r["data"] = False
+                r["data"] = self.get_value(keys)
 
         operations_map = {
             OperationType.ADD_NEW_SERIES: handle_add_new_series,
@@ -89,7 +85,8 @@ class SeriesData(BaseSlots):
             OperationType.GET_ALL_SERIES: handle_get_all_series,
             OperationType.GET_SERIES: handle_get_series,
             OperationType.SCHEME_CHANGE: handle_scheme_change,
-            OperationType.LOAD_DECONVOLUTION_RESULTS: handle_load_deconvolution_results,
+            OperationType.UPDATE_SERIES: handle_update_series,
+            OperationType.GET_SERIES_VALUE: handle_get_series_value,
         }
 
         handler = operations_map.get(operation)
@@ -109,7 +106,7 @@ class SeriesData(BaseSlots):
             "contribution": 0.5,
             "Ea_min": 1,
             "Ea_max": 2000,
-            "log_A_min": 0.1,
+            "log_A_min": -100,
             "log_A_max": 100,
             "contribution_min": 0.01,
             "contribution_max": 1,
@@ -169,42 +166,51 @@ class SeriesData(BaseSlots):
 
         return True, name
 
-    def update_series_cheme(self, series_name: str, new_scheme: dict, new_settings: dict) -> bool:
-        series_entry: dict = self.series.get(series_name)
+    def update_series(self, series_name: str, update_data: dict) -> bool:
+        series_entry = self.series.get(series_name)
         if not series_entry:
             logger.error(f"Series '{series_name}' not found; update failed.")
             return False
 
-        old_scheme: dict = series_entry.get("reaction_scheme", {})
-        old_scheme.update({k: v for k, v in new_scheme.items() if k != "reactions"})
+        if "reaction_scheme" in update_data:
+            self._update_reaction_scheme(series_entry, update_data["reaction_scheme"])
 
-        old_reactions: dict = old_scheme.get("reactions", [])
-        new_reactions_data = new_scheme.get("reactions", [])
-
-        old_reactions_map = {(r["from"], r["to"]): r for r in old_reactions}
-
-        updated_reactions = []
-        for nr in new_reactions_data:
-            key = (nr.get("from"), nr.get("to"))
-            if key in old_reactions_map:
-                old_reaction = old_reactions_map[key]
-                merged_reaction = {**old_reaction, **nr}
-                updated_reactions.append(merged_reaction)
+        for key, value in update_data.items():
+            if key == "reaction_scheme":
+                continue
+            if isinstance(value, dict):
+                existing_value = series_entry.get(key, {})
+                if not isinstance(existing_value, dict):
+                    existing_value = {}
+                existing_value.update(value)
+                series_entry[key] = existing_value
             else:
-                updated_reactions.append(nr)
-
-        old_scheme["reactions"] = updated_reactions
-        series_entry["reaction_scheme"] = old_scheme
-
-        old_settings: dict = series_entry.get("calculation_settings", {})
-        if new_settings:
-            old_settings.update(new_settings)
-
-        series_entry["calculation_settings"] = old_settings
+                series_entry[key] = value
 
         self._get_default_reaction_params(series_name)
-
         return True
+
+    def _update_reaction_scheme(self, series_entry: dict, new_scheme: dict) -> None:
+        old_scheme = series_entry.get("reaction_scheme", {})
+
+        for key, value in new_scheme.items():
+            if key != "reactions":
+                old_scheme[key] = value
+
+        if "reactions" in new_scheme:
+            new_reactions = new_scheme["reactions"]
+            old_reactions = old_scheme.get("reactions", [])
+            old_reactions_map = {(r.get("from"), r.get("to")): r for r in old_reactions}
+            updated_reactions = []
+            for nr in new_reactions:
+                reaction_key = (nr.get("from"), nr.get("to"))
+                if reaction_key in old_reactions_map:
+                    merged_reaction = {**old_reactions_map[reaction_key], **nr}
+                    updated_reactions.append(merged_reaction)
+                else:
+                    updated_reactions.append(nr)
+            old_scheme["reactions"] = updated_reactions
+        series_entry["reaction_scheme"] = old_scheme
 
     def delete_series(self, series_name: str) -> bool:
         if series_name in self.series:
@@ -246,3 +252,14 @@ class SeriesData(BaseSlots):
 
     def get_all_series(self):
         return self.series.copy()
+
+    def get_value(self, keys: list[str]) -> dict[str, Any]:
+        """Get a nested value from the data dictionary.
+
+        Args:
+            keys (list[str]): The list of keys representing the nested path.
+
+        Returns:
+            dict[str, Any]: The retrieved data or an empty dict if not found.
+        """
+        return reduce(lambda data, key: data.get(key, {}), keys, self.series)

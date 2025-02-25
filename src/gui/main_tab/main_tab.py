@@ -76,7 +76,7 @@ class MainTab(QWidget):
         self.sub_sidebar.model_based.model_params_changed.connect(self.to_main_window)
         self.sub_sidebar.series_sub_bar.load_deconvolution_results_signal.connect(self.to_main_window)
         self.sub_sidebar.series_sub_bar.results_combobox_text_changed_signal.connect(self.select_series_reaction)
-        self.sub_sidebar.model_fit_sub_bar.reaction_combobox_text_changed_signal.connect(self.to_main_window)
+        self.sub_sidebar.model_fit_sub_bar.table_combobox_text_changed_signal.connect(self.to_main_window)
 
     def initialize_sizes(self):
         total_width = self.width()

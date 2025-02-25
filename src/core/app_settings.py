@@ -20,6 +20,8 @@ class OperationType(Enum):
     CALCULATION_FINISHED = "calculation_finished"
     UPDATE_VALUE = "update_value"
     ADD_NEW_SERIES = "add_new_series"
+    UPDATE_SERIES = "update_series"
+    GET_SERIES_VALUE = "get_series_value"
     DELETE_SERIES = "delete_series"
     GET_ALL_SERIES = "get_all_series"
     GET_SERIES = "get_series"

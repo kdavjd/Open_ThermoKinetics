@@ -223,6 +223,7 @@ class SeriesSubBar(QWidget):
             reactions_per_key[key] = reactions_for_this_key
 
         common_reactions = set.intersection(*reactions_per_key.values()) if reactions_per_key else set()
+        logger.info(f"common_reactions: {common_reactions}")
         all_reactions = {reaction for reactions_set in reactions_per_key.values() for reaction in reactions_set}
         missing_reactions = all_reactions - common_reactions
 
@@ -230,9 +231,11 @@ class SeriesSubBar(QWidget):
             logger.error(f"The following reactions do not appear in all keys: {missing_reactions}")
             console.log(f"The following reactions do not appear in all keys: {missing_reactions}")
 
-        return common_reactions, missing_reactions
+        sorted_common_reactions = list(common_reactions)
+        sorted_common_reactions.sort(key=lambda x: int(x.split("_")[1]))
+        return sorted_common_reactions, missing_reactions
 
-    def _update_table_with_reactions(self, common_reactions, deconvolution_results: dict):
+    def _update_table_with_reactions(self, common_reactions):
         self.results_combobox.blockSignals(True)
         self.results_combobox.clear()
         self.table.setRowCount(0)
@@ -306,5 +309,5 @@ class SeriesSubBar(QWidget):
         return reaction_df
 
     def update_series_ui(self, experimental_data: pd.DataFrame, deconvolution_results: dict):
-        common_reactions, _ = self.check_missing_reactions(experimental_data, deconvolution_results)
-        self._update_table_with_reactions(common_reactions, deconvolution_results)
+        reactions, _ = self.check_missing_reactions(experimental_data, deconvolution_results)
+        self._update_table_with_reactions(reactions)

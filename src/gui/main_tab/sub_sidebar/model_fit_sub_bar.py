@@ -17,7 +17,7 @@ from src.core.app_settings import MODEL_FIT_METHODS, NUC_MODELS_LIST, OperationT
 
 class ModelFitSubBar(QWidget):
     model_fit_calculation = pyqtSignal(dict)
-    reaction_combobox_text_changed_signal = pyqtSignal(dict)
+    table_combobox_text_changed_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -42,8 +42,8 @@ class ModelFitSubBar(QWidget):
         self.valid_proportion_input = QLineEdit(self)
         self.valid_proportion_input.setText("0.8")
         self.valid_proportion_input.setToolTip(
-            "valid proportion - the proportion of values in the model calculation that is not infinity or NaN.\
-                If it is smaller, the model is ignored."
+            "valid proportion - the proportion of values in the model calculation that is not infinity or NaN. "
+            "If it is smaller, the model is ignored."
         )
         self.form_layout.addRow("valid proportion:", self.valid_proportion_input)
 
@@ -68,7 +68,9 @@ class ModelFitSubBar(QWidget):
 
         self.layout.addLayout(self.reaction_layout)
 
-        # Table for results
+        self.beta_combobox.currentTextChanged.connect(self.emit_combobox_text)
+        self.reaction_combobox.currentTextChanged.connect(self.emit_combobox_text)
+
         self.results_table = QTableWidget(self)
         self.results_table.setColumnCount(4)
         self.results_table.setHorizontalHeaderLabels(["Model", "R2_score", "Ea", "A"])
@@ -86,14 +88,21 @@ class ModelFitSubBar(QWidget):
         self.setLayout(self.layout)
 
         self.last_selected_reaction = None
+        self.last_selected_beta = None
 
-    def emit_combobox_text(self, text):
-        self.last_selected_reaction = text
-        self.reaction_combobox_text_changed_signal.emit(
+    def emit_combobox_text(self, _=None):
+        reaction = self.reaction_combobox.currentText()
+        beta = self.beta_combobox.currentText()
+
+        self.last_selected_reaction = reaction
+        self.last_selected_beta = beta
+
+        self.table_combobox_text_changed_signal.emit(
             {
                 "operation": OperationType.GET_MODEL_FIT_REACTION_DF,
                 "fit_method": self.model_combobox.currentText(),
-                "reaction_n": text,
+                "reaction_n": reaction,
+                "beta": beta,
             }
         )
 

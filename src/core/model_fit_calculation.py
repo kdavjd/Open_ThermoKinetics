@@ -58,7 +58,7 @@ class ModelFitCalculation(BaseSlots):
                 if beta_column == "temperature":
                     continue
 
-                beta_value = float(beta_column)
+                beta_value = int(beta_column)
                 conversion = data[beta_column].cumsum() / data[beta_column].cumsum().max()
                 reaction_results[str(beta_value)] = strategy.calculate(temperature, conversion, beta_value)
 
