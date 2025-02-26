@@ -393,3 +393,39 @@ class PlotCanvas(QWidget):
         self.canvas.draw_idle()
         self.figure.tight_layout()
         logger.debug("Redrawing canvas after anchor motion.")
+
+    def plot_model_fit_result(self, plot_data_and_kwargs):
+        logger.info(f"Received plot data and kwargs: {plot_data_and_kwargs}")
+
+        plot_df = plot_data_and_kwargs[0]["plot_df"]
+        plot_kwargs = plot_data_and_kwargs[0]["plot_kwargs"]
+
+        title = plot_kwargs.pop("title", "Model Plot")
+        xlabel = plot_kwargs.pop("xlabel", "Reverse Temperature")
+        ylabel = plot_kwargs.pop("ylabel", "Value")
+        annotation = plot_kwargs.pop("annotation", None)
+
+        logger.info(f"Plot title: {title}, xlabel: {xlabel}, ylabel: {ylabel}, annotation: {annotation}")
+
+        annotation = f"${annotation}$"  # Оборачиваем аннотацию в $ для LaTeX
+        logger.info(f"Formatted annotation for LaTeX: {annotation}")
+
+        # Используем многострочную аннотацию через text, чтобы избежать проблемы с LaTeX
+        # Устанавливаем аннотацию в центр графика, используя координаты от 0 до 1
+        self.axes.text(0.5, 0.5, annotation, transform=self.axes.transAxes, ha="center", fontsize=12, va="center")
+
+        self.axes.clear()
+        self.lines = {}
+        self.add_or_update_line("lhs_clean", plot_df["reverse_temperature"], plot_df["lhs_clean"], label="lhs_clean")
+        self.add_or_update_line("y", plot_df["reverse_temperature"], plot_df["y"], label="y")
+
+        # Устанавливаем заголовок и подписи осей
+        self.axes.set_title(title)
+        self.axes.set_xlabel(xlabel)
+        self.axes.set_ylabel(ylabel)
+
+        # Перерисовываем холст с обновленным графиком
+        self.canvas.draw_idle()
+        self.figure.tight_layout()
+
+        logger.debug("Finished plotting model fit result.")

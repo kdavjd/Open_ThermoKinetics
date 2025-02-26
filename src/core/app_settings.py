@@ -41,6 +41,7 @@ class OperationType(Enum):
     LOAD_DECONVOLUTION_RESULTS = "load_deconvolution_results"
     MODEL_FIT_CALCULATION = "model_fit_calculation"
     GET_MODEL_FIT_REACTION_DF = "get_model_fit_reaction_df"
+    PLOT_MODEL_FIT_RESULT = "plot_model_fit_result"
 
 
 MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {

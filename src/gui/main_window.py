@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
             OperationType.LOAD_DECONVOLUTION_RESULTS: self._handle_load_deconvolution_results,
             OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
             OperationType.GET_MODEL_FIT_REACTION_DF: self._handle_get_model_fit_reaction_df,
+            OperationType.PLOT_MODEL_FIT_RESULT: self._handle_plot_model_fit_result,
         }
 
         handler = operation_handlers.get(operation)
@@ -115,6 +116,35 @@ class MainWindow(QMainWindow):
             handler(params)
         else:
             logger.error(f"{self.actor_name} unknown operation: {operation},\n\n {params=}")
+
+    def _handle_plot_model_fit_result(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nIt is necessary to select a series for plot model fit result\n")
+            return
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+        beta = params.get("beta")
+        model = params.get("model")
+
+        keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
+        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        params["model_series"] = result_df[result_df["Model"] == model].copy()
+
+        series_entry = self.handle_request_cycle(
+            "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
+        )
+        experimental_df = series_entry.get("experimental_data")
+        deconvolution_results = series_entry.get("deconvolution_results", {})
+        reaction_df = self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
+            experimental_df, deconvolution_results, reaction_n=reaction_n
+        )
+        params["reaction_df"] = reaction_df[["temperature", int(beta)]]
+        plot_data_and_kwargs = self.handle_request_cycle(
+            "model_fit_calculation", OperationType.PLOT_MODEL_FIT_RESULT, calculation_params=params
+        )
+        logger.info(f"{plot_data_and_kwargs=}")
+        self.main_tab.plot_canvas.plot_model_fit_result(plot_data_and_kwargs)
 
     def _handle_get_model_fit_reaction_df(self, params: dict):
         series_name = params.get("series_name")

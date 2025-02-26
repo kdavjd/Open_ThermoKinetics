@@ -18,6 +18,7 @@ from src.core.app_settings import MODEL_FIT_METHODS, NUC_MODELS_LIST, OperationT
 class ModelFitSubBar(QWidget):
     model_fit_calculation = pyqtSignal(dict)
     table_combobox_text_changed_signal = pyqtSignal(dict)
+    plot_model_fit_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -78,10 +79,11 @@ class ModelFitSubBar(QWidget):
 
         # Drop-down for NUC models list and plot button
         self.plot_layout = QHBoxLayout()
-        self.nuc_combobox = QComboBox(self)
-        self.nuc_combobox.addItems(NUC_MODELS_LIST)
+        self.plot_model_combobox = QComboBox(self)
+        self.plot_model_combobox.addItems(NUC_MODELS_LIST)
         self.plot_button = QPushButton("Plot result", self)
-        self.plot_layout.addWidget(self.nuc_combobox)
+        self.plot_button.clicked.connect(self.on_plot_clicked)
+        self.plot_layout.addWidget(self.plot_model_combobox)
         self.plot_layout.addWidget(self.plot_button)
         self.layout.addLayout(self.plot_layout)
 
@@ -136,7 +138,6 @@ class ModelFitSubBar(QWidget):
             QMessageBox.warning(self, "Input Error", str(e))
 
     def _update_combobox_with_reactions(self, common_reactions: list[str]):
-        """Обновляет выпадающий список реакций."""
         self.reaction_combobox.blockSignals(True)
         self.reaction_combobox.clear()
 
@@ -185,3 +186,33 @@ class ModelFitSubBar(QWidget):
         if selected_beta:
             result_df = beta_dict[selected_beta]
             self.update_results_table(result_df)
+
+    def on_plot_clicked(self):
+        try:
+            alpha_min = float(self.alpha_min_input.text())
+            alpha_max = float(self.alpha_max_input.text())
+            valid_proportion = float(self.valid_proportion_input.text())
+
+            if not (0 <= alpha_min <= 0.999):
+                raise ValueError("alpha_min must be between 0 and 0.999")
+            if not (0 <= alpha_max <= 1):
+                raise ValueError("alpha_max must be between 0 and 1")
+            if alpha_min > alpha_max:
+                raise ValueError("alpha_min cannot be greater than alpha_max")
+            if not (0.001 <= valid_proportion <= 1):
+                raise ValueError("valid proportion must be between 0.001 and 1")
+
+            self.plot_model_fit_signal.emit(
+                {
+                    "operation": OperationType.PLOT_MODEL_FIT_RESULT,
+                    "beta": self.beta_combobox.currentText(),
+                    "reaction_n": self.reaction_combobox.currentText(),
+                    "model": self.plot_model_combobox.currentText(),
+                    "fit_method": self.model_combobox.currentText(),
+                    "alpha_min": alpha_min,
+                    "alpha_max": alpha_max,
+                    "valid_proportion": valid_proportion,
+                }
+            )
+        except ValueError as e:
+            QMessageBox.warning(self, "Input Error", str(e))
