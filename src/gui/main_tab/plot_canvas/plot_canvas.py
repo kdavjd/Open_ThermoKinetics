@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 import matplotlib.dates as mdates
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -13,7 +14,7 @@ from matplotlib.lines import Line2D
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
-from src.core.app_settings import OperationType
+from src.core.app_settings import MODEL_FIT_ANNOTATION_CONFIG, OperationType
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
 from src.gui.main_tab.plot_canvas.anchor_group import HeightAnchorGroup, PositionAnchorGroup
@@ -395,8 +396,6 @@ class PlotCanvas(QWidget):
         logger.debug("Redrawing canvas after anchor motion.")
 
     def plot_model_fit_result(self, plot_data_and_kwargs):
-        logger.info(f"Received plot data and kwargs: {plot_data_and_kwargs}")
-
         plot_df = plot_data_and_kwargs[0]["plot_df"]
         plot_kwargs = plot_data_and_kwargs[0]["plot_kwargs"]
 
@@ -405,27 +404,51 @@ class PlotCanvas(QWidget):
         ylabel = plot_kwargs.pop("ylabel", "Value")
         annotation = plot_kwargs.pop("annotation", None)
 
-        logger.info(f"Plot title: {title}, xlabel: {xlabel}, ylabel: {ylabel}, annotation: {annotation}")
-
-        annotation = f"${annotation}$"  # Оборачиваем аннотацию в $ для LaTeX
-        logger.info(f"Formatted annotation for LaTeX: {annotation}")
-
-        # Используем многострочную аннотацию через text, чтобы избежать проблемы с LaTeX
-        # Устанавливаем аннотацию в центр графика, используя координаты от 0 до 1
-        self.axes.text(0.5, 0.5, annotation, transform=self.axes.transAxes, ha="center", fontsize=12, va="center")
-
         self.axes.clear()
         self.lines = {}
         self.add_or_update_line("lhs_clean", plot_df["reverse_temperature"], plot_df["lhs_clean"], label="lhs_clean")
         self.add_or_update_line("y", plot_df["reverse_temperature"], plot_df["y"], label="y")
 
-        # Устанавливаем заголовок и подписи осей
         self.axes.set_title(title)
         self.axes.set_xlabel(xlabel)
         self.axes.set_ylabel(ylabel)
 
-        # Перерисовываем холст с обновленным графиком
         self.canvas.draw_idle()
         self.figure.tight_layout()
 
-        logger.debug("Finished plotting model fit result.")
+        if annotation:
+            annotation_core = annotation.strip("$")
+            lines = annotation_core.split(r"\n")
+
+            block_top = MODEL_FIT_ANNOTATION_CONFIG["block_top"]
+            delta_y = MODEL_FIT_ANNOTATION_CONFIG["delta_y"]
+            n_lines = len(lines)
+            block_bottom = block_top - n_lines * delta_y
+            block_left = MODEL_FIT_ANNOTATION_CONFIG["block_left"]
+            block_right = MODEL_FIT_ANNOTATION_CONFIG["block_right"]
+            rect_width = block_right - block_left
+
+            rect = patches.Rectangle(
+                (block_left, block_bottom),
+                rect_width,
+                block_top - block_bottom,
+                transform=self.axes.transAxes,
+                facecolor=MODEL_FIT_ANNOTATION_CONFIG["facecolor"],
+                edgecolor=MODEL_FIT_ANNOTATION_CONFIG["edgecolor"],
+                alpha=MODEL_FIT_ANNOTATION_CONFIG["alpha"],
+                zorder=10,
+            )
+            self.axes.add_patch(rect)
+
+            for i, line in enumerate(lines):
+                y_pos = block_top - i * delta_y - delta_y / 2
+                self.axes.text(
+                    0.5,
+                    y_pos,
+                    f"${line.strip()}$",
+                    transform=self.axes.transAxes,
+                    ha="center",
+                    va="center",
+                    fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
+                    zorder=11,
+                )

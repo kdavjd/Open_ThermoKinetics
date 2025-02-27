@@ -203,6 +203,17 @@ for key in NUC_MODELS_LIST:
 
 MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll", "Kissinger", "Horwitz-Metzger"]
 
+MODEL_FIT_ANNOTATION_CONFIG = {
+    "block_top": 0.98,
+    "block_left": 0.4,
+    "block_right": 0.6,
+    "delta_y": 0.03,
+    "fontsize": 8,
+    "facecolor": "white",
+    "edgecolor": "black",
+    "alpha": 1.0,
+}
+
 
 class SideBarNames(Enum):
     MODEL_BASED = "model based"

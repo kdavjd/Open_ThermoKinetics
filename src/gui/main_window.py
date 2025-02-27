@@ -126,6 +126,7 @@ class MainWindow(QMainWindow):
         reaction_n = params.get("reaction_n")
         beta = params.get("beta")
         model = params.get("model")
+        is_annotate = params.get("is_annotate")
 
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
@@ -143,7 +144,8 @@ class MainWindow(QMainWindow):
         plot_data_and_kwargs = self.handle_request_cycle(
             "model_fit_calculation", OperationType.PLOT_MODEL_FIT_RESULT, calculation_params=params
         )
-        logger.info(f"{plot_data_and_kwargs=}")
+        if not is_annotate:
+            plot_data_and_kwargs[0]["plot_kwargs"]["annotation"] = is_annotate
         self.main_tab.plot_canvas.plot_model_fit_result(plot_data_and_kwargs)
 
     def _handle_get_model_fit_reaction_df(self, params: dict):

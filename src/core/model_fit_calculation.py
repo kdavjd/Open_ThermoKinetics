@@ -199,8 +199,7 @@ class DirectDiff:
         A = float(model_row["A"]) if isinstance(model_row["A"], str) else model_row["A"]
         R2 = float(model_row["R2_score"]) if isinstance(model_row["R2_score"], str) else model_row["R2_score"]
 
-        # Подготовка аннотации с заменой \n на \\ для LaTeX
-        annotation = r"$E_a = {:.2f} \\\\ A = {:.2e} \\\\ R^2 = {:.4f}$".format(Ea, A, R2)
+        annotation = r"$ E_a = {:.2f} \n A = {:.2e} \n R^2 = {:.4f}$".format(Ea, A, R2)
 
         plot_kwargs = {
             "title": f"Model: {model_name}",
