@@ -13,6 +13,7 @@ class ModelFitCalculation(BaseSlots):
         super().__init__(actor_name=actor_name, signals=signals)
         self.strategies = {
             "direct-diff": DirectDiff,
+            "Coats-Redfern": CoatsRedfern,
         }
 
     def process_request(self, params: dict) -> None:
@@ -79,7 +80,7 @@ class ModelFitCalculation(BaseSlots):
         strategy = FitMethod(alpha_min, alpha_max, valid_proportion)
         result_data = {}
         for reaction_name, data in reaction_data.items():
-            temperature = data["temperature"]
+            temperature_K = data["temperature"] + 273.15
             reaction_results = {}
 
             for beta_column in data.columns:
@@ -88,7 +89,7 @@ class ModelFitCalculation(BaseSlots):
 
                 beta_value = int(beta_column)
                 conversion = data[beta_column].cumsum() / data[beta_column].cumsum().max()
-                reaction_results[str(beta_value)] = strategy.calculate(temperature, conversion, beta_value)
+                reaction_results[str(beta_value)] = strategy.calculate(temperature_K, conversion, beta_value)
 
             result_data[reaction_name] = reaction_results
 
@@ -205,6 +206,108 @@ class DirectDiff:
             "title": f"Model: {model_name}",
             "xlabel": "1/T",
             "ylabel": r"$\ln\left(\frac{da}{dT}\dot \frac{1}{f(a)}\right)$",
+            "annotation": annotation,
+        }
+
+        return plot_df, plot_kwargs
+
+
+class CoatsRedfern:
+    def __init__(self, alpha_min: float, alpha_max: float, valid_proportion: float):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.valid_proportion = valid_proportion
+
+    def calculate_coats_redfern_lhs(self, g_a_val, temperature):
+        try:
+            return np.log(g_a_val / (temperature**2))
+        except ZeroDivisionError:
+            return np.inf
+
+    def calculate_coats_redfern_params(self, slope, intercept, beta, temperature):
+        Ea = -slope * R
+        t_mean = temperature.mean()
+        A = np.exp(intercept) / (1 - t_mean * R * 2 / Ea) * beta * Ea / R
+        return Ea, A
+
+    def process_coats_redfern_model(self, conversion, temperature, model_func, model_name, beta):
+        g_a_val = model_func(1 - conversion)
+        lhs = self.calculate_coats_redfern_lhs(g_a_val, temperature)
+        temperature_clean, lhs_clean = self._filter_inf_data(lhs, temperature)
+        reverse_temperature = 1 / temperature_clean
+        try:
+            slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
+        except ValueError:
+            return pd.DataFrame(
+                {
+                    "Model": [model_name],
+                    "R2_score": [None],
+                    "Ea": [None],
+                    "A": [None],
+                }
+            )
+
+        Ea, A = self.calculate_coats_redfern_params(slope, intercept, beta, temperature)
+
+        return pd.DataFrame(
+            {
+                "Model": [model_name],
+                "R2_score": [r_value**2],
+                "Ea": [Ea],
+                "A": [A],
+            }
+        )
+
+    def calculate(self, temperature: pd.Series, conversion: pd.Series, beta: int) -> pd.DataFrame:
+        result_list = []
+        for model_key in NUC_MODELS_LIST:
+            model_func = NUC_MODELS_TABLE[model_key]["integral_form"]
+            temp_df = self.process_coats_redfern_model(conversion, temperature, model_func, model_key, beta)
+            result_list.append(temp_df)
+
+        if result_list:
+            coats_redfern = pd.concat(result_list, ignore_index=True)
+            coats_redfern["R2_score"] = coats_redfern["R2_score"].round(4)
+            coats_redfern["Ea"] = coats_redfern["Ea"].round()
+            coats_redfern["A"] = coats_redfern["A"].apply(lambda x: f"{x:.3e}")
+            coats_redfern = coats_redfern.sort_values(by="R2_score", ascending=False)
+        else:
+            coats_redfern = pd.DataFrame(columns=["Model", "Equation", "R2_score", "Ea", "A"])
+
+        return coats_redfern
+
+    def _filter_inf_data(self, lhs, temperature):
+        mask = np.isfinite(lhs) & np.isfinite(temperature)
+        return temperature[mask], lhs[mask]
+
+    def prepare_plot_data_for_model(self, model_row: pd.DataFrame, reaction_df: pd.DataFrame):
+        temperature_K = reaction_df["temperature"] + 273.15
+
+        beta_column = [col for col in reaction_df.columns if col != "temperature"][0]
+        da_dT = reaction_df[beta_column]
+        conversion = da_dT.cumsum()
+        model_func = NUC_MODELS_TABLE[model_row["Model"]]["integral_form"]
+
+        g_a_val = model_func(1 - conversion)
+        lhs = self.calculate_coats_redfern_lhs(g_a_val, temperature_K)
+        temperature_clean, lhs_clean = self._filter_inf_data(lhs, temperature_K)
+        reverse_temperature = 1 / temperature_clean
+        slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
+        y = reverse_temperature * slope + intercept
+
+        plot_df = pd.DataFrame({"reverse_temperature": reverse_temperature, "lhs_clean": lhs_clean, "y": y})
+
+        model_name = model_row["Model"]
+        Ea = float(model_row["Ea"]) if isinstance(model_row["Ea"], str) else model_row["Ea"]
+        A = float(model_row["A"]) if isinstance(model_row["A"], str) else model_row["A"]
+        R2 = float(model_row["R2_score"]) if isinstance(model_row["R2_score"], str) else model_row["R2_score"]
+
+        annotation = r"$ E_a = {:.2f} \n A = {:.2e} \n R^2 = {:.4f}$".format(Ea, A, R2)
+
+        plot_kwargs = {
+            "title": f"Model: {model_name}",
+            "xlabel": "1/T",
+            "ylabel": r"$\ln \frac{g(a)}{T^2}$",
             "annotation": annotation,
         }
 

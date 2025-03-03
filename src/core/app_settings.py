@@ -198,7 +198,9 @@ NUC_MODELS_LIST = sorted(NUC_MODELS_TABLE.keys())
 for key in NUC_MODELS_LIST:
     if key in NUC_MODELS_TABLE:
         df = NUC_MODELS_TABLE[key]["differential_form"]
+        itg = NUC_MODELS_TABLE[key]["integral_form"]
         NUC_MODELS_TABLE[key]["differential_form"] = clip_fraction_decorator()(df)
+        NUC_MODELS_TABLE[key]["integral_form"] = clip_fraction_decorator()(itg)
 
 
 MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll", "Kissinger", "Horwitz-Metzger"]
