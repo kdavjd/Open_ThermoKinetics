@@ -151,7 +151,7 @@ class ModelFitSubBar(QWidget):
         except ValueError as e:
             QMessageBox.warning(self, "Input Error", str(e))
 
-    def _update_combobox_with_reactions(self, common_reactions: list[str]):
+    def update_combobox_with_reactions(self, common_reactions: list[str]):
         self.reaction_combobox.blockSignals(True)
         self.reaction_combobox.clear()
 
@@ -166,9 +166,6 @@ class ModelFitSubBar(QWidget):
             self.last_selected_reaction = None
 
         self.reaction_combobox.blockSignals(False)
-
-    def update_reaction_combobox(self, reactions: list[str]):
-        self._update_combobox_with_reactions(reactions)
 
     def update_beta_combobox(self, beta_values: list[str]):
         self.beta_combobox.blockSignals(True)
@@ -186,7 +183,7 @@ class ModelFitSubBar(QWidget):
 
     def update_fit_results(self, fit_results: dict):
         reaction_keys = list(fit_results.keys())
-        self.update_reaction_combobox(reaction_keys)
+        self.update_combobox_with_reactions(reaction_keys)
         selected_reaction = (
             self.last_selected_reaction if self.last_selected_reaction in reaction_keys else reaction_keys[0]
         )

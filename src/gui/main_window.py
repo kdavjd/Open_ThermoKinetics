@@ -101,14 +101,15 @@ class MainWindow(QMainWindow):
             OperationType.STOP_CALCULATION: self._handle_stop_calculation,
             OperationType.ADD_NEW_SERIES: self._handle_add_new_series,
             OperationType.DELETE_SERIES: self._handle_delete_series,
-            OperationType.MODEL_BASED_CALCULATION: self._handle_model_based_calculation,
             OperationType.SCHEME_CHANGE: self._handle_scheme_change,
             OperationType.MODEL_PARAMS_CHANGE: self._handle_model_params_change,
             OperationType.SELECT_SERIES: self._handle_select_series,
             OperationType.LOAD_DECONVOLUTION_RESULTS: self._handle_load_deconvolution_results,
-            OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
             OperationType.GET_MODEL_FIT_REACTION_DF: self._handle_get_model_fit_reaction_df,
             OperationType.PLOT_MODEL_FIT_RESULT: self._handle_plot_model_fit_result,
+            OperationType.MODEL_BASED_CALCULATION: self._handle_model_based_calculation,
+            OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
+            OperationType.MODEL_FREE_CALCULATION: self._handle_model_free_calculation,
         }
 
         handler = operation_handlers.get(operation)
@@ -116,6 +117,37 @@ class MainWindow(QMainWindow):
             handler(params)
         else:
             logger.error(f"{self.actor_name} unknown operation: {operation},\n\n {params=}")
+
+    def _handle_model_free_calculation(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nIt is necessary to select a series for calculation\n")
+            return
+
+        series_entry = self.handle_request_cycle(
+            "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
+        )
+        experimental_df = series_entry.get("experimental_data")
+        deconvolution_results = series_entry.get("deconvolution_results", {})
+        if not deconvolution_results:
+            console.log(
+                f"\nSeries '{series_name}' should be divided into reactions by deconvolution.\n"
+                "Load deconvolution data in series working space.\n"
+            )
+            return
+        reactions, _ = self.main_tab.sub_sidebar.series_sub_bar.check_missing_reactions(
+            experimental_df, deconvolution_results
+        )
+        params["reaction_data"] = {
+            reaction: self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
+                experimental_df, deconvolution_results, reaction_n=reaction
+            )
+            for reaction in reactions
+        }
+        fit_results = self.handle_request_cycle(
+            "model_free_calculation", OperationType.MODEL_FREE_CALCULATION, calculation_params=params
+        )
+        logger.info(f"{fit_results}")
 
     def _handle_plot_model_fit_result(self, params: dict):
         series_name = params.get("series_name")

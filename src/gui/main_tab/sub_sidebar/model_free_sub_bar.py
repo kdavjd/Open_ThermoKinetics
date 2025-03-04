@@ -4,19 +4,18 @@ from PyQt6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QTableWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from src.core.app_settings import MODEL_FREE_METHODS
+from src.core.app_settings import MODEL_FREE_METHODS, OperationType
 
 
 class ModelFreeSubBar(QWidget):
-    model_fit_calculation = pyqtSignal(dict)
-    table_combobox_text_changed_signal = pyqtSignal(dict)
-    plot_model_fit_signal = pyqtSignal(dict)
+    model_free_calculation_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -42,7 +41,7 @@ class ModelFreeSubBar(QWidget):
 
         # Calculate button
         self.calculate_button = QPushButton("calculate", self)
-        # self.calculate_button.clicked.connect()
+        self.calculate_button.clicked.connect(self.on_calculate_clicked)
         self.layout.addWidget(self.calculate_button)
 
         self.reaction_layout = QHBoxLayout()
@@ -76,3 +75,44 @@ class ModelFreeSubBar(QWidget):
 
         self.last_selected_reaction = None
         self.last_selected_beta = None
+
+    def on_calculate_clicked(self):
+        try:
+            alpha_min = float(self.alpha_min_input.text())
+            alpha_max = float(self.alpha_max_input.text())
+            fit_method = self.model_combobox.currentText()
+
+            if not (0 <= alpha_min <= 0.999):
+                raise ValueError("alpha_min must be between 0 and 0.999")
+            if not (0 <= alpha_max <= 1):
+                raise ValueError("alpha_max must be between 0 and 1")
+            if alpha_min > alpha_max:
+                raise ValueError("alpha_min cannot be greater than alpha_max")
+
+            self.model_free_calculation_signal.emit(
+                {
+                    "fit_method": fit_method,
+                    "alpha_min": alpha_min,
+                    "alpha_max": alpha_max,
+                    "operation": OperationType.MODEL_FREE_CALCULATION,
+                }
+            )
+
+        except ValueError as e:
+            QMessageBox.warning(self, "Input Error", str(e))
+
+    def update_combobox_with_reactions(self, common_reactions: list[str]):
+        self.reaction_combobox.blockSignals(True)
+        self.reaction_combobox.clear()
+
+        selected_reaction = self.last_selected_reaction if self.last_selected_reaction in common_reactions else None
+
+        for reaction in common_reactions:
+            self.reaction_combobox.addItem(reaction)
+
+        if selected_reaction:
+            self.reaction_combobox.setCurrentText(selected_reaction)
+        else:
+            self.last_selected_reaction = None
+
+        self.reaction_combobox.blockSignals(False)
