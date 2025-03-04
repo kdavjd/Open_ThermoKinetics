@@ -14,6 +14,7 @@ class ModelFitCalculation(BaseSlots):
         self.strategies = {
             "direct-diff": DirectDiff,
             "Coats-Redfern": CoatsRedfern,
+            "Freeman-Carroll": FreemanCaroll,
         }
 
     def process_request(self, params: dict) -> None:
@@ -311,4 +312,147 @@ class CoatsRedfern:
             "annotation": annotation,
         }
 
+        return plot_df, plot_kwargs
+
+
+class FreemanCaroll:
+    def __init__(self, alpha_min: float, alpha_max: float, valid_proportion: float):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.valid_proportion = valid_proportion
+
+    def _process_freeman_carr_model(self, conversion, temperature, model_func, model_name, beta, DEBUG=False):
+        conversion_series = pd.Series(conversion)
+        da_dT = conversion_series.diff().astype(float)
+        epsilon = 1e-8
+        da_dT = da_dT.replace(0, epsilon)
+        ln_da_dT = np.log(da_dT.values)
+        ln_f_a = np.log(model_func(conversion_series) + epsilon)
+        m = len(temperature)
+        x = []
+        y = []
+
+        for j in range(2, m - 1):
+            delta_ln_da_dT = ln_da_dT[j] - ln_da_dT[j - 1]
+            delta_1_T = 1 / temperature[j + 1] - 1 / temperature[j]
+            delta_ln_f_a = ln_f_a[j + 1] - ln_f_a[j]
+            if np.isnan(delta_ln_da_dT) or np.isnan(delta_ln_f_a):
+                continue
+            if np.abs(delta_1_T) > epsilon:
+                x_val = delta_ln_f_a / delta_1_T
+                y_val = delta_ln_da_dT / delta_1_T
+                x.append(x_val)
+                y.append(y_val)
+            else:
+                continue
+
+        if len(x) < 2 or len(x) != len(y) or np.std(x) < epsilon:
+            return pd.DataFrame(
+                {
+                    "Model": [model_name],
+                    "R2_score": [None],
+                    "Ea": [None],
+                    "A": [None],
+                }
+            )
+
+        x_arr = np.array(x)
+        y_arr = np.array(y)
+        slope, intercept, r_value, _, _ = stats.linregress(x_arr, y_arr)
+        Ea = R * intercept
+
+        temperature_array = np.array(temperature[1:])
+        ln_A_over_beta = ln_da_dT[1:] + Ea / (R * temperature_array) - ln_f_a[1:]
+        average_ln_A_over_beta = np.mean(ln_A_over_beta)
+        A = beta * np.exp(average_ln_A_over_beta)
+        return pd.DataFrame(
+            {
+                "Model": [model_name],
+                "R2_score": [r_value**2],
+                "Ea": [Ea],
+                "A": [A],
+            }
+        )
+
+    def calculate(self, temperature: pd.Series, conversion: pd.Series, beta: int) -> pd.DataFrame:
+        result_list = []
+
+        for model_key in NUC_MODELS_LIST:
+            model_func = NUC_MODELS_TABLE[model_key]["differential_form"]
+            temp_df = self._process_freeman_carr_model(conversion, temperature, model_func, model_key, beta)
+            result_list.append(temp_df)
+
+        if result_list:
+            freeman_carr = pd.concat(result_list, ignore_index=True)
+            freeman_carr["R2_score"] = freeman_carr["R2_score"].round(4)
+            freeman_carr["Ea"] = freeman_carr["Ea"].round()
+            freeman_carr["A"] = freeman_carr["A"].apply(lambda x: f"{x:.3e}" if pd.notnull(x) else x)
+            freeman_carr = freeman_carr.sort_values(by="R2_score", ascending=False)
+        else:
+            freeman_carr = pd.DataFrame(columns=["Model", "R2_score", "Ea", "A"])
+        return freeman_carr
+
+    def prepare_plot_data_for_model(self, model_row: pd.DataFrame, reaction_df: pd.DataFrame):
+        """
+        x-axes: Δln(f(a))/Δ(1/T)
+        y-axes: Δln(da/dT)/Δ(1/T)
+        """
+
+        temperature_K = reaction_df["temperature"] + 273.15
+        beta_column = [col for col in reaction_df.columns if col != "temperature"][0]
+        da_dT = reaction_df[beta_column]
+        conversion = da_dT.cumsum()
+        conversion_series = pd.Series(conversion)
+        da_dT_series = conversion_series.diff().astype(float)
+        epsilon = 1e-8
+        da_dT_series = da_dT_series.replace(0, epsilon)
+        ln_da_dT = np.log(da_dT_series.values)
+        model_func = NUC_MODELS_TABLE[model_row["Model"]]["differential_form"]
+        ln_f_a = np.log(model_func(conversion_series) + epsilon)
+        m = len(temperature_K)
+        x_vals = []
+        y_vals = []
+
+        for j in range(2, m - 1):
+            delta_ln_da_dT = ln_da_dT[j] - ln_da_dT[j - 1]
+            delta_1_T = 1 / temperature_K.iloc[j + 1] - 1 / temperature_K.iloc[j]
+            delta_ln_f_a = ln_f_a[j + 1] - ln_f_a[j]
+            if np.isnan(delta_ln_da_dT) or np.isnan(delta_ln_f_a):
+                continue
+            if np.abs(delta_1_T) > epsilon:
+                x_val = delta_ln_f_a / delta_1_T
+                y_val = delta_ln_da_dT / delta_1_T
+                x_vals.append(x_val)
+                y_vals.append(y_val)
+        if len(x_vals) < 2 or np.std(x_vals) < epsilon:
+            plot_df = pd.DataFrame({"reverse_temperature": [], "lhs_clean": []})
+            plot_kwargs = {
+                "title": f"Model: {model_row['Model']}",
+                "xlabel": r"$\Delta \ln(f(a)) / \Delta(1/T)$",
+                "ylabel": r"$\Delta \ln(da/dT) / \Delta(1/T)$",
+                "annotation": "",
+            }
+            return plot_df, plot_kwargs
+
+        x_arr = np.array(x_vals)
+        y_arr = np.array(y_vals)
+
+        slope, intercept, r_value, _, _ = stats.linregress(x_arr, y_arr)
+        y_fit = slope * x_arr + intercept
+        plot_df = pd.DataFrame({"reverse_temperature": x_arr, "lhs_clean": y_arr, "y": y_fit})
+
+        model_name = model_row["Model"]
+        Ea = float(model_row["Ea"]) if pd.notna(model_row["Ea"]) else 0.0
+        try:
+            A_val = float(model_row["A"])
+        except (ValueError, TypeError):
+            A_val = 0.0
+        R2 = float(model_row["R2_score"]) if pd.notna(model_row["R2_score"]) else 0.0
+        annotation = r"$ E_a = {:.2f} \n A = {:.2e} \n R^2 = {:.4f}$".format(Ea, A_val, R2)
+        plot_kwargs = {
+            "title": f"Model: {model_name}",
+            "xlabel": r"$\Delta \ln(f(a)) / \Delta(1/T)$",
+            "ylabel": r"$\Delta \ln(da/dT) / \Delta(1/T)$",
+            "annotation": annotation,
+        }
         return plot_df, plot_kwargs

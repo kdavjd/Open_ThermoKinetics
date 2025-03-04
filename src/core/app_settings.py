@@ -203,7 +203,10 @@ for key in NUC_MODELS_LIST:
         NUC_MODELS_TABLE[key]["integral_form"] = clip_fraction_decorator()(itg)
 
 
-MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll", "Kissinger", "Horwitz-Metzger"]
+MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
+MODEL_FREE_METHODS = [
+    "linear approximation",
+]
 
 MODEL_FIT_ANNOTATION_CONFIG = {
     "block_top": 0.98,
