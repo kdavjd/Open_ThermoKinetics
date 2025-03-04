@@ -223,7 +223,7 @@ class SeriesSubBar(QWidget):
             reactions_per_key[key] = reactions_for_this_key
 
         common_reactions = set.intersection(*reactions_per_key.values()) if reactions_per_key else set()
-        logger.info(f"common_reactions: {common_reactions}")
+        logger.debug(f"common_reactions: {common_reactions}")
         all_reactions = {reaction for reactions_set in reactions_per_key.values() for reaction in reactions_set}
         missing_reactions = all_reactions - common_reactions
 

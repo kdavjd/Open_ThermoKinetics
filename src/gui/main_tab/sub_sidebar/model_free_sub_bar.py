@@ -7,15 +7,18 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QTableWidget,
+    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from src.core.app_settings import MODEL_FREE_METHODS, OperationType
+from src.core.logger_config import logger  # noqa: F401
 
 
 class ModelFreeSubBar(QWidget):
     model_free_calculation_signal = pyqtSignal(dict)
+    table_combobox_text_changed_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -51,20 +54,18 @@ class ModelFreeSubBar(QWidget):
 
         self.layout.addLayout(self.reaction_layout)
 
-        # self.beta_combobox.currentTextChanged.connect()
-        # self.reaction_combobox.currentTextChanged.connect()
+        self.reaction_combobox.currentTextChanged.connect(self.emit_combobox_text)
 
         self.results_table = QTableWidget(self)
-        self.results_table.setColumnCount(4)
-        self.results_table.setHorizontalHeaderLabels(["Model", "R2_score", "Ea", "A"])
+        self.results_table.setColumnCount(3)
+        self.results_table.setHorizontalHeaderLabels(["method", "Ea", "std"])
         self.layout.addWidget(self.results_table)
 
-        # Drop-down for NUC models, plot button and settings button
         self.plot_layout = QHBoxLayout()
         self.plot_button = QPushButton("plot", self)
         # self.plot_button.clicked.connect()
         self.settings_button = QPushButton("settings", self)
-        # self.settings_button.clicked.connect()
+
         self.plot_layout.addWidget(self.plot_button)
         self.plot_layout.addWidget(self.settings_button)
         self.plot_layout.setStretchFactor(self.plot_button, 4)
@@ -75,6 +76,19 @@ class ModelFreeSubBar(QWidget):
 
         self.last_selected_reaction = None
         self.last_selected_beta = None
+
+    def emit_combobox_text(self, _=None):
+        reaction = self.reaction_combobox.currentText()
+
+        self.last_selected_reaction = reaction
+
+        self.table_combobox_text_changed_signal.emit(
+            {
+                "operation": OperationType.GET_MODEL_FREE_REACTION_DF,
+                "fit_method": self.model_combobox.currentText(),
+                "reaction_n": reaction,
+            }
+        )
 
     def on_calculate_clicked(self):
         try:
@@ -116,3 +130,24 @@ class ModelFreeSubBar(QWidget):
             self.last_selected_reaction = None
 
         self.reaction_combobox.blockSignals(False)
+
+    def update_fit_results(self, fit_results: dict):
+        reaction_keys = list(fit_results.keys())
+        selected_reaction = (
+            self.last_selected_reaction if self.last_selected_reaction in reaction_keys else reaction_keys[0]
+        )
+        self.last_selected_reaction = selected_reaction
+        self.update_combobox_with_reactions(reaction_keys)
+        df = fit_results[selected_reaction]
+        self.update_results_table(df)
+
+    def update_results_table(self, df):
+        self.results_table.setRowCount(0)
+        methods = [col for col in df.columns if col != "conversion"]
+        self.results_table.setRowCount(len(methods))
+        for row, method in enumerate(methods):
+            mean_ea = df[method].mean()
+            std_ea = df[method].std()
+            self.results_table.setItem(row, 0, QTableWidgetItem(method))
+            self.results_table.setItem(row, 1, QTableWidgetItem(f"{mean_ea:.0f}"))
+            self.results_table.setItem(row, 2, QTableWidgetItem(f"{std_ea:.0f}"))

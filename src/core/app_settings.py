@@ -42,6 +42,7 @@ class OperationType(Enum):
     MODEL_FIT_CALCULATION = "model_fit_calculation"
     MODEL_FREE_CALCULATION = "model_free_calculation"
     GET_MODEL_FIT_REACTION_DF = "get_model_fit_reaction_df"
+    GET_MODEL_FREE_REACTION_DF = "get_model_free_reaction_df"
     PLOT_MODEL_FIT_RESULT = "plot_model_fit_result"
     PLOT_MODEL_FREE_RESULT = "plot_model_free_result"
 

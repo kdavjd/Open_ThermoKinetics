@@ -85,6 +85,7 @@ class LinearApproximation:
 
     def fetch_linear_approx_Ea(self, reaction_df: pd.DataFrame) -> pd.DataFrame:
         rate_cols = [col for col in reaction_df.columns if col != "temperature"]
+
         conv = reaction_df[rate_cols].cumsum() / reaction_df[rate_cols].cumsum().max()
         temperature = reaction_df["temperature"]
 
@@ -97,18 +98,26 @@ class LinearApproximation:
 
         lower_bound = max(conv.min().min(), self.alpha_min)
         upper_bound = min(conv.max().max(), self.alpha_max)
+
         conv_grid = np.linspace(lower_bound, upper_bound, 100)
+
         T = np.column_stack([f[rate](conv_grid) for rate in rate_cols])
         X = 1.0 / T
         x_mean = X.mean(axis=1, keepdims=True)
         denom = ((X - x_mean) ** 2).sum(axis=1)
-        rates = np.array([float(rate) for rate in rate_cols])
 
+        rates = np.array([float(rate) for rate in rate_cols])
         log_rates = np.log(rates)
+
+        # OFW: y = ln(β)
         Y_OFW = np.tile(log_rates, (100, 1))
         slope_OFW = ((X - x_mean) * (Y_OFW - Y_OFW.mean(axis=1, keepdims=True))).sum(axis=1) / denom
+
+        # KAS: y = ln(β) - 2·ln(T)
         Y_KAS = log_rates - 2 * np.log(T)
         slope_KAS = ((X - x_mean) * (Y_KAS - Y_KAS.mean(axis=1, keepdims=True))).sum(axis=1) / denom
+
+        # Starink: y = ln(β) - 1.92·ln(T)
         Y_Starink = log_rates - 1.92 * np.log(T)
         slope_Starink = ((X - x_mean) * (Y_Starink - Y_Starink.mean(axis=1, keepdims=True))).sum(axis=1) / denom
 

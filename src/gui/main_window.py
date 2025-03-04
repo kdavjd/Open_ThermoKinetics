@@ -106,6 +106,7 @@ class MainWindow(QMainWindow):
             OperationType.SELECT_SERIES: self._handle_select_series,
             OperationType.LOAD_DECONVOLUTION_RESULTS: self._handle_load_deconvolution_results,
             OperationType.GET_MODEL_FIT_REACTION_DF: self._handle_get_model_fit_reaction_df,
+            OperationType.GET_MODEL_FREE_REACTION_DF: self._handle_get_model_free_reaction_df,
             OperationType.PLOT_MODEL_FIT_RESULT: self._handle_plot_model_fit_result,
             OperationType.MODEL_BASED_CALCULATION: self._handle_model_based_calculation,
             OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
@@ -147,7 +148,11 @@ class MainWindow(QMainWindow):
         fit_results = self.handle_request_cycle(
             "model_free_calculation", OperationType.MODEL_FREE_CALCULATION, calculation_params=params
         )
-        logger.info(f"{fit_results}")
+        update_data = {"model_free_results": {params["fit_method"]: fit_results}}
+        self.handle_request_cycle(
+            "series_data", OperationType.UPDATE_SERIES, series_name=series_name, update_data=update_data
+        )
+        self.main_tab.sub_sidebar.model_free_sub_bar.update_fit_results(fit_results)
 
     def _handle_plot_model_fit_result(self, params: dict):
         series_name = params.get("series_name")
@@ -180,6 +185,16 @@ class MainWindow(QMainWindow):
             plot_data_and_kwargs[0]["plot_kwargs"]["annotation"] = is_annotate
         self.main_tab.plot_canvas.plot_model_fit_result(plot_data_and_kwargs)
 
+    def _handle_get_model_free_reaction_df(self, params: dict):
+        series_name = params.get("series_name")
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+
+        keys = [series_name, "model_free_results", fit_method, reaction_n]
+
+        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        self.main_tab.sub_sidebar.model_free_sub_bar.update_results_table(result_df)
+
     def _handle_get_model_fit_reaction_df(self, params: dict):
         series_name = params.get("series_name")
         fit_method = params.get("fit_method")
@@ -187,7 +202,6 @@ class MainWindow(QMainWindow):
         beta = params.get("beta")
 
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
-        logger.info(f"Запрос GET_MODEL_FIT_REACTION_DF с ключами: {keys}")
 
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
         self.main_tab.sub_sidebar.model_fit_sub_bar.update_results_table(result_df)
