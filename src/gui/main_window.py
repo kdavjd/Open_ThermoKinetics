@@ -149,6 +149,9 @@ class MainWindow(QMainWindow):
         fit_results = self.handle_request_cycle(
             "model_free_calculation", OperationType.MODEL_FREE_CALCULATION, calculation_params=params
         )
+        if not fit_results:
+            console.log("\nThere are not enough beta columns for model free calculation.\n")
+            return
         update_data = {"model_free_results": {params["fit_method"]: fit_results}}
         self.handle_request_cycle(
             "series_data", OperationType.UPDATE_SERIES, series_name=series_name, update_data=update_data
@@ -168,9 +171,16 @@ class MainWindow(QMainWindow):
 
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if type(result_df) != pd.DataFrame:  # noqa: E721
+            if result_df == {} or result_df is None:
+                console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
+                return
+        if result_df.empty:
+            console.log("\nThe model fit result is empty.\n")
+            return
         params["model_series"] = result_df[result_df["Model"] == model].copy()
 
-        series_entry = self.handle_request_cycle(
+        series_entry: dict = self.handle_request_cycle(
             "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
         )
         experimental_df = series_entry.get("experimental_data")
@@ -182,6 +192,9 @@ class MainWindow(QMainWindow):
         plot_data_and_kwargs = self.handle_request_cycle(
             "model_fit_calculation", OperationType.PLOT_MODEL_FIT_RESULT, calculation_params=params
         )
+        if plot_data_and_kwargs == []:
+            console.log(f"\nNo plot results were found for {fit_method}: {model}\n")
+            return
         if not is_annotate:
             plot_data_and_kwargs[0]["plot_kwargs"]["annotation"] = is_annotate
         self.main_tab.plot_canvas.plot_model_fit_result(plot_data_and_kwargs)
@@ -196,7 +209,11 @@ class MainWindow(QMainWindow):
         is_annotate = params.get("is_annotate")
 
         keys = [series_name, "model_free_results", fit_method, reaction_n]
-        params["result_df"] = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if result_df == {}:
+            console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
+            return
+        params["result_df"] = result_df
         plot_data_and_kwargs = self.handle_request_cycle(
             "model_free_calculation", OperationType.PLOT_MODEL_FREE_RESULT, calculation_params=params
         )
@@ -212,6 +229,12 @@ class MainWindow(QMainWindow):
         keys = [series_name, "model_free_results", fit_method, reaction_n]
 
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if result_df is None:
+            console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
+            return
+        if result_df.empty:
+            console.log("\nThe fit result is empty.\n")
+            return
         self.main_tab.sub_sidebar.model_free_sub_bar.update_results_table(result_df)
 
     def _handle_get_model_fit_reaction_df(self, params: dict):
@@ -223,6 +246,13 @@ class MainWindow(QMainWindow):
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
 
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if type(result_df) != pd.DataFrame:  # noqa: E721
+            if result_df == {} or result_df is None:
+                console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
+                return
+        if result_df.empty:
+            console.log("\nThe model fit result is empty.\n")
+            return
         self.main_tab.sub_sidebar.model_fit_sub_bar.update_results_table(result_df)
 
     def _handle_model_fit_calculation(self, params: dict):

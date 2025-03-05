@@ -60,7 +60,7 @@ class ModelFreeCalculation(BaseSlots):
             reaction_df["temperature"] = reaction_df["temperature"] + 273.15
             beta_columns = [col for col in reaction_df.columns if col != "temperature"]
             if len(beta_columns) < 2:
-                logger.error("There are not enough beta columns for model free calculation")
+                logger.error("There are not enough beta columns for model free calculation.")
                 response["data"] = False
                 return
 
@@ -153,11 +153,6 @@ class LinearApproximation:
         mean_starink = df["Starink"].mean()
         std_starink = df["Starink"].std()
 
-        annotation = (
-            f"OFW: {mean_ofw:.0f}, std {std_ofw:.0f}\n"
-            f"KAS: {mean_kas:.0f}, std {std_kas:.0f}\n"
-            f"Starink: {mean_starink:.0f}, std {std_starink:.0f}"
-        )
         annotation = (
             r"$ OFW = {:.0f}, std =  {:.0f} \n KAS = {:.0f}, std = {:.0f} \n Starink = {:.0f}, std = {:.0f}$".format(
                 mean_ofw, std_ofw, mean_kas, std_kas, mean_starink, std_starink

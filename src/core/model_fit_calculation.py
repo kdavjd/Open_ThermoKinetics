@@ -380,6 +380,7 @@ class FreemanCaroll:
             }
         )
 
+    # TODO: RuntimeWarning: invalid value encountered in log
     def calculate(self, temperature: pd.Series, conversion: pd.Series, beta: int) -> pd.DataFrame:
         result_list = []
 
@@ -388,8 +389,14 @@ class FreemanCaroll:
             temp_df = self._process_freeman_carr_model(conversion, temperature, model_func, model_key, beta)
             result_list.append(temp_df)
 
-        if result_list:
-            freeman_carr = pd.concat(result_list, ignore_index=True)
+        valid_results = [
+            df.dropna(axis=1, how="all")
+            for df in result_list
+            if not df.empty and not df.dropna(axis=1, how="all").empty
+        ]
+
+        if valid_results:
+            freeman_carr = pd.concat(valid_results, ignore_index=True)
             freeman_carr["R2_score"] = freeman_carr["R2_score"].round(4)
             freeman_carr["Ea"] = freeman_carr["Ea"].round()
             freeman_carr["A"] = freeman_carr["A"].apply(lambda x: f"{x:.3e}" if pd.notnull(x) else x)
