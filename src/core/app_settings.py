@@ -227,8 +227,8 @@ MODEL_FIT_ANNOTATION_CONFIG = {
 
 MODEL_FREE_ANNOTATION_CONFIG = {
     "block_top": 0.98,
-    "block_left": 0.4,
-    "block_right": 0.6,
+    "block_left": 0.35,
+    "block_right": 0.65,
     "delta_y": 0.03,
     "fontsize": 8,
     "facecolor": "white",

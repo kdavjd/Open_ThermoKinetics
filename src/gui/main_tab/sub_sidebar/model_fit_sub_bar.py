@@ -230,14 +230,14 @@ class ModelFitSubBar(QWidget):
             QMessageBox.warning(self, "Input Error", str(e))
 
     def on_settings_clicked(self):
-        dialog = AnnotationSettingsDialog(self, self.is_annotate, self.annotation_config)
+        dialog = ModelFitAnnotationSettingsDialog(self, self.is_annotate, self.annotation_config)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.is_annotate, self.annotation_config = dialog.get_settings()
             MODEL_FIT_ANNOTATION_CONFIG.clear()
             MODEL_FIT_ANNOTATION_CONFIG.update(self.annotation_config)
 
 
-class AnnotationSettingsDialog(QDialog):
+class ModelFitAnnotationSettingsDialog(QDialog):
     def __init__(self, parent, is_annotate, config):
         super().__init__(parent)
         self.setWindowTitle("annotation settings")

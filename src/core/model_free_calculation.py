@@ -160,7 +160,7 @@ class LinearApproximation:
         )
 
         plot_kwargs = {
-            "title": "Ea(α) for linear approximations of varying accuracy",
+            "title": "Ea vs α for linear approximations of varying accuracy",
             "xlabel": "α",
             "ylabel": r"$E_{a}$, J/Mole",
             "annotation": annotation,
@@ -211,6 +211,18 @@ class Friedman:
 
         return pd.DataFrame({"conversion": conv_grid, "Friedman": Ea_Friedman})
 
+    def prepare_plot_data(self, df: pd.DataFrame):
+        mean_friedman = df["Friedman"].mean()
+        std_friedman = df["Friedman"].std()
+        annotation = r"$Friedman = {:.0f}, std = {:.0f}$".format(mean_friedman, std_friedman)
+        plot_kwargs = {
+            "title": "Friedman Method: Ea vs α",
+            "xlabel": "α",
+            "ylabel": r"$E_{a}$, J/Mole",
+            "annotation": annotation,
+        }
+        return df, plot_kwargs
+
 
 class Kissinger:
     def __init__(self, alpha_min: float, alpha_max: float):
@@ -256,3 +268,15 @@ class Kissinger:
 
         result_df = pd.DataFrame({"conversion": alphas, "Kissinger_Ea": [E_a] * len(alphas)})
         return result_df
+
+    def prepare_plot_data(self, df: pd.DataFrame):
+        mean_kissinger = df["Kissinger_Ea"].mean()
+        std_kissinger = df["Kissinger_Ea"].std()
+        annotation = r"$Kissinger = {:.0f}, std = {:.0f}$".format(mean_kissinger, std_kissinger)
+        plot_kwargs = {
+            "title": "Kissinger Method: Ea vs Conversion",
+            "xlabel": "α",
+            "ylabel": r"$E_{a}$, J/Mole",
+            "annotation": annotation,
+        }
+        return df, plot_kwargs

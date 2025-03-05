@@ -210,9 +210,11 @@ class MainWindow(QMainWindow):
 
         keys = [series_name, "model_free_results", fit_method, reaction_n]
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
-        if result_df == {}:
-            console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
-            return
+        if type(result_df) != pd.DataFrame:  # noqa: E721
+            if result_df == {} or result_df is None:
+                console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
+                return
+
         params["result_df"] = result_df
         plot_data_and_kwargs = self.handle_request_cycle(
             "model_free_calculation", OperationType.PLOT_MODEL_FREE_RESULT, calculation_params=params
@@ -229,12 +231,10 @@ class MainWindow(QMainWindow):
         keys = [series_name, "model_free_results", fit_method, reaction_n]
 
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
-        if result_df is None:
-            console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
-            return
-        if result_df.empty:
-            console.log("\nThe fit result is empty.\n")
-            return
+        if type(result_df) != pd.DataFrame:  # noqa: E721
+            if result_df == {} or result_df is None:
+                console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
+                return
         self.main_tab.sub_sidebar.model_free_sub_bar.update_results_table(result_df)
 
     def _handle_get_model_fit_reaction_df(self, params: dict):

@@ -1,18 +1,23 @@
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
     QFormLayout,
     QHBoxLayout,
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QSpinBox,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
-from src.core.app_settings import MODEL_FREE_METHODS, OperationType
+from src.core.app_settings import MODEL_FREE_ANNOTATION_CONFIG, MODEL_FREE_METHODS, OperationType
 from src.core.logger_config import logger  # noqa: F401
 
 
@@ -66,6 +71,7 @@ class ModelFreeSubBar(QWidget):
         self.plot_button = QPushButton("plot", self)
         self.plot_button.clicked.connect(self.on_plot_clicked)
         self.settings_button = QPushButton("settings", self)
+        self.settings_button.clicked.connect(self.on_settings_clicked)
 
         self.plot_layout.addWidget(self.plot_button)
         self.plot_layout.addWidget(self.settings_button)
@@ -78,6 +84,7 @@ class ModelFreeSubBar(QWidget):
         self.last_selected_reaction = None
         self.last_selected_beta = None
         self.is_annotate = True
+        self.annotation_config = MODEL_FREE_ANNOTATION_CONFIG.copy()
 
     def emit_combobox_text(self, _=None):
         reaction = self.reaction_combobox.currentText()
@@ -178,3 +185,93 @@ class ModelFreeSubBar(QWidget):
             self.results_table.setItem(row, 0, QTableWidgetItem(method))
             self.results_table.setItem(row, 1, QTableWidgetItem(f"{mean_ea:.0f}"))
             self.results_table.setItem(row, 2, QTableWidgetItem(f"{std_ea:.0f}"))
+
+    def on_settings_clicked(self):
+        dialog = ModelFreeAnnotationSettingsDialog(self, self.is_annotate, self.annotation_config)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.is_annotate, self.annotation_config = dialog.get_settings()
+            MODEL_FREE_ANNOTATION_CONFIG.clear()
+            MODEL_FREE_ANNOTATION_CONFIG.update(self.annotation_config)
+
+
+class ModelFreeAnnotationSettingsDialog(QDialog):
+    def __init__(self, parent, is_annotate, config):
+        super().__init__(parent)
+        self.setWindowTitle("annotation settings")
+        self.resize(300, 300)
+        layout = QVBoxLayout(self)
+        form_layout = QFormLayout()
+
+        # Checkbox to enable annotations
+        self.annotate_checkbox = QCheckBox("annotation")
+        self.annotate_checkbox.setChecked(is_annotate)
+        form_layout.addRow(self.annotate_checkbox)
+
+        # Configuration parameters
+        self.block_top_spin = QDoubleSpinBox()
+        self.block_top_spin.setRange(0.0, 1.0)
+        self.block_top_spin.setDecimals(2)
+        self.block_top_spin.setSingleStep(0.01)
+        self.block_top_spin.setValue(config.get("block_top", 0.98))
+        form_layout.addRow("block Top:", self.block_top_spin)
+
+        self.block_left_spin = QDoubleSpinBox()
+        self.block_left_spin.setRange(0.0, 1.0)
+        self.block_left_spin.setDecimals(2)
+        self.block_left_spin.setSingleStep(0.01)
+        self.block_left_spin.setValue(config.get("block_left", 0.4))
+        form_layout.addRow("block Left:", self.block_left_spin)
+
+        self.block_right_spin = QDoubleSpinBox()
+        self.block_right_spin.setRange(0.0, 1.0)
+        self.block_right_spin.setDecimals(2)
+        self.block_right_spin.setSingleStep(0.01)
+        self.block_right_spin.setValue(config.get("block_right", 0.6))
+        form_layout.addRow("block Right:", self.block_right_spin)
+
+        self.delta_y_spin = QDoubleSpinBox()
+        self.delta_y_spin.setRange(0.0, 1.0)
+        self.delta_y_spin.setDecimals(2)
+        self.delta_y_spin.setSingleStep(0.01)
+        self.delta_y_spin.setValue(config.get("delta_y", 0.03))
+        form_layout.addRow("delta Y:", self.delta_y_spin)
+
+        self.fontsize_spin = QSpinBox()
+        self.fontsize_spin.setRange(1, 100)
+        self.fontsize_spin.setValue(config.get("fontsize", 8))
+        form_layout.addRow("font size:", self.fontsize_spin)
+
+        self.facecolor_edit = QLineEdit()
+        self.facecolor_edit.setText(config.get("facecolor", "white"))
+        form_layout.addRow("face color:", self.facecolor_edit)
+
+        self.edgecolor_edit = QLineEdit()
+        self.edgecolor_edit.setText(config.get("edgecolor", "black"))
+        form_layout.addRow("edge color:", self.edgecolor_edit)
+
+        self.alpha_spin = QDoubleSpinBox()
+        self.alpha_spin.setRange(0.0, 1.0)
+        self.alpha_spin.setDecimals(2)
+        self.alpha_spin.setSingleStep(0.1)
+        self.alpha_spin.setValue(config.get("alpha", 1.0))
+        form_layout.addRow("alpha:", self.alpha_spin)
+
+        layout.addLayout(form_layout)
+
+        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        layout.addWidget(self.button_box)
+
+    def get_settings(self):
+        config = {
+            "block_top": self.block_top_spin.value(),
+            "block_left": self.block_left_spin.value(),
+            "block_right": self.block_right_spin.value(),
+            "delta_y": self.delta_y_spin.value(),
+            "fontsize": self.fontsize_spin.value(),
+            "facecolor": self.facecolor_edit.text(),
+            "edgecolor": self.edgecolor_edit.text(),
+            "alpha": self.alpha_spin.value(),
+        }
+        return self.annotate_checkbox.isChecked(), config
