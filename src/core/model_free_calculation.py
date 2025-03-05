@@ -13,6 +13,7 @@ class ModelFreeCalculation(BaseSlots):
         super().__init__(actor_name=actor_name, signals=signals)
         self.strategies = {
             "linear approximation": LinearApproximation,
+            "Friedman": Friedman,
         }
 
     def process_request(self, params: dict) -> None:
@@ -98,7 +99,6 @@ class LinearApproximation:
 
         lower_bound = max(conv.min().min(), self.alpha_min)
         upper_bound = min(conv.max().max(), self.alpha_max)
-
         conv_grid = np.linspace(lower_bound, upper_bound, 100)
 
         T = np.column_stack([f[rate](conv_grid) for rate in rate_cols])
@@ -126,3 +126,46 @@ class LinearApproximation:
         Ea_Starink = slope_Starink * R / -1.008
 
         return pd.DataFrame({"conversion": conv_grid, "OFW": Ea_OFW, "KAS": Ea_KAS, "Starink": Ea_Starink})
+
+
+class Friedman:
+    def __init__(self, alpha_min: float, alpha_max: float):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+
+    def calculate(self, reaction_df: pd.DataFrame) -> pd.DataFrame:
+        return self.fetch_friedman_Ea(reaction_df)
+
+    def fetch_friedman_Ea(self, reaction_df: pd.DataFrame) -> pd.DataFrame:
+        rate_cols = [col for col in reaction_df.columns if col != "temperature"]
+
+        conv = reaction_df[rate_cols].cumsum() / reaction_df[rate_cols].cumsum().max()
+        temperature = reaction_df["temperature"]
+
+        valid = temperature.notna() & conv.notna().all(axis=1)
+        conv, temperature = conv[valid], temperature[valid]
+
+        f = {
+            rate: interp1d(conv[rate], temperature, bounds_error=False, fill_value="extrapolate") for rate in rate_cols
+        }
+
+        lower_bound = max(conv.min().min(), self.alpha_min)
+        upper_bound = min(conv.max().max(), self.alpha_max)
+        conv_grid = np.linspace(lower_bound, upper_bound, 100)
+
+        T = np.column_stack([f[rate](conv_grid) for rate in rate_cols])
+        X = 1.0 / T
+
+        x_mean = X.mean(axis=1, keepdims=True)
+        denom = ((X - x_mean) ** 2).sum(axis=1)
+
+        rates = np.array([float(rate) for rate in rate_cols])
+        log_rates = np.log(rates)  # ln(β)
+
+        # ln(dα/dT) = ln(β) - ln(T)
+        Y_Friedman = np.tile(log_rates, (len(conv_grid), 1)) - np.log(T)
+        slope_Friedman = ((X - x_mean) * (Y_Friedman - Y_Friedman.mean(axis=1, keepdims=True))).sum(axis=1) / denom
+
+        Ea_Friedman = -slope_Friedman * R
+
+        return pd.DataFrame({"conversion": conv_grid, "Friedman": Ea_Friedman})

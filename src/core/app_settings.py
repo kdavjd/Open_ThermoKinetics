@@ -209,6 +209,7 @@ for key in NUC_MODELS_LIST:
 MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
 MODEL_FREE_METHODS = [
     "linear approximation",
+    "Friedman",
 ]
 
 MODEL_FIT_ANNOTATION_CONFIG = {
