@@ -19,6 +19,7 @@ from src.core.logger_config import logger  # noqa: F401
 class ModelFreeSubBar(QWidget):
     model_free_calculation_signal = pyqtSignal(dict)
     table_combobox_text_changed_signal = pyqtSignal(dict)
+    plot_model_free_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -63,7 +64,7 @@ class ModelFreeSubBar(QWidget):
 
         self.plot_layout = QHBoxLayout()
         self.plot_button = QPushButton("plot", self)
-        # self.plot_button.clicked.connect()
+        self.plot_button.clicked.connect(self.on_plot_clicked)
         self.settings_button = QPushButton("settings", self)
 
         self.plot_layout.addWidget(self.plot_button)
@@ -76,6 +77,7 @@ class ModelFreeSubBar(QWidget):
 
         self.last_selected_reaction = None
         self.last_selected_beta = None
+        self.is_annotate = True
 
     def emit_combobox_text(self, _=None):
         reaction = self.reaction_combobox.currentText()
@@ -112,6 +114,31 @@ class ModelFreeSubBar(QWidget):
                 }
             )
 
+        except ValueError as e:
+            QMessageBox.warning(self, "Input Error", str(e))
+
+    def on_plot_clicked(self):
+        try:
+            alpha_min = float(self.alpha_min_input.text())
+            alpha_max = float(self.alpha_max_input.text())
+
+            if not (0 <= alpha_min <= 0.999):
+                raise ValueError("alpha_min must be between 0 and 0.999")
+            if not (0 <= alpha_max <= 1):
+                raise ValueError("alpha_max must be between 0 and 1")
+            if alpha_min > alpha_max:
+                raise ValueError("alpha_min cannot be greater than alpha_max")
+
+            self.plot_model_free_signal.emit(
+                {
+                    "operation": OperationType.PLOT_MODEL_FREE_RESULT,
+                    "reaction_n": self.reaction_combobox.currentText(),
+                    "fit_method": self.model_combobox.currentText(),
+                    "alpha_min": alpha_min,
+                    "alpha_max": alpha_max,
+                    "is_annotate": self.is_annotate,
+                }
+            )
         except ValueError as e:
             QMessageBox.warning(self, "Input Error", str(e))
 

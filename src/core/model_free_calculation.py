@@ -74,7 +74,24 @@ class ModelFreeCalculation(BaseSlots):
         logger.debug(f"Calculation results for '{fit_method}': {result_data}")
 
     def _handle_plot_model_fit_result(self, calculation_params: dict, response: dict):
-        pass
+        fit_method = calculation_params.get("fit_method")
+        result_df = calculation_params.get("result_df")
+        alpha_min = calculation_params.get("alpha_min", 0.01)
+        alpha_max = calculation_params.get("alpha_max", 0.99)
+
+        FitMethod = self.strategies.get(fit_method)
+        if FitMethod is None:
+            logger.error(f"Unknown fit method: {fit_method}")
+            return
+
+        strategy = FitMethod(alpha_min=alpha_min, alpha_max=alpha_max)
+
+        plot_data = []
+
+        plot_df, plot_kwargs = strategy.prepare_plot_data(result_df)
+        plot_data.append({"plot_df": plot_df, "plot_kwargs": plot_kwargs})
+
+        response["data"] = plot_data
 
 
 class LinearApproximation:
@@ -127,6 +144,34 @@ class LinearApproximation:
         Ea_Starink = slope_Starink * R / -1.008
 
         return pd.DataFrame({"conversion": conv_grid, "OFW": Ea_OFW, "KAS": Ea_KAS, "Starink": Ea_Starink})
+
+    def prepare_plot_data(self, df: pd.DataFrame):
+        mean_ofw = df["OFW"].mean()
+        std_ofw = df["OFW"].std()
+        mean_kas = df["KAS"].mean()
+        std_kas = df["KAS"].std()
+        mean_starink = df["Starink"].mean()
+        std_starink = df["Starink"].std()
+
+        annotation = (
+            f"OFW: {mean_ofw:.0f}, std {std_ofw:.0f}\n"
+            f"KAS: {mean_kas:.0f}, std {std_kas:.0f}\n"
+            f"Starink: {mean_starink:.0f}, std {std_starink:.0f}"
+        )
+        annotation = (
+            r"$ OFW = {:.0f}, std =  {:.0f} \n KAS = {:.0f}, std = {:.0f} \n Starink = {:.0f}, std = {:.0f}$".format(
+                mean_ofw, std_ofw, mean_kas, std_kas, mean_starink, std_starink
+            )
+        )
+
+        plot_kwargs = {
+            "title": "Ea(α) for linear approximations of varying accuracy",
+            "xlabel": "α",
+            "ylabel": r"$E_{a}$, J/Mole",
+            "annotation": annotation,
+        }
+
+        return df, plot_kwargs
 
 
 class Friedman:

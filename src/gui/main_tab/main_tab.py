@@ -80,6 +80,7 @@ class MainTab(QWidget):
         self.sub_sidebar.model_fit_sub_bar.plot_model_fit_signal.connect(self.to_main_window)
         self.sub_sidebar.model_free_sub_bar.model_free_calculation_signal.connect(self.to_main_window)
         self.sub_sidebar.model_free_sub_bar.table_combobox_text_changed_signal.connect(self.to_main_window)
+        self.sub_sidebar.model_free_sub_bar.plot_model_free_signal.connect(self.to_main_window)
 
     def initialize_sizes(self):
         total_width = self.width()

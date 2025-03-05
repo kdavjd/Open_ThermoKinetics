@@ -44,7 +44,6 @@ class ModelFitCalculation(BaseSlots):
         self.signals.response_signal.emit(response)
 
     def _handle_plot_model_fit_result(self, calculation_params: dict, response: dict) -> None:
-        logger.info(f"{calculation_params=}")
         fit_method = calculation_params.get("fit_method")
         model_series = calculation_params.get("model_series")
         reaction_df = calculation_params.get("reaction_df")
@@ -220,10 +219,11 @@ class CoatsRedfern:
         self.valid_proportion = valid_proportion
 
     def calculate_coats_redfern_lhs(self, g_a_val, temperature):
-        try:
-            return np.log(g_a_val / (temperature**2))
-        except ZeroDivisionError:
-            return np.inf
+        epsilon = 1e-8
+        with np.errstate(divide="ignore", invalid="ignore"):
+            result = np.log(g_a_val / ((temperature**2) + epsilon))
+            result[~np.isfinite(result)] = np.inf
+        return result
 
     def calculate_coats_redfern_params(self, slope, intercept, beta, temperature):
         Ea = -slope * R
@@ -266,8 +266,14 @@ class CoatsRedfern:
             temp_df = self.process_coats_redfern_model(conversion, temperature, model_func, model_key, beta)
             result_list.append(temp_df)
 
-        if result_list:
-            coats_redfern = pd.concat(result_list, ignore_index=True)
+        valid_results = [
+            df.dropna(axis=1, how="all")
+            for df in result_list
+            if not df.empty and not df.dropna(axis=1, how="all").empty
+        ]
+
+        if valid_results:
+            coats_redfern = pd.concat(valid_results, ignore_index=True)
             coats_redfern["R2_score"] = coats_redfern["R2_score"].round(4)
             coats_redfern["Ea"] = coats_redfern["Ea"].round()
             coats_redfern["A"] = coats_redfern["A"].apply(lambda x: f"{x:.3e}")

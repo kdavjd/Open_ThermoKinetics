@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
             OperationType.GET_MODEL_FIT_REACTION_DF: self._handle_get_model_fit_reaction_df,
             OperationType.GET_MODEL_FREE_REACTION_DF: self._handle_get_model_free_reaction_df,
             OperationType.PLOT_MODEL_FIT_RESULT: self._handle_plot_model_fit_result,
+            OperationType.PLOT_MODEL_FREE_RESULT: self._handle_plot_model_free_result,
             OperationType.MODEL_BASED_CALCULATION: self._handle_model_based_calculation,
             OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
             OperationType.MODEL_FREE_CALCULATION: self._handle_model_free_calculation,
@@ -184,6 +185,24 @@ class MainWindow(QMainWindow):
         if not is_annotate:
             plot_data_and_kwargs[0]["plot_kwargs"]["annotation"] = is_annotate
         self.main_tab.plot_canvas.plot_model_fit_result(plot_data_and_kwargs)
+
+    def _handle_plot_model_free_result(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nIt is necessary to select a series for plot model fit result\n")
+            return
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+        is_annotate = params.get("is_annotate")
+
+        keys = [series_name, "model_free_results", fit_method, reaction_n]
+        params["result_df"] = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        plot_data_and_kwargs = self.handle_request_cycle(
+            "model_free_calculation", OperationType.PLOT_MODEL_FREE_RESULT, calculation_params=params
+        )
+        if not is_annotate:
+            plot_data_and_kwargs[0]["plot_kwargs"]["annotation"] = is_annotate
+        self.main_tab.plot_canvas.plot_model_free_result(plot_data_and_kwargs)
 
     def _handle_get_model_free_reaction_df(self, params: dict):
         series_name = params.get("series_name")

@@ -14,7 +14,7 @@ from matplotlib.lines import Line2D
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
-from src.core.app_settings import MODEL_FIT_ANNOTATION_CONFIG, OperationType
+from src.core.app_settings import MODEL_FIT_ANNOTATION_CONFIG, MODEL_FREE_ANNOTATION_CONFIG, OperationType
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
 from src.gui.main_tab.plot_canvas.anchor_group import HeightAnchorGroup, PositionAnchorGroup
@@ -395,6 +395,80 @@ class PlotCanvas(QWidget):
         self.figure.tight_layout()
         logger.debug("Redrawing canvas after anchor motion.")
 
+    def add_model_fit_annotation(self, annotation: str):
+        annotation_core = annotation.strip("$")
+        lines = annotation_core.split(r"\n")
+
+        block_top = MODEL_FIT_ANNOTATION_CONFIG["block_top"]
+        delta_y = MODEL_FIT_ANNOTATION_CONFIG["delta_y"]
+        n_lines = len(lines)
+        block_bottom = block_top - n_lines * delta_y
+        block_left = MODEL_FIT_ANNOTATION_CONFIG["block_left"]
+        block_right = MODEL_FIT_ANNOTATION_CONFIG["block_right"]
+        rect_width = block_right - block_left
+
+        rect = patches.Rectangle(
+            (block_left, block_bottom),
+            rect_width,
+            block_top - block_bottom,
+            transform=self.axes.transAxes,
+            facecolor=MODEL_FIT_ANNOTATION_CONFIG["facecolor"],
+            edgecolor=MODEL_FIT_ANNOTATION_CONFIG["edgecolor"],
+            alpha=MODEL_FIT_ANNOTATION_CONFIG["alpha"],
+            zorder=11,
+        )
+        self.axes.add_patch(rect)
+
+        for i, line in enumerate(lines):
+            y_pos = block_top - i * delta_y - delta_y / 2
+            self.axes.text(
+                0.5,
+                y_pos,
+                f"${line.strip()}$",
+                transform=self.axes.transAxes,
+                ha="center",
+                va="center",
+                fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
+                zorder=11,
+            )
+
+    def add_model_free_annotation(self, annotation: str):
+        annotation_core = annotation.strip("$")
+        lines = annotation_core.split(r"\n")
+
+        block_top = MODEL_FREE_ANNOTATION_CONFIG["block_top"]
+        delta_y = MODEL_FREE_ANNOTATION_CONFIG["delta_y"]
+        n_lines = len(lines)
+        block_bottom = block_top - n_lines * delta_y
+        block_left = MODEL_FREE_ANNOTATION_CONFIG["block_left"]
+        block_right = MODEL_FREE_ANNOTATION_CONFIG["block_right"]
+        rect_width = block_right - block_left
+
+        rect = patches.Rectangle(
+            (block_left, block_bottom),
+            rect_width,
+            block_top - block_bottom,
+            transform=self.axes.transAxes,
+            facecolor=MODEL_FREE_ANNOTATION_CONFIG["facecolor"],
+            edgecolor=MODEL_FREE_ANNOTATION_CONFIG["edgecolor"],
+            alpha=MODEL_FREE_ANNOTATION_CONFIG["alpha"],
+            zorder=11,
+        )
+        self.axes.add_patch(rect)
+
+        for i, line in enumerate(lines):
+            y_pos = block_top - i * delta_y - delta_y / 2
+            self.axes.text(
+                0.5,
+                y_pos,
+                f"${line.strip()}$",
+                transform=self.axes.transAxes,
+                ha="center",
+                va="center",
+                fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
+                zorder=11,
+            )
+
     def plot_model_fit_result(self, plot_data_and_kwargs):
         plot_df = plot_data_and_kwargs[0]["plot_df"]
         plot_kwargs = plot_data_and_kwargs[0]["plot_kwargs"]
@@ -417,38 +491,33 @@ class PlotCanvas(QWidget):
         self.figure.tight_layout()
 
         if annotation:
-            annotation_core = annotation.strip("$")
-            lines = annotation_core.split(r"\n")
+            self.add_model_fit_annotation(annotation)
 
-            block_top = MODEL_FIT_ANNOTATION_CONFIG["block_top"]
-            delta_y = MODEL_FIT_ANNOTATION_CONFIG["delta_y"]
-            n_lines = len(lines)
-            block_bottom = block_top - n_lines * delta_y
-            block_left = MODEL_FIT_ANNOTATION_CONFIG["block_left"]
-            block_right = MODEL_FIT_ANNOTATION_CONFIG["block_right"]
-            rect_width = block_right - block_left
+    def plot_model_free_result(self, plot_data_and_kwargs):
+        plot_df = plot_data_and_kwargs[0]["plot_df"]
+        plot_kwargs = plot_data_and_kwargs[0]["plot_kwargs"]
 
-            rect = patches.Rectangle(
-                (block_left, block_bottom),
-                rect_width,
-                block_top - block_bottom,
-                transform=self.axes.transAxes,
-                facecolor=MODEL_FIT_ANNOTATION_CONFIG["facecolor"],
-                edgecolor=MODEL_FIT_ANNOTATION_CONFIG["edgecolor"],
-                alpha=MODEL_FIT_ANNOTATION_CONFIG["alpha"],
-                zorder=10,
-            )
-            self.axes.add_patch(rect)
+        title = plot_kwargs.pop("title", "Model Free Plot")
+        xlabel = plot_kwargs.pop("xlabel", "Conversion")
+        ylabel = plot_kwargs.pop("ylabel", "Value")
+        annotation = plot_kwargs.pop("annotation", None)
 
-            for i, line in enumerate(lines):
-                y_pos = block_top - i * delta_y - delta_y / 2
-                self.axes.text(
-                    0.5,
-                    y_pos,
-                    f"${line.strip()}$",
-                    transform=self.axes.transAxes,
-                    ha="center",
-                    va="center",
-                    fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
-                    zorder=11,
-                )
+        self.axes.clear()
+        self.lines = {}
+
+        x = plot_df["conversion"]
+
+        for col in plot_df.columns:
+            if col != "conversion":
+                self.add_or_update_line(col, x, plot_df[col], label=col)
+
+        self.axes.set_title(title)
+        self.axes.set_xlabel(xlabel)
+        self.axes.set_ylabel(ylabel)
+        self.axes.legend()
+
+        self.canvas.draw_idle()
+        self.figure.tight_layout()
+
+        if annotation:
+            self.add_model_free_annotation(annotation)
