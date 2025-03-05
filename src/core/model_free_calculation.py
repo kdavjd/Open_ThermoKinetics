@@ -14,6 +14,7 @@ class ModelFreeCalculation(BaseSlots):
         self.strategies = {
             "linear approximation": LinearApproximation,
             "Friedman": Friedman,
+            "Kissinger": Kissinger,
         }
 
     def process_request(self, params: dict) -> None:
@@ -169,3 +170,49 @@ class Friedman:
         Ea_Friedman = -slope_Friedman * R
 
         return pd.DataFrame({"conversion": conv_grid, "Friedman": Ea_Friedman})
+
+
+class Kissinger:
+    def __init__(self, alpha_min: float, alpha_max: float):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+
+    def calculate(self, reaction_df: pd.DataFrame) -> pd.DataFrame:
+        return self.fetch_kissinger_Ea(reaction_df)
+
+    def fetch_kissinger_Ea(self, reaction_df: pd.DataFrame) -> pd.DataFrame:
+        rate_cols = [col for col in reaction_df.columns if col != "temperature"]
+
+        temperature_K = reaction_df["temperature"]
+
+        peak_points = []
+        for col in rate_cols:
+            series = reaction_df[col]
+
+            valid = series.notna() & temperature_K.notna()
+            if valid.sum() == 0:
+                continue
+
+            cum = series[valid].cumsum()
+            conv = cum / cum.iloc[-1]
+
+            idx_peak = series.idxmax()
+            T_peak = temperature_K.loc[idx_peak]
+            alpha_peak = conv.loc[idx_peak]
+            beta_val = float(col)
+            peak_points.append((beta_val, T_peak, alpha_peak))
+
+        peak_points.sort(key=lambda x: x[2])
+
+        beta_vals = np.array([pt[0] for pt in peak_points], dtype=float)
+        T_peaks = np.array([pt[1] for pt in peak_points], dtype=float)
+        alphas = np.array([pt[2] for pt in peak_points], dtype=float)
+
+        # X = 1/Tₚ, Y = ln(β / Tₚ²)
+        X = 1.0 / T_peaks
+        Y = np.log(beta_vals / (T_peaks**2))
+        slope, intercept = np.polyfit(X, Y, 1)
+        E_a = -slope * R
+
+        result_df = pd.DataFrame({"conversion": alphas, "Kissinger_Ea": [E_a] * len(alphas)})
+        return result_df

@@ -210,6 +210,7 @@ MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
 MODEL_FREE_METHODS = [
     "linear approximation",
     "Friedman",
+    "Kissinger",
 ]
 
 MODEL_FIT_ANNOTATION_CONFIG = {
