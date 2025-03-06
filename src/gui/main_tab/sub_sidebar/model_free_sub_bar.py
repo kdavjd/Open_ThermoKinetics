@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox,
     QFormLayout,
     QHBoxLayout,
+    QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
@@ -46,7 +47,27 @@ class ModelFreeSubBar(QWidget):
         self.alpha_max_input.setToolTip("alpha_max - maximum conversion value for calculation")
         self.form_layout.addRow("α_max:", self.alpha_max_input)
 
+        # Создаем явные QLabel для полей Ea
+        self.ea_min_label = QLabel("Ea min, kJ:", self)
+        self.ea_min_input = QLineEdit(self)
+        self.ea_min_input.setText("10")
+        self.ea_min_input.setToolTip("Ea min, kJ")
+        self.form_layout.addRow(self.ea_min_label, self.ea_min_input)
+
+        self.ea_max_label = QLabel("Ea max, kJ:", self)
+        self.ea_max_input = QLineEdit(self)
+        self.ea_max_input.setText("2000")
+        self.ea_max_input.setToolTip("Ea max, kJ")
+        self.form_layout.addRow(self.ea_max_label, self.ea_max_input)
+
+        self.ea_min_label.hide()
+        self.ea_min_input.hide()
+        self.ea_max_label.hide()
+        self.ea_max_input.hide()
+
         self.layout.addLayout(self.form_layout)
+
+        self.model_combobox.currentTextChanged.connect(self.on_model_combobox_changed)
 
         # Calculate button
         self.calculate_button = QPushButton("calculate", self)
@@ -57,7 +78,6 @@ class ModelFreeSubBar(QWidget):
         self.reaction_combobox = QComboBox(self)
         self.reaction_combobox.addItems(["select reaction"])
         self.reaction_layout.addWidget(self.reaction_combobox)
-
         self.layout.addLayout(self.reaction_layout)
 
         self.reaction_combobox.currentTextChanged.connect(self.emit_combobox_text)
@@ -77,7 +97,6 @@ class ModelFreeSubBar(QWidget):
         self.plot_layout.addWidget(self.settings_button)
         self.plot_layout.setStretchFactor(self.plot_button, 4)
         self.plot_layout.setStretchFactor(self.settings_button, 4)
-
         self.layout.addLayout(self.plot_layout)
         self.setLayout(self.layout)
 
@@ -85,6 +104,18 @@ class ModelFreeSubBar(QWidget):
         self.last_selected_beta = None
         self.is_annotate = True
         self.annotation_config = MODEL_FREE_ANNOTATION_CONFIG.copy()
+
+    def on_model_combobox_changed(self, text):
+        if text == "Vyazovkin":
+            self.ea_min_label.show()
+            self.ea_min_input.show()
+            self.ea_max_label.show()
+            self.ea_max_input.show()
+        else:
+            self.ea_min_label.hide()
+            self.ea_min_input.hide()
+            self.ea_max_label.hide()
+            self.ea_max_input.hide()
 
     def emit_combobox_text(self, _=None):
         reaction = self.reaction_combobox.currentText()
@@ -112,14 +143,20 @@ class ModelFreeSubBar(QWidget):
             if alpha_min > alpha_max:
                 raise ValueError("alpha_min cannot be greater than alpha_max")
 
-            self.model_free_calculation_signal.emit(
-                {
-                    "fit_method": fit_method,
-                    "alpha_min": alpha_min,
-                    "alpha_max": alpha_max,
-                    "operation": OperationType.MODEL_FREE_CALCULATION,
-                }
-            )
+            calc_params = {
+                "fit_method": fit_method,
+                "alpha_min": alpha_min,
+                "alpha_max": alpha_max,
+                "operation": OperationType.MODEL_FREE_CALCULATION,
+            }
+
+            if fit_method == "Vyazovkin":
+                ea_min = float(self.ea_min_input.text())
+                ea_max = float(self.ea_max_input.text())
+                calc_params["ea_min"] = ea_min
+                calc_params["ea_max"] = ea_max
+
+            self.model_free_calculation_signal.emit(calc_params)
 
         except ValueError as e:
             QMessageBox.warning(self, "Input Error", str(e))

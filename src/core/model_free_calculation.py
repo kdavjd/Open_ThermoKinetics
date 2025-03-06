@@ -50,13 +50,20 @@ class ModelFreeCalculation(BaseSlots):
         reaction_data = calculation_params.get("reaction_data")
         alpha_min = calculation_params.get("alpha_min", 0.005)
         alpha_max = calculation_params.get("alpha_max", 0.995)
+        ea_min = calculation_params.get("ea_min")
+        ea_max = calculation_params.get("ea_max")
 
         FitMethod = self.strategies.get(fit_method)
         if FitMethod is None:
             logger.error(f"Unknown fit method: {fit_method}")
             return
 
-        strategy = FitMethod(alpha_min, alpha_max)
+        if ea_min is not None and ea_max is not None:
+            ea_min = ea_min * 1000  # convert from kJ/mol to J/mol
+            ea_max = ea_max * 1000  # convert from kJ/mol to J/mol
+            strategy = FitMethod(alpha_min, alpha_max, ea_min, ea_max)
+        else:
+            strategy = FitMethod(alpha_min, alpha_max)
         result_data = {}
         for reaction_name, reaction_df in reaction_data.items():
             reaction_df["temperature"] = reaction_df["temperature"] + 273.15
