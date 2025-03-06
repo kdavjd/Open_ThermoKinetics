@@ -211,6 +211,7 @@ MODEL_FREE_METHODS = [
     "linear approximation",
     "Friedman",
     "Kissinger",
+    "Vyazovkin",
 ]
 
 MODEL_FIT_ANNOTATION_CONFIG = {

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.constants import R
+from scipy.integrate import quad
 from scipy.interpolate import interp1d
 
 from src.core.app_settings import OperationType
@@ -15,6 +16,7 @@ class ModelFreeCalculation(BaseSlots):
             "linear approximation": LinearApproximation,
             "Friedman": Friedman,
             "Kissinger": Kissinger,
+            "Vyazovkin": Vyazovkin,
         }
 
     def process_request(self, params: dict) -> None:
@@ -275,6 +277,86 @@ class Kissinger:
         annotation = r"$Kissinger = {:.0f}, std = {:.0f}$".format(mean_kissinger, std_kissinger)
         plot_kwargs = {
             "title": "Kissinger Method: Ea vs Conversion",
+            "xlabel": "α",
+            "ylabel": r"$E_{a}$, J/Mole",
+            "annotation": annotation,
+        }
+        return df, plot_kwargs
+
+
+class Vyazovkin:
+    def __init__(self, alpha_min: float, alpha_max: float, ea_min: float = 10000, ea_max: float = 300000):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.ea_min = ea_min
+        self.ea_max = ea_max
+
+    def calculate(self, reaction_df: pd.DataFrame) -> pd.DataFrame:  # noqa: C901
+        beta_cols = [col for col in reaction_df.columns if col != "temperature"]
+
+        conv_df = pd.DataFrame()
+        for col in beta_cols:
+            cum = reaction_df[col].cumsum()
+            conv_df[col] = cum / cum.iloc[-1]
+
+        temperature = reaction_df["temperature"]
+
+        f_funcs = {
+            col: interp1d(conv_df[col], temperature, bounds_error=False, fill_value="extrapolate") for col in beta_cols
+        }
+
+        conv_grid = np.linspace(self.alpha_min, self.alpha_max, 100)
+
+        T_matrix = {}
+        for col in beta_cols:
+            T_matrix[col] = f_funcs[col](conv_grid)
+
+        beta_vals = {col: float(col) for col in beta_cols}
+
+        dT = reaction_df["temperature"].diff().mean()
+
+        def integrand(T, Ea):
+            return np.exp(-Ea / (R * T))
+
+        def I_func(Ea, T, dT):
+            integral, _ = quad(integrand, T - dT, T, args=(Ea,))
+            return integral
+
+        def vyazovkin_lhs(Ea, dT, pairs):
+            n = len(pairs)
+            sum_ratio = 0.0
+            for i in range(n):
+                T_i, beta_i = pairs[i]
+                for j in range(n):
+                    if i != j:
+                        T_j, beta_j = pairs[j]
+                        I_i = I_func(Ea, T_i, dT)
+                        I_j = I_func(Ea, T_j, dT)
+                        sum_ratio += (beta_j / beta_i) * (I_i / I_j)
+            result = (n * (n - 1) - sum_ratio) * -1
+            return result
+
+        candidate_Ea = np.arange(self.ea_min, self.ea_max + 1, 1000)
+        estimated_Ea = []
+
+        for idx, alpha in enumerate(conv_grid):
+            pairs = []
+            for col in beta_cols:
+                pairs.append((T_matrix[col][idx], beta_vals[col]))
+            f_vals = [abs(vyazovkin_lhs(Ea, dT, pairs)) for Ea in candidate_Ea]
+            best_index = np.argmin(f_vals)
+            best_Ea = candidate_Ea[best_index]
+            estimated_Ea.append(best_Ea)
+
+        result_df = pd.DataFrame({"conversion": conv_grid, "Vyazovkin": estimated_Ea})
+        return result_df
+
+    def prepare_plot_data(self, df: pd.DataFrame):
+        mean_vyazovkin = df["Vyazovkin"].mean()
+        std_vyazovkin = df["Vyazovkin"].std()
+        annotation = r"$Vyazovkin = {:.0f}, std = {:.0f}$".format(mean_vyazovkin, std_vyazovkin)
+        plot_kwargs = {
+            "title": "Vyazovkin Method: Ea vs α",
             "xlabel": "α",
             "ylabel": r"$E_{a}$, J/Mole",
             "annotation": annotation,
