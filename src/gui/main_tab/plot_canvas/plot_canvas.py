@@ -1,8 +1,10 @@
+import random
 from typing import Dict, Optional
 
 import matplotlib.dates as mdates
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 # see: https://pypi.org/project/SciencePlots/
@@ -14,7 +16,12 @@ from matplotlib.lines import Line2D
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
-from src.core.app_settings import MODEL_FIT_ANNOTATION_CONFIG, MODEL_FREE_ANNOTATION_CONFIG, OperationType
+from src.core.app_settings import (
+    MODEL_FIT_ANNOTATION_CONFIG,
+    MODEL_FREE_ANNOTATION_CONFIG,
+    NUC_MODELS_TABLE,
+    OperationType,
+)
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
 from src.gui.main_tab.plot_canvas.anchor_group import HeightAnchorGroup, PositionAnchorGroup
@@ -86,17 +93,84 @@ class PlotCanvas(QWidget):
         """Restore the previously saved background to the canvas."""
         self.canvas.restore_region(self.background)
 
-    def mock_plot(self, data=None):
-        """
-        Create a mock plot for demonstration or initialization.
+    def mock_plot(self, data=None):  # noqa: C901
+        MEDIUM_SIZE = 12
+        SMALL_SIZE = 10
 
-        Args:
-            data: Optional data list. If None, a default sequence is plotted.
-        """
-        if data is None:
-            data = [1, 2, 3, 4, 5]
-        logger.debug("Plotting mock data for initial display.")
-        self.add_or_update_line("mock", range(len(data)), data)
+        def get_random_line_style_and_width():
+            line_styles = ["-", "--", "-."]
+            line_widths = [1, 2]
+            return np.random.choice(line_styles), np.random.choice(line_widths)
+
+        def normalize_data(data):
+            if np.isinf(np.max(data)) or np.isnan(np.max(data)):
+                data_max = np.nanmax(data[~np.isinf(data) & ~np.isnan(data)])
+            else:
+                data_max = np.max(data)
+            if np.isinf(np.min(data)) or np.isnan(np.min(data)):
+                data_min = np.nanmin(data[~np.isinf(data) & ~np.isnan(data)])
+            else:
+                data_min = np.min(data)
+            return (data - data_min) / (data_max - data_min)
+
+        a = np.linspace(0.001, 1, 100)
+        e = 1 - a
+
+        function_type = random.choice(["y", "g", "z"])
+
+        self.axes.clear()
+        self.lines.clear()
+
+        for model_key, funcs in NUC_MODELS_TABLE.items():
+            try:
+                if function_type == "y":
+                    values = normalize_data(funcs["differential_form"](e))
+                elif function_type == "g":
+                    values = normalize_data(funcs["integral_form"](e))
+                elif function_type == "z":
+                    y_values = funcs["differential_form"](e)
+                    g_values = funcs["integral_form"](e)
+                    values = normalize_data(y_values * g_values)
+                else:
+                    continue
+
+                line_style, line_width = get_random_line_style_and_width()
+
+                self.add_or_update_line(
+                    model_key,
+                    a,
+                    values,
+                    label=model_key,
+                    linestyle=line_style,
+                    linewidth=line_width,
+                )
+
+                rand_index = np.random.choice(range(len(a)))
+                self.axes.annotate(
+                    model_key,
+                    (a[rand_index], values[rand_index]),
+                    textcoords="offset points",
+                    xytext=(-10, -10),
+                    ha="center",
+                )
+            except Exception as exc:
+                logger.error(f"Error while plotting model {model_key}: {exc}")
+
+        self.axes.set_xlabel("α", fontsize=MEDIUM_SIZE)
+
+        label_mapping = {
+            "g": ("g(α)", "Theoretical view of g(α) graphs"),
+            "y": ("y(α)", "Theoretical view of y(α) master graphs"),
+            "z": ("z(α)", "Theoretical view of z(α) master graphs"),
+        }
+
+        if function_type in label_mapping:
+            ylabel, title = label_mapping[function_type]
+            self.axes.set_ylabel(ylabel, fontsize=MEDIUM_SIZE)
+            self.axes.set_title(title, fontsize=MEDIUM_SIZE, loc="left")
+
+        self.axes.tick_params(axis="both", which="major", labelsize=SMALL_SIZE)
+        self.canvas.draw_idle()
 
     def add_or_update_line(self, key, x, y, **kwargs):
         """
