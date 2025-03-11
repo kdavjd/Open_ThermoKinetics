@@ -51,26 +51,23 @@ class ModelFreeCalculation(BaseSlots):
     def _handle_model_free_calculation(self, calculation_params: dict, response: dict):
         fit_method = calculation_params.get("fit_method")
         reaction_data = calculation_params.get("reaction_data")
-        alpha_min = calculation_params.get("alpha_min", 0.005)
-        alpha_max = calculation_params.get("alpha_max", 0.995)
-        ea_min = calculation_params.get("ea_min")
-        ea_max = calculation_params.get("ea_max")
-        ea_mean = calculation_params.get("ea_mean")
-
         FitMethod = self.strategies.get(fit_method)
         if FitMethod is None:
             logger.error(f"Unknown fit method: {fit_method}, \n\n{calculation_params=}")
             return
 
-        if ea_min is not None and ea_max is not None:
-            ea_min = ea_min * 1000  # convert from kJ/mol to J/mol
-            ea_max = ea_max * 1000  # convert from kJ/mol to J/mol
-            strategy = FitMethod(alpha_min, alpha_max, ea_min, ea_max)
-        if ea_mean is not None:
-            ea_mean = ea_mean * 1000  # convert from kJ/mol to J/mol
-            strategy = FitMethod(alpha_min, alpha_max, ea_mean)
-        else:
-            strategy = FitMethod(alpha_min, alpha_max)
+        kwargs = {
+            "alpha_min": calculation_params.get("alpha_min", 0.005),
+            "alpha_max": calculation_params.get("alpha_max", 0.995),
+        }
+        if calculation_params.get("ea_mean") is not None:
+            kwargs["ea_mean"] = calculation_params["ea_mean"] * 1000  #  kJ/mol to J/mol
+        elif calculation_params.get("ea_min") is not None and calculation_params.get("ea_max") is not None:
+            kwargs["ea_min"] = calculation_params["ea_min"] * 1000
+            kwargs["ea_max"] = calculation_params["ea_max"] * 1000
+
+        strategy = FitMethod(**kwargs)
+
         result_data = {}
         for reaction_name, reaction_df in reaction_data.items():
             reaction_df["temperature"] = reaction_df["temperature"] + 273.15
@@ -95,22 +92,19 @@ class ModelFreeCalculation(BaseSlots):
     def _handle_plot_model_fit_result(self, calculation_params: dict, response: dict):
         fit_method = calculation_params.get("fit_method")
         result_df = calculation_params.get("result_df")
-        alpha_min = calculation_params.get("alpha_min", 0.01)
-        alpha_max = calculation_params.get("alpha_max", 0.99)
-
         FitMethod = self.strategies.get(fit_method)
         if FitMethod is None:
             logger.error(f"Unknown fit method: {fit_method}")
             return
 
-        strategy = FitMethod(alpha_min=alpha_min, alpha_max=alpha_max)
-
-        plot_data = []
+        kwargs = {
+            "alpha_min": calculation_params.get("alpha_min", 0.01),
+            "alpha_max": calculation_params.get("alpha_max", 0.99),
+        }
+        strategy = FitMethod(**kwargs)
 
         plot_df, plot_kwargs = strategy.prepare_plot_data(result_df)
-        plot_data.append({"plot_df": plot_df, "plot_kwargs": plot_kwargs})
-
-        response["data"] = plot_data
+        response["data"] = [{"plot_df": plot_df, "plot_kwargs": plot_kwargs}]
 
 
 class LinearApproximation:
