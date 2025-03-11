@@ -94,12 +94,9 @@ class PlotCanvas(QWidget):
         self.canvas.restore_region(self.background)
 
     def mock_plot(self, data=None):  # noqa: C901
-        MEDIUM_SIZE = 12
-        SMALL_SIZE = 10
-
         def get_random_line_style_and_width():
             line_styles = ["-", "--", "-."]
-            line_widths = [1, 2]
+            line_widths = [0.5, 0.75, 1]
             return np.random.choice(line_styles), np.random.choice(line_widths)
 
         def normalize_data(data):
@@ -156,7 +153,7 @@ class PlotCanvas(QWidget):
             except Exception as exc:
                 logger.error(f"Error while plotting model {model_key}: {exc}")
 
-        self.axes.set_xlabel("α", fontsize=MEDIUM_SIZE)
+        self.axes.set_xlabel("α", fontsize=10)
 
         label_mapping = {
             "g": ("g(α)", "Theoretical view of g(α) graphs"),
@@ -166,10 +163,12 @@ class PlotCanvas(QWidget):
 
         if function_type in label_mapping:
             ylabel, title = label_mapping[function_type]
-            self.axes.set_ylabel(ylabel, fontsize=MEDIUM_SIZE)
-            self.axes.set_title(title, fontsize=MEDIUM_SIZE, loc="left")
+            self.axes.set_ylabel(
+                ylabel,
+            )
+            self.axes.set_title(title, loc="left")
 
-        self.axes.tick_params(axis="both", which="major", labelsize=SMALL_SIZE)
+        self.axes.tick_params(axis="both", which="major", labelsize=8)
         self.canvas.draw_idle()
 
     def add_or_update_line(self, key, x, y, **kwargs):

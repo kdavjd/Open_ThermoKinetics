@@ -1,10 +1,12 @@
+import warnings
+
 import numpy as np
 import pandas as pd
+from scipy import integrate
 from scipy.constants import R
-from scipy.integrate import quad
 from scipy.interpolate import interp1d
 
-from src.core.app_settings import OperationType
+from src.core.app_settings import NUC_MODELS_TABLE, OperationType
 from src.core.base_signals import BaseSlots
 from src.core.logger_config import logger
 
@@ -17,6 +19,7 @@ class ModelFreeCalculation(BaseSlots):
             "Friedman": Friedman,
             "Kissinger": Kissinger,
             "Vyazovkin": Vyazovkin,
+            "master plots": MasterPlots,
         }
 
     def process_request(self, params: dict) -> None:
@@ -52,16 +55,20 @@ class ModelFreeCalculation(BaseSlots):
         alpha_max = calculation_params.get("alpha_max", 0.995)
         ea_min = calculation_params.get("ea_min")
         ea_max = calculation_params.get("ea_max")
+        ea_mean = calculation_params.get("ea_mean")
 
         FitMethod = self.strategies.get(fit_method)
         if FitMethod is None:
-            logger.error(f"Unknown fit method: {fit_method}")
+            logger.error(f"Unknown fit method: {fit_method}, \n\n{calculation_params=}")
             return
 
         if ea_min is not None and ea_max is not None:
             ea_min = ea_min * 1000  # convert from kJ/mol to J/mol
             ea_max = ea_max * 1000  # convert from kJ/mol to J/mol
             strategy = FitMethod(alpha_min, alpha_max, ea_min, ea_max)
+        if ea_mean is not None:
+            ea_mean = ea_mean * 1000  # convert from kJ/mol to J/mol
+            strategy = FitMethod(alpha_min, alpha_max, ea_mean)
         else:
             strategy = FitMethod(alpha_min, alpha_max)
         result_data = {}
@@ -73,14 +80,17 @@ class ModelFreeCalculation(BaseSlots):
                 response["data"] = False
                 return
 
-            for beta_column in beta_columns:
-                reaction_df[beta_column] = reaction_df[beta_column].cumsum() / reaction_df[beta_column].cumsum().max()
+            if fit_method != "master plots":
+                for beta_column in beta_columns:
+                    reaction_df[beta_column] = (
+                        reaction_df[beta_column].cumsum() / reaction_df[beta_column].cumsum().max()
+                    )
 
             reaction_results = strategy.calculate(reaction_df)
             result_data[reaction_name] = reaction_results
 
         response["data"] = result_data
-        logger.debug(f"Calculation results for '{fit_method}': {result_data}")
+        logger.info(f"Calculation results for '{fit_method}': {result_data}")
 
     def _handle_plot_model_fit_result(self, calculation_params: dict, response: dict):
         fit_method = calculation_params.get("fit_method")
@@ -326,7 +336,7 @@ class Vyazovkin:
             return np.exp(-Ea / (R * T))
 
         def I_func(Ea, T, dT):
-            integral, _ = quad(integrand, T - dT, T, args=(Ea,))
+            integral, _ = integrate.quad(integrand, T - dT, T, args=(Ea,))
             return integral
 
         def vyazovkin_lhs(Ea, dT, pairs):
@@ -366,6 +376,138 @@ class Vyazovkin:
             "title": "Vyazovkin Method: Ea vs α",
             "xlabel": "α",
             "ylabel": r"$E_{a}$, J/Mole",
+            "annotation": annotation,
+        }
+        return df, plot_kwargs
+
+
+class MasterPlots:
+    def __init__(self, alpha_min, alpha_max, Ea_mean, master_plot="y(α)"):
+        self.alpha_min = alpha_min
+        self.alpha_max = alpha_max
+        self.Ea_mean = Ea_mean
+        self.master_plot = master_plot
+
+    @staticmethod
+    def normalize_data(arr):
+        arr = np.array(arr)
+        finite_mask = np.isfinite(arr)
+        if not finite_mask.any():
+            return arr
+        arr_min = np.min(arr[finite_mask])
+        arr_max = np.max(arr[finite_mask])
+        if arr_max - arr_min != 0:
+            return (arr - arr_min) / (arr_max - arr_min)
+        else:
+            return arr
+
+    @staticmethod
+    def r2_score(y_true, y_pred):
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+        ss_res = np.sum((y_true - y_pred) ** 2)
+        ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+        return 1 - ss_res / ss_tot
+
+    def get_exp_term(self, temperature):
+        return np.exp(self.Ea_mean / (R * temperature))
+
+    def calculate_y_master_plot(self, da_dt, exp_term):
+        y_a = da_dt * exp_term
+        y_a_norm = (y_a - y_a.min()) / (y_a.max() - y_a.min())
+        return y_a_norm
+
+    def calculate_g_master_plot(self, temperature_a: np.ndarray):
+        def integrand(T):
+            return np.exp(-self.Ea_mean / (R * T))
+
+        N = len(temperature_a)
+        g_values = []
+        for i in range(N):
+            if i == 0:
+                lower_bound = temperature_a[i]
+                upper_bound = (temperature_a[i] + temperature_a[i + 1]) / 2
+            elif i == N - 1:
+                lower_bound = (temperature_a[i - 1] + temperature_a[i]) / 2
+                upper_bound = temperature_a[i]
+            else:
+                lower_bound = (temperature_a[i - 1] + temperature_a[i]) / 2
+                upper_bound = (temperature_a[i] + temperature_a[i + 1]) / 2
+
+            integral_value, _ = integrate.quad(integrand, lower_bound, upper_bound)
+            g_values.append(integral_value)
+
+        g_a = np.array(g_values)
+        g_norm = (g_a - g_a.min()) / (g_a.max() - g_a.min())
+        return g_norm
+
+    def model_r2_scores(self, experiment_norm, conversion, model_form, z_a=False):
+        e = 1 - conversion
+        r2_scores = {}
+        model_predictions = {}
+        for model, funcs in NUC_MODELS_TABLE.items():
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    raw_model = (
+                        funcs[model_form](e) if not z_a else funcs["differential_form"](e) * funcs["integral_form"](e)
+                    )
+                    model_norm = self.normalize_data(raw_model)
+                    score = self.r2_score(experiment_norm, model_norm)
+                    r2_scores[model] = score
+                    model_predictions[model] = model_norm
+            except Exception as exception:
+                print(f"Проблема с моделью {model}: {exception}")
+
+        top_models = sorted(r2_scores.items(), key=lambda x: x[1], reverse=True)[:5]
+        df_dict = {"conversion": conversion, "experiment": experiment_norm}
+        for model, score in top_models:
+            df_dict[model] = model_predictions[model]
+        return pd.DataFrame(df_dict)
+
+    def calculate_z_master_plot(self, da_dt, temperature_a):
+        z = da_dt * temperature_a**2
+        z_norm = (z - z.min()) / (z.max() - z.min())
+        return z_norm
+
+    def calculate(self, reaction_df: pd.DataFrame) -> pd.DataFrame:
+        rate_cols = [col for col in reaction_df.columns if col != "temperature"]
+        temperature = reaction_df["temperature"].values
+        y_a_results = {}
+        g_a_results = {}
+        z_a_results = {}
+        for beta in rate_cols:
+            da_dT = reaction_df[beta].values
+
+            valid = ~np.isnan(temperature) & ~np.isnan(da_dT)
+            da_dT, temperature_valid = da_dT[valid], temperature[valid]
+            conversion = da_dT.cumsum() / da_dT.cumsum().max()
+
+            exp_term = self.get_exp_term(temperature_valid)
+            y_a_norm = self.calculate_y_master_plot(da_dT, exp_term)
+            g_a_norm = self.calculate_g_master_plot(temperature_valid)
+            z_a_norm = self.calculate_z_master_plot(da_dT, temperature_valid)
+            sorted_ya_r2 = self.model_r2_scores(y_a_norm, conversion, "differential_form")
+            sorted_ga_r2 = self.model_r2_scores(g_a_norm, conversion, "integral_form")
+            sorted_za_r2 = self.model_r2_scores(z_a_norm, conversion, "_", z_a=True)
+            y_a_results[beta] = sorted_ya_r2
+            g_a_results[beta] = sorted_ga_r2
+            z_a_results[beta] = sorted_za_r2
+
+        return {
+            "y(α)": y_a_results,
+            "g(α)": g_a_results,
+            "z(α)": z_a_results,
+        }
+
+    def prepare_plot_data(self, df: pd.DataFrame):
+        mean_val = df["master_plot_norm"].mean()
+        std_val = df["master_plot_norm"].std()
+        annotation = r"${} = {:.2f},\ std = {:.2f}$".format(self.master_plot, mean_val, std_val)
+        plot_kwargs = {
+            "title": f"Master Plot: {self.master_plot} vs Conversion",
+            "xlabel": "Conversion (α)",
+            "ylabel": self.master_plot,
             "annotation": annotation,
         }
         return df, plot_kwargs

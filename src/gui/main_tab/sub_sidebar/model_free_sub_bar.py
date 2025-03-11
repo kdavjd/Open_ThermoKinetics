@@ -60,10 +60,24 @@ class ModelFreeSubBar(QWidget):
         self.ea_max_input.setToolTip("Ea max, kJ")
         self.form_layout.addRow(self.ea_max_label, self.ea_max_input)
 
+        self.ea_mean_label = QLabel("Ea mean, kJ:", self)
+        self.ea_mean_input = QLineEdit(self)
+        self.ea_mean_input.setToolTip("Ea mean, kJ")
+        self.form_layout.addRow(self.ea_mean_label, self.ea_mean_input)
+
+        self.master_plot_label = QLabel("Plot type:", self)
+        self.master_plot_dropdown = QComboBox(self)
+        self.master_plot_dropdown.addItems(["y(α)", "g(α)", "z(α)"])
+        self.form_layout.addRow(self.master_plot_label, self.master_plot_dropdown)
+
         self.ea_min_label.hide()
         self.ea_min_input.hide()
         self.ea_max_label.hide()
         self.ea_max_input.hide()
+        self.ea_mean_label.hide()
+        self.ea_mean_input.hide()
+        self.master_plot_dropdown.hide()
+        self.master_plot_label.hide()
 
         self.layout.addLayout(self.form_layout)
 
@@ -117,6 +131,17 @@ class ModelFreeSubBar(QWidget):
             self.ea_max_label.hide()
             self.ea_max_input.hide()
 
+        if text == "master plots":
+            self.ea_mean_label.show()
+            self.ea_mean_input.show()
+            self.master_plot_dropdown.show()
+            self.master_plot_label.show()
+        else:
+            self.ea_mean_label.hide()
+            self.ea_mean_input.hide()
+            self.master_plot_dropdown.hide()
+            self.master_plot_label.hide()
+
     def emit_combobox_text(self, _=None):
         reaction = self.reaction_combobox.currentText()
 
@@ -155,6 +180,23 @@ class ModelFreeSubBar(QWidget):
                 ea_max = float(self.ea_max_input.text())
                 calc_params["ea_min"] = ea_min
                 calc_params["ea_max"] = ea_max
+
+            if fit_method == "master plots":
+                if self.ea_mean_input.text() == "":
+                    raise ValueError(
+                        "Enter E0 in the input field by defining it using another method.\
+                        (Friedman, for example)."
+                    )
+                if self.reaction_combobox.currentText() == "select reaction":
+                    raise ValueError(
+                        "Determine the number of reactions by performing the calculation using another method.\
+                        (Friedman, for example)."
+                    )
+                ea_mean = int(self.ea_mean_input.text())
+                master_plot = self.master_plot_dropdown.currentText()
+                calc_params["ea_mean"] = ea_mean
+                calc_params["master_plot"] = master_plot
+                calc_params["reaction_n"] = (self.reaction_combobox.currentText(),)
 
             self.model_free_calculation_signal.emit(calc_params)
 
@@ -227,7 +269,6 @@ class ModelFreeSubBar(QWidget):
         dialog = ModelFreeAnnotationSettingsDialog(self, self.is_annotate, self.annotation_config)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.is_annotate, self.annotation_config = dialog.get_settings()
-            MODEL_FREE_ANNOTATION_CONFIG.clear()
             MODEL_FREE_ANNOTATION_CONFIG.update(self.annotation_config)
 
 

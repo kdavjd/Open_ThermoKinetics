@@ -212,6 +212,7 @@ MODEL_FREE_METHODS = [
     "Friedman",
     "Kissinger",
     "Vyazovkin",
+    "master plots",
 ]
 
 MODEL_FIT_ANNOTATION_CONFIG = {
