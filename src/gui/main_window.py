@@ -171,7 +171,7 @@ class MainWindow(QMainWindow):
 
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
-        if not self._is_valid_result_df(result_df, series_name, fit_method):
+        if not self._is_valid_result_data(result_df, series_name, fit_method):
             return
         params["model_series"] = result_df[result_df["Model"] == model].copy()
 
@@ -204,11 +204,16 @@ class MainWindow(QMainWindow):
         is_annotate = params.get("is_annotate")
 
         keys = [series_name, "model_free_results", fit_method, reaction_n]
-        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
-        if not self._is_valid_result_df(result_df, series_name, fit_method):
+        result_data = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if not self._is_valid_result_data(result_data, series_name, fit_method):
             return
 
-        params["result_df"] = result_df
+        if fit_method == "master plots":
+            master_plot = params.get("master_plot")
+            beta = params.get("beta")
+            result_data = result_data[master_plot][int(beta)]
+
+        params["result_df"] = result_data
         plot_data_and_kwargs = self.handle_request_cycle(
             "model_free_calculation", OperationType.PLOT_MODEL_FREE_RESULT, calculation_params=params
         )
@@ -221,10 +226,13 @@ class MainWindow(QMainWindow):
         fit_method = params.get("fit_method")
         reaction_n = params.get("reaction_n")
 
+        if fit_method == "master plots":
+            return
+
         keys = [series_name, "model_free_results", fit_method, reaction_n]
 
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
-        if not self._is_valid_result_df(result_df, series_name, fit_method):
+        if not self._is_valid_result_data(result_df, series_name, fit_method):
             return
         self.main_tab.sub_sidebar.model_free_sub_bar.update_results_table(result_df)
 
@@ -237,7 +245,7 @@ class MainWindow(QMainWindow):
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
 
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
-        if not self._is_valid_result_df(result_df, series_name, fit_method):
+        if not self._is_valid_result_data(result_df, series_name, fit_method):
             return
         self.main_tab.sub_sidebar.model_fit_sub_bar.update_results_table(result_df)
 
@@ -529,13 +537,14 @@ class MainWindow(QMainWindow):
                 label=f"Simulation β={col}",
             )
 
-    def _is_valid_result_df(self, result_df, series_name=None, fit_method=None):
+    def _is_valid_result_data(self, result_df, series_name=None, fit_method=None):
         if not isinstance(result_df, pd.DataFrame):
             if result_df in ({}, None):
                 if series_name and fit_method:
                     console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
                 return False
-        if result_df.empty:
-            console.log("\nThe model fit result is empty.\n")
+        if isinstance(result_df, pd.DataFrame):
+            if result_df.empty:
+                console.log("\nThe model fit result is empty.\n")
             return False
         return True

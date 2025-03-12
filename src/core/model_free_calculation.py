@@ -70,6 +70,10 @@ class ModelFreeCalculation(BaseSlots):
 
         result_data = {}
         for reaction_name, reaction_df in reaction_data.items():
+            if fit_method == "master plots":
+                if reaction_name != calculation_params.get("reaction_n"):
+                    continue
+
             reaction_df["temperature"] = reaction_df["temperature"] + 273.15
             beta_columns = [col for col in reaction_df.columns if col != "temperature"]
             if len(beta_columns) < 2:
@@ -87,7 +91,7 @@ class ModelFreeCalculation(BaseSlots):
             result_data[reaction_name] = reaction_results
 
         response["data"] = result_data
-        logger.info(f"Calculation results for '{fit_method}': {result_data}")
+        logger.debug(f"Calculation results for '{fit_method}': {result_data}")
 
     def _handle_plot_model_fit_result(self, calculation_params: dict, response: dict):
         fit_method = calculation_params.get("fit_method")
@@ -376,10 +380,10 @@ class Vyazovkin:
 
 
 class MasterPlots:
-    def __init__(self, alpha_min, alpha_max, Ea_mean, master_plot="y(α)"):
+    def __init__(self, alpha_min, alpha_max, ea_mean=0, master_plot="y(α)"):
         self.alpha_min = alpha_min
         self.alpha_max = alpha_max
-        self.Ea_mean = Ea_mean
+        self.Ea_mean = ea_mean
         self.master_plot = master_plot
 
     @staticmethod
@@ -495,13 +499,19 @@ class MasterPlots:
         }
 
     def prepare_plot_data(self, df: pd.DataFrame):
-        mean_val = df["master_plot_norm"].mean()
-        std_val = df["master_plot_norm"].std()
-        annotation = r"${} = {:.2f},\ std = {:.2f}$".format(self.master_plot, mean_val, std_val)
+        annotation_parts = []
+        for col in df.columns:
+            if col not in ["conversion", "experiment"]:
+                r2 = self.r2_score(df["experiment"], df[col])
+                annotation_parts.append(f"{col} = {r2:.2f}")
+
+        annotation = "\n".join(annotation_parts)
+
         plot_kwargs = {
-            "title": f"Master Plot: {self.master_plot} vs Conversion",
-            "xlabel": "Conversion (α)",
-            "ylabel": self.master_plot,
+            "title": "Master Plot: Model R2 Scores",
+            "xlabel": "α",
+            "ylabel": "R2 Score",
             "annotation": annotation,
         }
+
         return df, plot_kwargs

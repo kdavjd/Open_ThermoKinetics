@@ -32,9 +32,9 @@ class ModelFreeSubBar(QWidget):
 
         self.layout = QVBoxLayout(self)
 
-        self.model_combobox = QComboBox(self)
-        self.model_combobox.addItems(MODEL_FREE_METHODS)
-        self.layout.addWidget(self.model_combobox)
+        self.method_combobox = QComboBox(self)
+        self.method_combobox.addItems(MODEL_FREE_METHODS)
+        self.layout.addWidget(self.method_combobox)
 
         self.form_layout = QFormLayout()
         self.alpha_min_input = QLineEdit(self)
@@ -81,7 +81,7 @@ class ModelFreeSubBar(QWidget):
 
         self.layout.addLayout(self.form_layout)
 
-        self.model_combobox.currentTextChanged.connect(self.on_model_combobox_changed)
+        self.method_combobox.currentTextChanged.connect(self.on_model_combobox_changed)
 
         # Calculate button
         self.calculate_button = QPushButton("calculate", self)
@@ -91,7 +91,11 @@ class ModelFreeSubBar(QWidget):
         self.reaction_layout = QHBoxLayout()
         self.reaction_combobox = QComboBox(self)
         self.reaction_combobox.addItems(["select reaction"])
+        self.beta_combobox = QComboBox(self)
+        self.beta_combobox.addItems(["select beta"])
+        self.beta_combobox.hide()
         self.reaction_layout.addWidget(self.reaction_combobox)
+        self.reaction_layout.addWidget(self.beta_combobox)
         self.layout.addLayout(self.reaction_layout)
 
         self.reaction_combobox.currentTextChanged.connect(self.emit_combobox_text)
@@ -136,30 +140,34 @@ class ModelFreeSubBar(QWidget):
             self.ea_mean_input.show()
             self.master_plot_dropdown.show()
             self.master_plot_label.show()
+            self.results_table.hide()
+            self.beta_combobox.show()
         else:
             self.ea_mean_label.hide()
             self.ea_mean_input.hide()
             self.master_plot_dropdown.hide()
             self.master_plot_label.hide()
+            self.results_table.show()
+            self.beta_combobox.hide()
 
     def emit_combobox_text(self, _=None):
         reaction = self.reaction_combobox.currentText()
 
         self.last_selected_reaction = reaction
 
-        self.table_combobox_text_changed_signal.emit(
-            {
-                "operation": OperationType.GET_MODEL_FREE_REACTION_DF,
-                "fit_method": self.model_combobox.currentText(),
-                "reaction_n": reaction,
-            }
-        )
+        emit_params = {
+            "operation": OperationType.GET_MODEL_FREE_REACTION_DF,
+            "fit_method": self.method_combobox.currentText(),
+            "reaction_n": reaction,
+        }
+
+        self.table_combobox_text_changed_signal.emit(emit_params)
 
     def on_calculate_clicked(self):
         try:
             alpha_min = float(self.alpha_min_input.text())
             alpha_max = float(self.alpha_max_input.text())
-            fit_method = self.model_combobox.currentText()
+            fit_method = self.method_combobox.currentText()
 
             if not (0 <= alpha_min <= 0.999):
                 raise ValueError("alpha_min must be between 0 and 0.999")
@@ -196,7 +204,7 @@ class ModelFreeSubBar(QWidget):
                 master_plot = self.master_plot_dropdown.currentText()
                 calc_params["ea_mean"] = ea_mean
                 calc_params["master_plot"] = master_plot
-                calc_params["reaction_n"] = (self.reaction_combobox.currentText(),)
+                calc_params["reaction_n"] = self.reaction_combobox.currentText()
 
             self.model_free_calculation_signal.emit(calc_params)
 
@@ -207,6 +215,7 @@ class ModelFreeSubBar(QWidget):
         try:
             alpha_min = float(self.alpha_min_input.text())
             alpha_max = float(self.alpha_max_input.text())
+            beta = self.beta_combobox.currentText()
 
             if not (0 <= alpha_min <= 0.999):
                 raise ValueError("alpha_min must be between 0 and 0.999")
@@ -215,16 +224,19 @@ class ModelFreeSubBar(QWidget):
             if alpha_min > alpha_max:
                 raise ValueError("alpha_min cannot be greater than alpha_max")
 
-            self.plot_model_free_signal.emit(
-                {
-                    "operation": OperationType.PLOT_MODEL_FREE_RESULT,
-                    "reaction_n": self.reaction_combobox.currentText(),
-                    "fit_method": self.model_combobox.currentText(),
-                    "alpha_min": alpha_min,
-                    "alpha_max": alpha_max,
-                    "is_annotate": self.is_annotate,
-                }
-            )
+            emit_params = {
+                "operation": OperationType.PLOT_MODEL_FREE_RESULT,
+                "reaction_n": self.reaction_combobox.currentText(),
+                "fit_method": self.method_combobox.currentText(),
+                "alpha_min": alpha_min,
+                "alpha_max": alpha_max,
+                "is_annotate": self.is_annotate,
+            }
+            if self.method_combobox.currentText() == "master plots":
+                emit_params["beta"] = beta
+                emit_params["master_plot"] = self.master_plot_dropdown.currentText()
+
+            self.plot_model_free_signal.emit(emit_params)
         except ValueError as e:
             QMessageBox.warning(self, "Input Error", str(e))
 
@@ -250,7 +262,16 @@ class ModelFreeSubBar(QWidget):
             self.last_selected_reaction if self.last_selected_reaction in reaction_keys else reaction_keys[0]
         )
         self.last_selected_reaction = selected_reaction
+
+        if isinstance(fit_results[selected_reaction], dict):
+            if "y(α)" in fit_results[selected_reaction]:
+                self.beta_combobox.clear()
+                for key in fit_results[selected_reaction]["y(α)"].keys():
+                    self.beta_combobox.addItem(str(key))
+            return
+
         self.update_combobox_with_reactions(reaction_keys)
+
         df = fit_results[selected_reaction]
         self.update_results_table(df)
 
