@@ -102,6 +102,9 @@ class MainTab(QWidget):
     def toggle_sub_sidebar(self, content_type):
         logger.debug(f"totoggle_sub_sidebar: {content_type=}")
         if content_type:
+            canvas_connects = True if content_type == SideBarNames.DECONVOLUTION.value else False
+            self.plot_canvas.toggle_event_connections(canvas_connects)
+
             if content_type in self.sidebar.get_experiment_files_names():
                 self.sub_sidebar.update_content(SideBarNames.EXPERIMENTS.value)
             else:

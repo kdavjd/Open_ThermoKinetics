@@ -73,13 +73,24 @@ class PlotCanvas(QWidget):
         self.background = None
         self.dragging_anchor = None
         self.dragging_anchor_group = None
-
-        self.canvas.mpl_connect("draw_event", self.on_draw)
-        self.canvas.mpl_connect("button_press_event", self.on_click)
-        self.canvas.mpl_connect("button_release_event", self.on_release)
-        self.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        self.cid_draw = None
+        self.cid_press = None
+        self.cid_release = None
+        self.cid_motion = None
 
         self.mock_plot()
+
+    def toggle_event_connections(self, enable: bool):
+        if enable:
+            self.cid_draw = self.canvas.mpl_connect("draw_event", self.on_draw)
+            self.cid_press = self.canvas.mpl_connect("button_press_event", self.on_click)
+            self.cid_release = self.canvas.mpl_connect("button_release_event", self.on_release)
+            self.cid_motion = self.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        else:
+            self.canvas.mpl_disconnect(self.cid_draw)
+            self.canvas.mpl_disconnect(self.cid_press)
+            self.canvas.mpl_disconnect(self.cid_release)
+            self.canvas.mpl_disconnect(self.cid_motion)
 
     def on_draw(self, event):
         """
