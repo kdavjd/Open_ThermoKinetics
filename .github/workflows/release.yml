@@ -41,7 +41,7 @@ jobs:
             
       - name: Build ${{ matrix.os }}
         run: |
-          poetry run pyinstaller src/gui/__main__.py --collect-all scienceplots --onefile --name main.exe
+          poetry run pyinstaller src/gui/__main__.py --collect-all scienceplots --onefile --name OTK.exe
 
 # UPLOADING ARTIFACTS
 
