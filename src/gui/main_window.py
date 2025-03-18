@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, signals: BaseSignals):
         super().__init__()
-        self.setWindowTitle("Solid state kinetics")
+        self.setWindowTitle("Open ThermoKinetics")
 
         self.tabs = QTabWidget(self)
         self.setCentralWidget(self.tabs)

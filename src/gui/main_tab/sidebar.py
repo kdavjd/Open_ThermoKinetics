@@ -43,7 +43,7 @@ class SideBar(QWidget):
         self.tree_view = QTreeView()
         self.tree_view.clicked.connect(self.on_item_clicked)
         self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["Project Management"])
+        self.model.setHorizontalHeaderLabels(["app tree"])
         self.tree_view.setModel(self.model)
 
         # Initialize experiment data section
