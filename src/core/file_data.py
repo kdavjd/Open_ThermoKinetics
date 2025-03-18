@@ -158,7 +158,6 @@ class FileData(BaseSlots):
             console.log(f"\n\nThe file '{self.file_path}' is already loaded.")
             return
 
-        # If user provided column names as a string, split them appropriately.
         if columns_names:
             column_delimiter = "," if "," in columns_names else " "
             self.columns_names = [name.strip() for name in columns_names.split(column_delimiter)]
@@ -177,10 +176,7 @@ class FileData(BaseSlots):
                 self.skip_rows,
             )
 
-        # Determine file extension and load accordingly.
         _, file_extension = os.path.splitext(self.file_path)
-
-        # Additional console output to inform user that file loading is in progress.
         console.log(f"\n\nAttempting to load the file: {self.file_path}")
 
         if file_extension == ".csv":
@@ -191,7 +187,6 @@ class FileData(BaseSlots):
             console.log(f"\n\nFile extension '{file_extension}' is not supported.")
 
         self.loaded_files.add(self.file_path)
-        # Inform user that file loading is complete.
         console.log(f"\n\nFile '{self.file_path}' has been successfully loaded.")
 
     @detect_encoding
@@ -272,18 +267,15 @@ class FileData(BaseSlots):
         else:
             logger.debug("No custom column names provided; using file's header row as column names.")
 
-        # Store original and copy of the data for transformations.
         self.original_data[file_basename] = self.data.copy()
         self.dataframe_copies[file_basename] = self.data.copy()
 
-        # Log DataFrame info to console for user reference.
         buffer = StringIO()
         self.dataframe_copies[file_basename].info(buf=buffer)
         file_info = buffer.getvalue()
         console.log(f"\n\nFile loaded:\n{file_info}")
 
         logger.debug(f"dataframe_copies keys: {self.dataframe_copies.keys()}")
-        # Emit a signal that data is loaded.
         self.data_loaded_signal.emit(self.data)
 
     @pyqtSlot(str)

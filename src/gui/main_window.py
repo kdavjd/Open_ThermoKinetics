@@ -1,12 +1,10 @@
 from functools import reduce
 
-import numpy as np
 import pandas as pd
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QMainWindow, QTabWidget
-from scipy.integrate import solve_ivp
 
-from src.core.app_settings import NUC_MODELS_TABLE, OperationType
+from src.core.app_settings import OperationType
 from src.core.base_signals import BaseSignals, BaseSlots
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
@@ -20,7 +18,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self, signals: BaseSignals):
         super().__init__()
-        self.setWindowTitle("Solid state kinetics")
+        self.setWindowTitle("Open ThermoKinetics")
 
         self.tabs = QTabWidget(self)
         self.setCentralWidget(self.tabs)
@@ -88,7 +86,7 @@ class MainWindow(QMainWindow):
     def handle_request_from_main_tab(self, params: dict):
         operation = params.pop("operation")
 
-        logger.debug(f"{self.actor_name} handle_request_from_main_tab '{operation}'")
+        logger.info(f"{self.actor_name} handle_request_from_main_tab '{operation}' with {params=}")
 
         operation_handlers = {
             OperationType.DIFFERENTIAL: self._handle_differential,
@@ -103,10 +101,17 @@ class MainWindow(QMainWindow):
             OperationType.STOP_CALCULATION: self._handle_stop_calculation,
             OperationType.ADD_NEW_SERIES: self._handle_add_new_series,
             OperationType.DELETE_SERIES: self._handle_delete_series,
-            OperationType.MODEL_BASED_CALCULATION: self._handle_model_based_calculation,
             OperationType.SCHEME_CHANGE: self._handle_scheme_change,
             OperationType.MODEL_PARAMS_CHANGE: self._handle_model_params_change,
             OperationType.SELECT_SERIES: self._handle_select_series,
+            OperationType.LOAD_DECONVOLUTION_RESULTS: self._handle_load_deconvolution_results,
+            OperationType.GET_MODEL_FIT_REACTION_DF: self._handle_get_model_fit_reaction_df,
+            OperationType.GET_MODEL_FREE_REACTION_DF: self._handle_get_model_free_reaction_df,
+            OperationType.PLOT_MODEL_FIT_RESULT: self._handle_plot_model_fit_result,
+            OperationType.PLOT_MODEL_FREE_RESULT: self._handle_plot_model_free_result,
+            OperationType.MODEL_BASED_CALCULATION: self._handle_model_based_calculation,
+            OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
+            OperationType.MODEL_FREE_CALCULATION: self._handle_model_free_calculation,
         }
 
         handler = operation_handlers.get(operation)
@@ -114,6 +119,189 @@ class MainWindow(QMainWindow):
             handler(params)
         else:
             logger.error(f"{self.actor_name} unknown operation: {operation},\n\n {params=}")
+
+    def _handle_model_free_calculation(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nIt is necessary to select a series for calculation\n")
+            return
+
+        series_entry = self.handle_request_cycle(
+            "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
+        )
+        experimental_df = series_entry.get("experimental_data")
+        deconvolution_results = series_entry.get("deconvolution_results", {})
+        if not deconvolution_results:
+            console.log(
+                f"\nSeries '{series_name}' should be divided into reactions by deconvolution.\n"
+                "Load deconvolution data in series working space.\n"
+            )
+            return
+        reactions, _ = self.main_tab.sub_sidebar.series_sub_bar.check_missing_reactions(
+            experimental_df, deconvolution_results
+        )
+        params["reaction_data"] = {
+            reaction: self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
+                experimental_df, deconvolution_results, reaction_n=reaction
+            )
+            for reaction in reactions
+        }
+        fit_results = self.handle_request_cycle(
+            "model_free_calculation", OperationType.MODEL_FREE_CALCULATION, calculation_params=params
+        )
+        if not fit_results:
+            console.log("\nThere are not enough beta columns for model free calculation.\n")
+            return
+        update_data = {"model_free_results": {params["fit_method"]: fit_results}}
+        self.handle_request_cycle(
+            "series_data", OperationType.UPDATE_SERIES, series_name=series_name, update_data=update_data
+        )
+        self.main_tab.sub_sidebar.model_free_sub_bar.update_fit_results(fit_results)
+
+    def _handle_plot_model_fit_result(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nIt is necessary to select a series for plot model fit result\n")
+            return
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+        beta = params.get("beta")
+        model = params.get("model")
+        is_annotate = params.get("is_annotate")
+
+        keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
+        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if not self._is_valid_result_data(result_df, series_name, fit_method):
+            return
+        params["model_series"] = result_df[result_df["Model"] == model].copy()
+
+        series_entry: dict = self.handle_request_cycle(
+            "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
+        )
+        experimental_df = series_entry.get("experimental_data")
+        deconvolution_results = series_entry.get("deconvolution_results", {})
+        reaction_df = self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
+            experimental_df, deconvolution_results, reaction_n=reaction_n
+        )
+        params["reaction_df"] = reaction_df[["temperature", int(beta)]]
+        plot_data_and_kwargs = self.handle_request_cycle(
+            "model_fit_calculation", OperationType.PLOT_MODEL_FIT_RESULT, calculation_params=params
+        )
+        if plot_data_and_kwargs == []:
+            console.log(f"\nNo plot results were found for {fit_method}: {model}\n")
+            return
+        if not is_annotate:
+            plot_data_and_kwargs[0]["plot_kwargs"]["annotation"] = is_annotate
+        self.main_tab.plot_canvas.plot_model_fit_result(plot_data_and_kwargs)
+
+    def _handle_plot_model_free_result(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nIt is necessary to select a series for plot model fit result\n")
+            return
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+        is_annotate = params.get("is_annotate")
+
+        keys = [series_name, "model_free_results", fit_method, reaction_n]
+        result_data = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if not self._is_valid_result_data(result_data, series_name, fit_method):
+            return
+
+        if fit_method == "master plots":
+            master_plot = params.get("master_plot")
+            beta = params.get("beta")
+            result_data = result_data[master_plot][int(beta)]
+
+        params["result_df"] = result_data
+        plot_data_and_kwargs = self.handle_request_cycle(
+            "model_free_calculation", OperationType.PLOT_MODEL_FREE_RESULT, calculation_params=params
+        )
+        if not is_annotate:
+            plot_data_and_kwargs[0]["plot_kwargs"]["annotation"] = is_annotate
+        self.main_tab.plot_canvas.plot_model_free_result(plot_data_and_kwargs)
+
+    def _handle_get_model_free_reaction_df(self, params: dict):
+        series_name = params.get("series_name")
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+
+        if fit_method == "master plots":
+            return
+
+        keys = [series_name, "model_free_results", fit_method, reaction_n]
+
+        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if not self._is_valid_result_data(result_df, series_name, fit_method):
+            return
+        self.main_tab.sub_sidebar.model_free_sub_bar.update_results_table(result_df)
+
+    def _handle_get_model_fit_reaction_df(self, params: dict):
+        series_name = params.get("series_name")
+        fit_method = params.get("fit_method")
+        reaction_n = params.get("reaction_n")
+        beta = params.get("beta")
+
+        keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
+
+        result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
+        if not self._is_valid_result_data(result_df, series_name, fit_method):
+            return
+        self.main_tab.sub_sidebar.model_fit_sub_bar.update_results_table(result_df)
+
+    def _handle_model_fit_calculation(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            console.log("\nIt is necessary to select a series for calculation\n")
+            return
+
+        series_entry = self.handle_request_cycle(
+            "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
+        )
+        experimental_df = series_entry.get("experimental_data")
+        deconvolution_results = series_entry.get("deconvolution_results", {})
+        if not deconvolution_results:
+            console.log(
+                f"\nSeries '{series_name}' should be divided into reactions by deconvolution.\n"
+                "Load deconvolution data in series working space.\n"
+            )
+            return
+
+        reactions, _ = self.main_tab.sub_sidebar.series_sub_bar.check_missing_reactions(
+            experimental_df, deconvolution_results
+        )
+        params["reaction_data"] = {
+            reaction: self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
+                experimental_df, deconvolution_results, reaction_n=reaction
+            )
+            for reaction in reactions
+        }
+        fit_results = self.handle_request_cycle(
+            "model_fit_calculation", OperationType.MODEL_FIT_CALCULATION, calculation_params=params
+        )
+        update_data = {"model_fit_results": {params["fit_method"]: fit_results}}
+        self.handle_request_cycle(
+            "series_data", OperationType.UPDATE_SERIES, series_name=series_name, update_data=update_data
+        )
+        self.main_tab.sub_sidebar.model_fit_sub_bar.update_fit_results(fit_results)
+
+    def _handle_load_deconvolution_results(self, params: dict):
+        series_name = params.get("series_name")
+        if not series_name:
+            logger.error("No series_name provided for deconvolution results.")
+            return
+
+        deconvolution_results = params.get("deconvolution_results", {})
+        update_data = {"deconvolution_results": deconvolution_results}
+        is_ok = self.handle_request_cycle(
+            "series_data",
+            OperationType.UPDATE_SERIES,
+            series_name=series_name,
+            update_data=update_data,
+        )
+        if not is_ok:
+            logger.error(f"Failed to update deconvolution results for series '{series_name}'.")
+        self._handle_select_series(params)
 
     def _handle_select_series(self, params: dict):
         series_name = params.get("series_name")
@@ -130,13 +318,23 @@ class MainWindow(QMainWindow):
 
         reaction_scheme = series_entry.get("reaction_scheme")
         calculation_settings = series_entry.get("calculation_settings")
+        series_df = series_entry.get("experimental_data")
+        deconvolution_results = series_entry.get("deconvolution_results", {})
         if not reaction_scheme:
             logger.warning(f"Couldn't get a scheme for the series '{series_name}'")
             return
 
+        if deconvolution_results == {}:
+            self.main_tab.plot_canvas.plot_data_from_dataframe(series_df)
+        else:
+            reaction_n = params.get("reaction_n", "reaction_0")
+            reaction_df = self.main_tab.sub_sidebar.series_sub_bar.get_reaction_dataframe(
+                series_df, deconvolution_results, reaction_n
+            )
+            self.main_tab.plot_canvas.plot_data_from_dataframe(reaction_df)
         self.main_tab.sub_sidebar.model_based.update_scheme_data(reaction_scheme)
         self.main_tab.sub_sidebar.model_based.update_calculation_settings(calculation_settings)
-        self.update_model_simulation(series_name)
+        self.main_tab.sub_sidebar.series_sub_bar.update_series_ui(series_df, deconvolution_results)
 
     def _handle_model_params_change(self, params: dict):
         series_name = params.get("series_name")
@@ -323,7 +521,9 @@ class MainWindow(QMainWindow):
         )
         reaction_scheme = series_entry.get("reaction_scheme")
         experimental_data = series_entry.get("experimental_data")
-        simulation_df = self._simulate_reaction_model(experimental_data, reaction_scheme)
+        simulation_df = self.main_tab.sub_sidebar.model_based._simulate_reaction_model(
+            experimental_data, reaction_scheme
+        )
 
         for col in simulation_df.columns:
             if col == "temperature":
@@ -334,74 +534,17 @@ class MainWindow(QMainWindow):
                 simulation_df["temperature"],
                 simulation_df[col],
                 linestyle="--",
-                color="blue",
                 label=f"Simulation β={col}",
             )
-        self.main_tab.plot_canvas.canvas.draw_idle()
 
-    def _simulate_reaction_model(self, experimental_data: pd.DataFrame, reaction_scheme: dict):
-        T = experimental_data["temperature"].values
-        T_K = T + 273.15
-
-        beta_columns = [col for col in experimental_data.columns if col.lower() != "temperature"]
-
-        reactions = reaction_scheme.get("reactions", [])
-        components = reaction_scheme.get("components", [])
-
-        species_list = [comp["id"] for comp in components]
-        num_species = len(species_list)
-        num_reactions = len(reactions)
-
-        logA = np.array([reaction.get("log_A", 0) for reaction in reactions])
-        Ea = np.array([reaction.get("Ea", 0) for reaction in reactions])
-        contributions = np.array([reaction.get("contribution", 0) for reaction in reactions])
-        R = 8.314
-
-        simulation_results = {"temperature": T}
-
-        for beta_col in beta_columns:
-            beta_value = float(beta_col)
-
-            def ode_func(T_val, X):
-                dXdt = np.zeros(num_species + num_reactions)
-                conc = X[:num_species]
-                beta_SI = beta_value / 60.0
-                for i, reaction in enumerate(reactions):
-                    src = reaction.get("from")
-                    tgt = reaction.get("to")
-                    if src not in species_list or tgt not in species_list:
-                        continue
-                    src_index = species_list.index(src)
-                    tgt_index = species_list.index(tgt)
-                    e_value = conc[src_index]
-                    reaction_type = reaction.get("reaction_type")
-                    model = NUC_MODELS_TABLE.get(reaction_type)
-                    f_e = model["differential_form"](e_value)
-                    # Arrhenius
-                    k_i = (10 ** logA[i]) * np.exp(-Ea[i] * 1000 / (R * T_val))
-                    k_i /= beta_SI
-                    rate = k_i * f_e
-                    dXdt[src_index] -= rate
-                    dXdt[tgt_index] += rate
-                    dXdt[num_species + i] = rate
-                return dXdt
-
-            X0 = np.zeros(num_species + num_reactions)
-            if num_species > 0:
-                X0[0] = 1.0
-
-            sol = solve_ivp(ode_func, [T_K[0], T_K[-1]], X0, t_eval=T_K, method="RK45")
-            if not sol.success:
-                logger.error(f"ODE failed for β = {beta_value}.")
-                continue
-
-            rates_int = sol.y[num_species : num_species + num_reactions, :]
-            int_sum = np.sum(contributions[:, np.newaxis] * rates_int, axis=0)
-            exp_mass = experimental_data[beta_col].values
-            M0 = exp_mass[0]
-            Mfin = exp_mass[-1]
-
-            model_mass = M0 - (M0 - Mfin) * int_sum
-            simulation_results[beta_col] = model_mass
-
-        return pd.DataFrame(simulation_results)
+    def _is_valid_result_data(self, result_df, series_name=None, fit_method=None):
+        if not isinstance(result_df, pd.DataFrame):
+            if result_df in ({}, None):
+                if series_name and fit_method:
+                    console.log(f"\nNo calculation results were found for {series_name}: {fit_method}\n")
+                return False
+        if isinstance(result_df, pd.DataFrame):
+            if result_df.empty:
+                console.log("\nThe model fit result is empty.\n")
+            return False
+        return True

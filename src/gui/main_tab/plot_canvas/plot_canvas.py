@@ -1,7 +1,10 @@
+import random
 from typing import Dict, Optional
 
 import matplotlib.dates as mdates
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 # see: https://pypi.org/project/SciencePlots/
@@ -13,7 +16,12 @@ from matplotlib.lines import Line2D
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
-from src.core.app_settings import OperationType
+from src.core.app_settings import (
+    MODEL_FIT_ANNOTATION_CONFIG,
+    MODEL_FREE_ANNOTATION_CONFIG,
+    NUC_MODELS_TABLE,
+    OperationType,
+)
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
 from src.gui.main_tab.plot_canvas.anchor_group import HeightAnchorGroup, PositionAnchorGroup
@@ -65,13 +73,24 @@ class PlotCanvas(QWidget):
         self.background = None
         self.dragging_anchor = None
         self.dragging_anchor_group = None
-
-        self.canvas.mpl_connect("draw_event", self.on_draw)
-        self.canvas.mpl_connect("button_press_event", self.on_click)
-        self.canvas.mpl_connect("button_release_event", self.on_release)
-        self.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        self.cid_draw = None
+        self.cid_press = None
+        self.cid_release = None
+        self.cid_motion = None
 
         self.mock_plot()
+
+    def toggle_event_connections(self, enable: bool):
+        if enable:
+            self.cid_draw = self.canvas.mpl_connect("draw_event", self.on_draw)
+            self.cid_press = self.canvas.mpl_connect("button_press_event", self.on_click)
+            self.cid_release = self.canvas.mpl_connect("button_release_event", self.on_release)
+            self.cid_motion = self.canvas.mpl_connect("motion_notify_event", self.on_motion)
+        else:
+            self.canvas.mpl_disconnect(self.cid_draw)
+            self.canvas.mpl_disconnect(self.cid_press)
+            self.canvas.mpl_disconnect(self.cid_release)
+            self.canvas.mpl_disconnect(self.cid_motion)
 
     def on_draw(self, event):
         """
@@ -85,17 +104,83 @@ class PlotCanvas(QWidget):
         """Restore the previously saved background to the canvas."""
         self.canvas.restore_region(self.background)
 
-    def mock_plot(self, data=None):
-        """
-        Create a mock plot for demonstration or initialization.
+    def mock_plot(self, data=None):  # noqa: C901
+        def get_random_line_style_and_width():
+            line_styles = ["-", "--", "-."]
+            line_widths = [0.5, 0.75, 1]
+            return np.random.choice(line_styles), np.random.choice(line_widths)
 
-        Args:
-            data: Optional data list. If None, a default sequence is plotted.
-        """
-        if data is None:
-            data = [1, 2, 3, 4, 5]
-        logger.debug("Plotting mock data for initial display.")
-        self.add_or_update_line("mock", range(len(data)), data)
+        def normalize_data(data):
+            if np.isinf(np.max(data)) or np.isnan(np.max(data)):
+                data_max = np.nanmax(data[~np.isinf(data) & ~np.isnan(data)])
+            else:
+                data_max = np.max(data)
+            if np.isinf(np.min(data)) or np.isnan(np.min(data)):
+                data_min = np.nanmin(data[~np.isinf(data) & ~np.isnan(data)])
+            else:
+                data_min = np.min(data)
+            return (data - data_min) / (data_max - data_min)
+
+        a = np.linspace(0.001, 1, 100)
+        e = 1 - a
+
+        function_type = random.choice(["y", "g", "z"])
+
+        self.axes.clear()
+        self.lines.clear()
+
+        for model_key, funcs in NUC_MODELS_TABLE.items():
+            try:
+                if function_type == "y":
+                    values = normalize_data(funcs["differential_form"](e))
+                elif function_type == "g":
+                    values = normalize_data(funcs["integral_form"](e))
+                elif function_type == "z":
+                    y_values = funcs["differential_form"](e)
+                    g_values = funcs["integral_form"](e)
+                    values = normalize_data(y_values * g_values)
+                else:
+                    continue
+
+                line_style, line_width = get_random_line_style_and_width()
+
+                self.add_or_update_line(
+                    model_key,
+                    a,
+                    values,
+                    label=model_key,
+                    linestyle=line_style,
+                    linewidth=line_width,
+                )
+
+                rand_index = np.random.choice(range(len(a)))
+                self.axes.annotate(
+                    model_key,
+                    (a[rand_index], values[rand_index]),
+                    textcoords="offset points",
+                    xytext=(-10, -10),
+                    ha="center",
+                )
+            except Exception as exc:
+                logger.error(f"Error while plotting model {model_key}: {exc}")
+
+        self.axes.set_xlabel("α", fontsize=10)
+
+        label_mapping = {
+            "g": ("g(α)", "Theoretical view of g(α) graphs"),
+            "y": ("y(α)", "Theoretical view of y(α) master graphs"),
+            "z": ("z(α)", "Theoretical view of z(α) master graphs"),
+        }
+
+        if function_type in label_mapping:
+            ylabel, title = label_mapping[function_type]
+            self.axes.set_ylabel(
+                ylabel,
+            )
+            self.axes.set_title(title, loc="left")
+
+        self.axes.tick_params(axis="both", which="major", labelsize=8)
+        self.canvas.draw_idle()
 
     def add_or_update_line(self, key, x, y, **kwargs):
         """
@@ -393,3 +478,130 @@ class PlotCanvas(QWidget):
         self.canvas.draw_idle()
         self.figure.tight_layout()
         logger.debug("Redrawing canvas after anchor motion.")
+
+    def add_model_fit_annotation(self, annotation: str):
+        annotation_core = annotation.strip("$")
+        lines = annotation_core.split(r"\n")
+
+        block_top = MODEL_FIT_ANNOTATION_CONFIG["block_top"]
+        delta_y = MODEL_FIT_ANNOTATION_CONFIG["delta_y"]
+        n_lines = len(lines)
+        block_bottom = block_top - n_lines * delta_y
+        block_left = MODEL_FIT_ANNOTATION_CONFIG["block_left"]
+        block_right = MODEL_FIT_ANNOTATION_CONFIG["block_right"]
+        rect_width = block_right - block_left
+
+        rect = patches.Rectangle(
+            (block_left, block_bottom),
+            rect_width,
+            block_top - block_bottom,
+            transform=self.axes.transAxes,
+            facecolor=MODEL_FIT_ANNOTATION_CONFIG["facecolor"],
+            edgecolor=MODEL_FIT_ANNOTATION_CONFIG["edgecolor"],
+            alpha=MODEL_FIT_ANNOTATION_CONFIG["alpha"],
+            zorder=11,
+        )
+        self.axes.add_patch(rect)
+
+        for i, line in enumerate(lines):
+            y_pos = block_top - i * delta_y - delta_y / 2
+            self.axes.text(
+                0.5,
+                y_pos,
+                f"${line.strip()}$",
+                transform=self.axes.transAxes,
+                ha="center",
+                va="center",
+                fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
+                zorder=11,
+            )
+
+    def add_model_free_annotation(self, annotation: str):
+        annotation_core = annotation.strip("$")
+        lines = annotation_core.split(r"\n")
+
+        block_top = MODEL_FREE_ANNOTATION_CONFIG["block_top"]
+        delta_y = MODEL_FREE_ANNOTATION_CONFIG["delta_y"]
+        n_lines = len(lines)
+        block_bottom = block_top - n_lines * delta_y
+        block_left = MODEL_FREE_ANNOTATION_CONFIG["block_left"]
+        block_right = MODEL_FREE_ANNOTATION_CONFIG["block_right"]
+        rect_width = block_right - block_left
+
+        rect = patches.Rectangle(
+            (block_left, block_bottom),
+            rect_width,
+            block_top - block_bottom,
+            transform=self.axes.transAxes,
+            facecolor=MODEL_FREE_ANNOTATION_CONFIG["facecolor"],
+            edgecolor=MODEL_FREE_ANNOTATION_CONFIG["edgecolor"],
+            alpha=MODEL_FREE_ANNOTATION_CONFIG["alpha"],
+            zorder=11,
+        )
+        self.axes.add_patch(rect)
+
+        for i, line in enumerate(lines):
+            y_pos = block_top - i * delta_y - delta_y / 2
+            self.axes.text(
+                0.5,
+                y_pos,
+                f"${line.strip()}$",
+                transform=self.axes.transAxes,
+                ha="center",
+                va="center",
+                fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
+                zorder=11,
+            )
+
+    def plot_model_fit_result(self, plot_data_and_kwargs):
+        plot_df = plot_data_and_kwargs[0]["plot_df"]
+        plot_kwargs = plot_data_and_kwargs[0]["plot_kwargs"]
+
+        title = plot_kwargs.pop("title", "Model Plot")
+        xlabel = plot_kwargs.pop("xlabel", "Reverse Temperature")
+        ylabel = plot_kwargs.pop("ylabel", "Value")
+        annotation = plot_kwargs.pop("annotation", None)
+
+        self.axes.clear()
+        self.lines = {}
+        self.add_or_update_line("lhs_clean", plot_df["reverse_temperature"], plot_df["lhs_clean"], label="lhs_clean")
+        self.add_or_update_line("y", plot_df["reverse_temperature"], plot_df["y"], label="y")
+
+        self.axes.set_title(title)
+        self.axes.set_xlabel(xlabel)
+        self.axes.set_ylabel(ylabel)
+
+        self.canvas.draw_idle()
+        self.figure.tight_layout()
+
+        if annotation:
+            self.add_model_fit_annotation(annotation)
+
+    def plot_model_free_result(self, plot_data_and_kwargs):
+        plot_df = plot_data_and_kwargs[0]["plot_df"]
+        plot_kwargs = plot_data_and_kwargs[0]["plot_kwargs"]
+
+        title = plot_kwargs.pop("title", "Model Free Plot")
+        xlabel = plot_kwargs.pop("xlabel", "Conversion")
+        ylabel = plot_kwargs.pop("ylabel", "Value")
+        annotation = plot_kwargs.pop("annotation", None)
+
+        self.axes.clear()
+        self.lines = {}
+
+        x = plot_df["conversion"]
+
+        for col in plot_df.columns:
+            if col != "conversion":
+                self.add_or_update_line(col, x, plot_df[col], label=col)
+
+        self.axes.set_title(title)
+        self.axes.set_xlabel(xlabel)
+        self.axes.set_ylabel(ylabel)
+        self.axes.legend()
+
+        self.canvas.draw_idle()
+        self.figure.tight_layout()
+
+        if annotation:
+            self.add_model_free_annotation(annotation)

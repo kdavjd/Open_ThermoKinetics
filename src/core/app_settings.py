@@ -20,6 +20,8 @@ class OperationType(Enum):
     CALCULATION_FINISHED = "calculation_finished"
     UPDATE_VALUE = "update_value"
     ADD_NEW_SERIES = "add_new_series"
+    UPDATE_SERIES = "update_series"
+    GET_SERIES_VALUE = "get_series_value"
     DELETE_SERIES = "delete_series"
     GET_ALL_SERIES = "get_all_series"
     GET_SERIES = "get_series"
@@ -36,6 +38,13 @@ class OperationType(Enum):
     SCHEME_CHANGE = "scheme_change"
     MODEL_PARAMS_CHANGE = "model_params_change"
     SELECT_SERIES = "select_series"
+    LOAD_DECONVOLUTION_RESULTS = "load_deconvolution_results"
+    MODEL_FIT_CALCULATION = "model_fit_calculation"
+    MODEL_FREE_CALCULATION = "model_free_calculation"
+    GET_MODEL_FIT_REACTION_DF = "get_model_fit_reaction_df"
+    GET_MODEL_FREE_REACTION_DF = "get_model_free_reaction_df"
+    PLOT_MODEL_FIT_RESULT = "plot_model_fit_result"
+    PLOT_MODEL_FREE_RESULT = "plot_model_free_result"
 
 
 MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
@@ -172,18 +181,15 @@ NUC_MODELS_TABLE = {
 }
 
 
-def clamp_fraction(e, eps=1e-8):
-    if e < eps:
-        e = eps
-    elif e > 1 - eps:
-        e = 1 - eps
+def clip_fraction(e, eps=1e-8):
+    e = np.clip(e, eps, 1 - eps)
     return e
 
 
-def clamp_fraction_decorator(eps=1e-8):
+def clip_fraction_decorator(eps=1e-8):
     def decorator(func):
         def wrapper(e, *args, **kwargs):
-            e_clamped = clamp_fraction(e, eps=eps)
+            e_clamped = clip_fraction(e, eps=eps)
             return func(e_clamped, *args, **kwargs)
 
         return wrapper
@@ -195,4 +201,48 @@ NUC_MODELS_LIST = sorted(NUC_MODELS_TABLE.keys())
 for key in NUC_MODELS_LIST:
     if key in NUC_MODELS_TABLE:
         df = NUC_MODELS_TABLE[key]["differential_form"]
-        NUC_MODELS_TABLE[key]["differential_form"] = clamp_fraction_decorator()(df)
+        itg = NUC_MODELS_TABLE[key]["integral_form"]
+        NUC_MODELS_TABLE[key]["differential_form"] = clip_fraction_decorator()(df)
+        NUC_MODELS_TABLE[key]["integral_form"] = clip_fraction_decorator()(itg)
+
+
+MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
+MODEL_FREE_METHODS = [
+    "linear approximation",
+    "Friedman",
+    "Kissinger",
+    "Vyazovkin",
+    "master plots",
+]
+
+MODEL_FIT_ANNOTATION_CONFIG = {
+    "block_top": 0.98,
+    "block_left": 0.4,
+    "block_right": 0.6,
+    "delta_y": 0.03,
+    "fontsize": 8,
+    "facecolor": "white",
+    "edgecolor": "black",
+    "alpha": 1.0,
+}
+
+
+MODEL_FREE_ANNOTATION_CONFIG = {
+    "block_top": 0.98,
+    "block_left": 0.35,
+    "block_right": 0.65,
+    "delta_y": 0.03,
+    "fontsize": 8,
+    "facecolor": "white",
+    "edgecolor": "black",
+    "alpha": 1.0,
+}
+
+
+class SideBarNames(Enum):
+    MODEL_BASED = "model based"
+    MODEL_FREE = "model free"
+    MODEL_FIT = "model fit"
+    EXPERIMENTS = "experiments"
+    SERIES = "series"
+    DECONVOLUTION = "deconvolution"

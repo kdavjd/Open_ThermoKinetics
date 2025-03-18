@@ -11,6 +11,8 @@ from src.core.calculation_data import CalculationsData
 from src.core.calculation_data_operations import CalculationsDataOperations
 from src.core.file_data import FileData
 from src.core.file_operations import ActiveFileOperations
+from src.core.model_fit_calculation import ModelFitCalculation
+from src.core.model_free_calculation import ModelFreeCalculation
 from src.core.series_data import SeriesData
 from src.gui.main_window import MainWindow
 
@@ -25,6 +27,8 @@ def main():
     calculations = Calculations(signals=signals)
     calculations_data_operations = CalculationsDataOperations(signals=signals)
     file_operations = ActiveFileOperations(signals=signals)  # noqa: F841
+    model_fit_calculation = ModelFitCalculation(signals=signals)  # noqa: F841
+    model_free_calculation = ModelFreeCalculation(signals=signals)  # noqa: F841
 
     window.main_tab.sidebar.load_button.file_selected.connect(file_data.load_file)
     window.main_tab.sidebar.chosen_experiment_signal.connect(file_data.plot_dataframe_copy)
