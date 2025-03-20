@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
         logger.info(f"{self.actor_name} handle_request_from_main_tab '{operation}' with {params=}")
 
         operation_handlers = {
-            OperationType.DIFFERENTIAL: self._handle_differential,
+            OperationType.TO_DTG: self._handle_differential,
             OperationType.ADD_REACTION: self._handle_add_reaction,
             OperationType.HIGHLIGHT_REACTION: self._handle_highlight_reaction,
             OperationType.REMOVE_REACTION: self._handle_remove_reaction,
@@ -380,8 +380,8 @@ class MainWindow(QMainWindow):
         self.update_model_simulation(series_name)
 
     def _handle_differential(self, params):
-        params["function"] = self.handle_request_cycle("active_file_operations", OperationType.DIFFERENTIAL)
-        is_modifyed = self.handle_request_cycle("file_data", OperationType.DIFFERENTIAL, **params)
+        params["function"] = self.handle_request_cycle("active_file_operations", OperationType.TO_DTG)
+        is_modifyed = self.handle_request_cycle("file_data", OperationType.TO_DTG, **params)
         if is_modifyed:
             df = self.handle_request_cycle("file_data", OperationType.GET_DF_DATA, **params)
             self.main_tab.plot_canvas.plot_data_from_dataframe(df)

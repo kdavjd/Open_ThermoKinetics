@@ -15,7 +15,7 @@ class ActiveFileOperations(BaseSlots):
         logger.debug(f"{self.actor_name} processing request '{operation}' from '{actor}'")
         response = params.copy()
 
-        if operation == OperationType.DIFFERENTIAL:
+        if operation == OperationType.TO_DTG:
             response["data"] = self.diff_function
         if operation == "load":
             pass

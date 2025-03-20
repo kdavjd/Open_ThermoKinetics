@@ -52,7 +52,7 @@ class MainTab(QWidget):
         self.sidebar.sub_side_bar_needed.connect(self.toggle_sub_sidebar)
         self.sidebar.console_show_signal.connect(self.toggle_console_visibility)
         self.sub_sidebar.experiment_sub_bar.action_buttons_block.cancel_changes_clicked.connect(self.to_main_window)
-        self.sub_sidebar.experiment_sub_bar.action_buttons_block.derivative_clicked.connect(self.to_main_window)
+        self.sub_sidebar.experiment_sub_bar.action_buttons_block.DTG_clicked.connect(self.to_main_window)
         self.sub_sidebar.experiment_sub_bar.action_buttons_block.deconvolution_clicked.connect(self.toggle_sub_sidebar)
         self.sub_sidebar.deconvolution_sub_bar.reactions_table.reaction_added.connect(self.to_main_window)
         self.sub_sidebar.deconvolution_sub_bar.reactions_table.reaction_removed.connect(self.to_main_window)
