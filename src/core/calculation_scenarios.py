@@ -89,7 +89,12 @@ class DeconvolutionScenario(BaseCalculationScenario):
                     best_combination = combination
 
                     self.calculations.new_best_result.emit(
-                        {"best_mse": best_mse, "best_combination": best_combination, "params": params_array}
+                        {
+                            "best_mse": best_mse,
+                            "best_combination": best_combination,
+                            "params": params_array,
+                            "reaction_variables": reaction_variables,
+                        }
                     )
 
             return best_mse
@@ -105,13 +110,6 @@ class ModelBasedScenario(BaseCalculationScenario):
         return self.params.get("calculation_settings", {}).get("method", "differential_evolution")
 
     def get_bounds(self) -> list[tuple]:
-        """
-        Порядок параметров в оптимизационном векторе:
-          1. logA: [log_A_min, log_A_max] (индексы 0 ... num_reactions - 1)
-          2. Ea:   [Ea_min, Ea_max]       (индексы num_reactions ... 2*num_reactions - 1)
-          3. модель: [0, len(allowed_models) - 1] (индексы 2*num_reactions ... 3*num_reactions - 1)
-          4. contribution: [contribution_min, contribution_max] (индексы 3*num_reactions ... 4*num_reactions - 1)
-        """
         scheme = self.params.get("reaction_scheme")
         if not scheme:
             raise ValueError("No 'reaction_scheme' provided for ModelBasedScenario.")

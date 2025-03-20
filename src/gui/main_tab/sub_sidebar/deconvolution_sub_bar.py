@@ -804,17 +804,18 @@ class CalcButtons(QWidget):
         Check that a file is active and settings are chosen before starting the calculation.
         If settings are missing, prompt the user to configure them.
         """
-        if not self.parent.reactions_table.active_file:
+        parent: DeconvolutionSubBar = self.parent
+        if not parent.reactions_table.active_file:
             QMessageBox.warning(self, "The file is not selected.", "Choose an experiment")
             return
 
-        settings = self.parent.reactions_table.calculation_settings.get(self.parent.reactions_table.active_file, {})
-        deconvolution_settings = self.parent.reactions_table.deconvolution_settings.get(
-            self.parent.reactions_table.active_file, {}
+        settings = parent.reactions_table.calculation_settings.get(parent.reactions_table.active_file, {})
+        deconvolution_settings = parent.reactions_table.deconvolution_settings.get(
+            parent.reactions_table.active_file, {}
         )
         if not settings or not deconvolution_settings:
             QMessageBox.information(self, "Settings are required.", "The calculation settings are not set.")
-            self.parent.open_settings_dialog()
+            parent.open_settings_dialog()
         else:
             data = {
                 "path_keys": [],

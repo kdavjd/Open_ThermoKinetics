@@ -81,6 +81,10 @@ class Calculations(BaseSlots):
 
         try:
             bounds = scenario_instance.get_bounds()
+            for lb, ub in bounds:
+                if ub < lb:
+                    console.log("Invalid bounds: upper bound is less than lower bound.")
+                    raise ValueError("Invalid bounds: upper bound is less than lower bound.")
             target_function = scenario_instance.get_target_function()
             optimization_method = scenario_instance.get_optimization_method()
             strategy_type = scenario_instance.get_result_strategy_type()
@@ -89,7 +93,6 @@ class Calculations(BaseSlots):
 
             if optimization_method == "differential_evolution":
                 calc_params = params.get("calculation_settings", {}).get("method_parameters", {}).copy()
-
                 self.start_differential_evolution(bounds=bounds, target_function=target_function, **calc_params)
             else:
                 logger.error(f"Unsupported optimization method: {optimization_method}")
@@ -109,7 +112,10 @@ class Calculations(BaseSlots):
     @pyqtSlot(object)
     def _calculation_finished(self, result):
         try:
-            if isinstance(result, OptimizeResult):
+            if isinstance(result, Exception):
+                logger.error(f"Calculation error: {result}")
+                console.log(f"Calculation error: {result}")
+            elif isinstance(result, OptimizeResult):
                 x = result.x
                 fun = result.fun
                 logger.info(f"Calculation completed. Optimal parameters: {x}, fun={fun}")
@@ -119,8 +125,7 @@ class Calculations(BaseSlots):
             else:
                 logger.info("Calculation finished with a non-OptimizeResult object.")
                 console.log(f"Calculation result: {result}")
-
-        except ValueError as e:
+        except Exception as e:
             logger.error(f"Error processing the result: {e}")
             console.log("An error occurred while processing the result. Check logs for details.")
 

@@ -1,5 +1,7 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 
+from src.core.logger_config import logger
+
 
 class CalculationThread(QThread):
     result_ready = pyqtSignal(object)
@@ -11,5 +13,9 @@ class CalculationThread(QThread):
         self.kwargs = kwargs
 
     def run(self):
-        result = self.calculation_func(*self.args, **self.kwargs)
+        try:
+            result = self.calculation_func(*self.args, **self.kwargs)
+        except Exception as e:
+            logger.error(f"Error during calculation: {e}")
+            result = e
         self.result_ready.emit(result)

@@ -21,6 +21,9 @@ class DeconvolutionStrategy(BestResultStrategy):
         best_mse = result.get("best_mse")
         best_combination = result.get("best_combination")
         params = result.get("params")
+        reaction_variables = result.get("reaction_variables")
+
+        params_per_reaction = [len(reaction_variables[key]) for key in reaction_variables.keys()]
 
         if best_mse < self.calculation.best_mse:
             self.calculation.best_mse = best_mse
@@ -44,10 +47,10 @@ class DeconvolutionStrategy(BestResultStrategy):
 
             idx = 0
             parameters_yaml = "parameters:\n"
-            for i, func_type in enumerate(best_combination, start=1):
+            for i, func_type in enumerate(best_combination):
                 count = reaction_param_count(func_type)
-                reaction_params = params[idx : idx + count]
-                idx += count
+                reaction_params = params[idx : idx + params_per_reaction[i]]
+                idx += params_per_reaction[i]
 
                 param_dict = {
                     "h": None,
