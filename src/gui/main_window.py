@@ -90,6 +90,7 @@ class MainWindow(QMainWindow):
 
         operation_handlers = {
             OperationType.TO_DTG: self._handle_differential,
+            OperationType.TO_A_T: self._handle_to_a_t,
             OperationType.ADD_REACTION: self._handle_add_reaction,
             OperationType.HIGHLIGHT_REACTION: self._handle_highlight_reaction,
             OperationType.REMOVE_REACTION: self._handle_remove_reaction,
@@ -378,6 +379,15 @@ class MainWindow(QMainWindow):
 
         self.main_tab.sub_sidebar.model_based.update_scheme_data(scheme_data)
         self.update_model_simulation(series_name)
+
+    def _handle_to_a_t(self, params):
+        params["function"] = self.handle_request_cycle("active_file_operations", OperationType.TO_A_T)
+        is_modifyed = self.handle_request_cycle("file_data", OperationType.TO_A_T, **params)
+        if is_modifyed:
+            df = self.handle_request_cycle("file_data", OperationType.GET_DF_DATA, **params)
+            self.main_tab.plot_canvas.plot_data_from_dataframe(df)
+        else:
+            logger.error(f"{self.actor_name} no response in handle_request_from_main_tab")
 
     def _handle_differential(self, params):
         params["function"] = self.handle_request_cycle("active_file_operations", OperationType.TO_DTG)

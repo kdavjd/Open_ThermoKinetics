@@ -119,6 +119,7 @@ class BackgroundSubtractionBlock(QWidget):
 
 class ActionButtonsBlock(QWidget):
     cancel_changes_clicked = pyqtSignal(dict)
+    conversion_clicked = pyqtSignal(dict)
     DTG_clicked = pyqtSignal(dict)
     deconvolution_clicked = pyqtSignal(str)
 
@@ -127,19 +128,25 @@ class ActionButtonsBlock(QWidget):
         self.setLayout(QVBoxLayout())
 
         self.cancel_changes_button = QPushButton("reset changes")
+        self.conversion_button = QPushButton("to α(t)")
         self.DTG_button = QPushButton("to DTG")
         self.deconvolution_button = QPushButton("deconvolution")
 
         self.cancel_changes_button.clicked.connect(self.emit_cancel_changes_signal)
+        self.conversion_button.clicked.connect(self.emit_conversion_signal)
         self.DTG_button.clicked.connect(self.emit_DTG_signal)
         self.deconvolution_button.clicked.connect(self.emit_deconvolution_signal)
 
+        self.layout().addWidget(self.conversion_button)
         self.layout().addWidget(self.DTG_button)
         self.layout().addWidget(self.deconvolution_button)
         self.layout().addWidget(self.cancel_changes_button)
 
     def emit_cancel_changes_signal(self):
         self.cancel_changes_clicked.emit({"operation": OperationType.RESET_FILE_DATA})
+
+    def emit_conversion_signal(self):
+        self.conversion_clicked.emit({"operation": OperationType.TO_A_T})
 
     def emit_DTG_signal(self):
         self.DTG_clicked.emit({"operation": OperationType.TO_DTG})

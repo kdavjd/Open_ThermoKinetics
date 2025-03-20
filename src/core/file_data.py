@@ -225,7 +225,18 @@ class FileData(BaseSlots):
             console.log("\n\nError: 'file_name' must be specified for the requested operation.")
             return
 
-        if operation == OperationType.TO_DTG:
+        if operation == OperationType.TO_A_T:
+            if not self.check_operation_executed(file_name, OperationType.TO_A_T):
+                self.modify_data(func, params)
+            else:
+                console.log("\nThe data has already been transformed to α(t).")
+            params["data"] = True
+
+        elif operation == OperationType.TO_DTG:
+            if not self.check_operation_executed(file_name, OperationType.TO_A_T):
+                console.log("\nBefore transforming to DTG, you need to transform to α(t).")
+                params["data"] = True
+                return
             if not self.check_operation_executed(file_name, OperationType.TO_DTG):
                 self.modify_data(func, params)
             else:

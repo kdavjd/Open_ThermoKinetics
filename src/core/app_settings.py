@@ -7,6 +7,7 @@ class OperationType(Enum):
     ADD_REACTION = "add_reaction"
     REMOVE_REACTION = "remove_reaction"
     HIGHLIGHT_REACTION = "highlight_reaction"
+    TO_A_T = "to_a_t"
     TO_DTG = "to_dtg"
     RESET_FILE_DATA = "reset_file_data"
     IMPORT_REACTIONS = "import_reactions"
