@@ -728,7 +728,7 @@ class CoeffsTable(QTableWidget):
                 # data structure: [x_range, function_type, params]
                 data = reaction_params[key][2]
                 for i in range(min(len(row_labels), len(data))):
-                    value = f"{data[i]:.2f}"
+                    value = f"{data[i]:.3f}"
                     self.setItem(i, j, QTableWidgetItem(value))
             except IndexError as e:
                 logger.error(f"Index error processing data '{key}': {e}")

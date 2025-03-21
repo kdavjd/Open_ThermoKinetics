@@ -81,7 +81,7 @@ class DeconvolutionStrategy(BestResultStrategy):
                     parameters_yaml += f"    {key}: {val_str}\n"
 
             console.log("\nNew best result found:")
-            console.log(f"\nBest MSE: {best_mse:.4f}")
+            console.log(f"\nBest MSE*10e4: {10_000 * best_mse:.7f}")
             console.log(f"\nReaction combination: {best_combination}")
             console.log(parameters_yaml.rstrip())
 
