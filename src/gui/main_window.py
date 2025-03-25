@@ -173,6 +173,7 @@ class MainWindow(QMainWindow):
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
         if not self._is_valid_result_data(result_df, series_name, fit_method):
+            logger.debug(f"{self.actor_name} invalid result data for {keys=}")
             return
         params["model_series"] = result_df[result_df["Model"] == model].copy()
 
@@ -556,5 +557,5 @@ class MainWindow(QMainWindow):
         if isinstance(result_df, pd.DataFrame):
             if result_df.empty:
                 console.log("\nThe model fit result is empty.\n")
-            return False
+                return False
         return True
