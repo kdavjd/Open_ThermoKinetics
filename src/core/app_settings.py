@@ -85,6 +85,47 @@ MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
     "constraints": (),
 }
 
+MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
+MODEL_FREE_METHODS = [
+    "linear approximation",
+    "Friedman",
+    "Kissinger",
+    "Vyazovkin",
+    "master plots",
+]
+
+MODEL_FIT_ANNOTATION_CONFIG = {
+    "block_top": 0.98,
+    "block_left": 0.4,
+    "block_right": 0.6,
+    "delta_y": 0.03,
+    "fontsize": 8,
+    "facecolor": "white",
+    "edgecolor": "black",
+    "alpha": 1.0,
+}
+
+
+MODEL_FREE_ANNOTATION_CONFIG = {
+    "block_top": 0.98,
+    "block_left": 0.35,
+    "block_right": 0.65,
+    "delta_y": 0.03,
+    "fontsize": 8,
+    "facecolor": "white",
+    "edgecolor": "black",
+    "alpha": 1.0,
+}
+
+
+class SideBarNames(Enum):
+    MODEL_BASED = "model based"
+    MODEL_FREE = "model free"
+    MODEL_FIT = "model fit"
+    EXPERIMENTS = "experiments"
+    SERIES = "series"
+    DECONVOLUTION = "deconvolution"
+
 
 def ensure_array(func):
     def wrapper(e, *args, **kwargs):
@@ -645,7 +686,6 @@ def integral_B1(e):
     return np.log((1 - e) / e)
 
 
-# Обновлённый словарь моделей
 NUC_MODELS_TABLE = {
     "F1/3": {"differential_form": differential_F1_3, "integral_form": integral_F1_3},
     "F3/4": {"differential_form": differential_F3_4, "integral_form": integral_F3_4},
@@ -688,58 +728,4 @@ NUC_MODELS_TABLE = {
     "B1": {"differential_form": differential_B1, "integral_form": integral_B1},
 }
 
-
 NUC_MODELS_LIST = sorted(NUC_MODELS_TABLE.keys())
-
-
-# def clip_fraction_decorator(eps=1e-8):
-#     def decorator(func):
-#         def wrapper(e, *args, **kwargs):
-#             e_clamped = clip_fraction(e, eps=eps)
-#             return func(e_clamped, *args, **kwargs)
-
-#         return wrapper
-
-#     return decorator
-
-
-MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
-MODEL_FREE_METHODS = [
-    "linear approximation",
-    "Friedman",
-    "Kissinger",
-    "Vyazovkin",
-    "master plots",
-]
-
-MODEL_FIT_ANNOTATION_CONFIG = {
-    "block_top": 0.98,
-    "block_left": 0.4,
-    "block_right": 0.6,
-    "delta_y": 0.03,
-    "fontsize": 8,
-    "facecolor": "white",
-    "edgecolor": "black",
-    "alpha": 1.0,
-}
-
-
-MODEL_FREE_ANNOTATION_CONFIG = {
-    "block_top": 0.98,
-    "block_left": 0.35,
-    "block_right": 0.65,
-    "delta_y": 0.03,
-    "fontsize": 8,
-    "facecolor": "white",
-    "edgecolor": "black",
-    "alpha": 1.0,
-}
-
-
-class SideBarNames(Enum):
-    MODEL_BASED = "model based"
-    MODEL_FREE = "model free"
-    MODEL_FIT = "model fit"
-    EXPERIMENTS = "experiments"
-    SERIES = "series"
-    DECONVOLUTION = "deconvolution"

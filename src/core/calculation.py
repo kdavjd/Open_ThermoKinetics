@@ -93,6 +93,11 @@ class Calculations(BaseSlots):
 
             if optimization_method == "differential_evolution":
                 calc_params = params.get("calculation_settings", {}).get("method_parameters", {}).copy()
+                constraints = scenario_instance.get_constraints()
+                if constraints == []:
+                    logger.warning("No constraints provided.")
+                else:
+                    calc_params["constraints"] = constraints
                 self.start_differential_evolution(bounds=bounds, target_function=target_function, **calc_params)
             else:
                 logger.error(f"Unsupported optimization method: {optimization_method}")

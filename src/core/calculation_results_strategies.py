@@ -101,12 +101,10 @@ class ModelBasedCalculationStrategy(BestResultStrategy):
 
     def handle(self, result: Dict):
         best_mse = result.get("best_mse")
-        best_combination = result.get("best_combination")
         params = result.get("params")
 
         if best_mse < self.calculation.best_mse:
             self.calculation.best_mse = best_mse
-            self.calculation.best_combination = best_combination
             self.calculation.mse_history.append((datetime.datetime.now(), best_mse))
             logger.info("A new best MSE has been found in model calculation.")
 
@@ -116,5 +114,4 @@ class ModelBasedCalculationStrategy(BestResultStrategy):
 
             console.log("\nNew best result found in model calculation:")
             console.log(f"Best MSE: {best_mse:.4f}")
-            console.log(f"Best combination: {best_combination}")
             console.log(f"Parameters: {params}")
