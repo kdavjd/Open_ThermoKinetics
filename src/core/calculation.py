@@ -58,7 +58,10 @@ class Calculations(BaseSlots):
             self.calculation_active = False
             self.result_strategy = None
             self.thread.requestInterruption()
+            console.log("\nCalculation thread has been requested to stop. Wait for it to finish.")
             return True
+        else:
+            logger.info("No active calculation to stop.")
         return False
 
     @pyqtSlot(dict)
@@ -124,8 +127,10 @@ class Calculations(BaseSlots):
     def _calculation_finished(self, result):
         try:
             if isinstance(result, Exception):
-                logger.error(f"Calculation error: {result}")
-                console.log(f"Calculation error: {result}")
+                if str(result) == "array must not contain infs or NaNs":
+                    console.log("\nСalculation was successfully terminated.")
+                else:
+                    logger.error(f"Calculation error: {result}")
             elif isinstance(result, OptimizeResult):
                 x = result.x
                 fun = result.fun

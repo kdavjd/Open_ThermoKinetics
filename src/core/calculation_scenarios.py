@@ -187,11 +187,14 @@ def integrate_ode_for_beta(
 
 
 def model_based_objective_function(
-    params, species_list, reactions, num_species, num_reactions, betas, all_exp_masses, exp_temperature, R
+    params, species_list, reactions, num_species, num_reactions, betas, all_exp_masses, exp_temperature, R, stop_event
 ):
     total_mse = 0.0
     contributions = params[3 * num_reactions : 4 * num_reactions]
     for beta, exp_mass in zip(betas, all_exp_masses):
+        if stop_event.is_set():
+            return float("inf")
+
         mse_i = integrate_ode_for_beta(
             beta,
             contributions,
@@ -351,6 +354,7 @@ class ModelBasedTargetFunction:
                 self.all_exp_masses,
                 self.exp_temperature,
                 self.R,
+                self.stop_event,
             )
             with self.lock:
                 if total_mse < self.best_mse.value:
@@ -365,8 +369,6 @@ class ModelBasedTargetFunction:
 
 def make_de_callback(target_obj, calculations_instance):
     def callback(x, convergence):
-        if calculations_instance.stop_event.is_set():
-            return True
         best_mse = target_obj.best_mse.value
         best_params = list(target_obj.best_params)
         calculations_instance.new_best_result.emit(
