@@ -230,8 +230,8 @@ class ModelBasedScenario(BaseCalculationScenario):
             bounds.append((logA_min, logA_max))
 
         for reaction in reactions:
-            Ea_min = reaction.get("Ea_min", 1) * 1000  # to J/mol
-            Ea_max = reaction.get("Ea_max", 2000) * 1000  # to J/mol
+            Ea_min = reaction.get("Ea_min", 1)
+            Ea_max = reaction.get("Ea_max", 2000)
             bounds.append((Ea_min, Ea_max))
 
         for reaction in reactions:
@@ -305,6 +305,7 @@ class ModelBasedScenario(BaseCalculationScenario):
             best_mse,
             best_params,
             lock,
+            stop_event=self.calculations.stop_event,
         )
 
 
@@ -321,6 +322,7 @@ class ModelBasedTargetFunction:
         best_mse,
         best_params,
         lock,
+        stop_event,
     ):
         self.species_list = species_list
         self.reactions = reactions
@@ -333,8 +335,11 @@ class ModelBasedTargetFunction:
         self.best_params = best_params
         self.lock = lock
         self.R = R
+        self.stop_event = stop_event
 
     def __call__(self, params: np.ndarray) -> float:
+        if self.stop_event.is_set():
+            return float("inf")
         try:
             total_mse = model_based_objective_function(
                 params,
@@ -352,7 +357,6 @@ class ModelBasedTargetFunction:
                     self.best_mse.value = total_mse
                     del self.best_params[:]
                     self.best_params.extend(params.tolist())
-
             return total_mse
         except Exception as e:
             logger.error(f"Error in ModelBasedTargetFunction: {e}")
@@ -361,9 +365,10 @@ class ModelBasedTargetFunction:
 
 def make_de_callback(target_obj, calculations_instance):
     def callback(x, convergence):
+        if calculations_instance.stop_event.is_set():
+            return True
         best_mse = target_obj.best_mse.value
         best_params = list(target_obj.best_params)
-
         calculations_instance.new_best_result.emit(
             {
                 "best_mse": best_mse,

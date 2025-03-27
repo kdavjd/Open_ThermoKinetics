@@ -1,3 +1,4 @@
+from multiprocessing import Manager
 from typing import Callable, Optional
 
 from core.base_signals import BaseSlots
@@ -28,6 +29,9 @@ class Calculations(BaseSlots):
         self.mse_history = []
         self.calculation_active = False
 
+        self.manager = Manager()
+        self.stop_event = self.manager.Event()
+
         self.deconvolution_strategy = DeconvolutionStrategy(self)
         self.model_based_calculation_strategy = ModelBasedCalculationStrategy(self)
         self.result_strategy: Optional[BestResultStrategy] = None
@@ -41,6 +45,7 @@ class Calculations(BaseSlots):
             raise ValueError(f"Unknown strategy type: {strategy_type}")
 
     def start_calculation_thread(self, func: Callable, *args, **kwargs) -> None:
+        self.stop_event.clear()
         self.calculation_active = True
         self.thread = CalculationThread(func, *args, **kwargs)
         self.thread.result_ready.connect(self._calculation_finished)
@@ -49,6 +54,7 @@ class Calculations(BaseSlots):
     def stop_calculation(self):
         if self.thread and self.thread.isRunning():
             logger.info("Stopping current calculation...")
+            self.stop_event.set()
             self.calculation_active = False
             self.result_strategy = None
             self.thread.requestInterruption()
