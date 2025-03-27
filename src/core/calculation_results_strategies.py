@@ -100,18 +100,27 @@ class ModelBasedCalculationStrategy(BestResultStrategy):
         self.calculation = calculation_instance
 
     def handle(self, result: Dict):
-        best_mse = result.get("best_mse")
-        params = result.get("params")
+        try:
+            best_mse = result.get("best_mse")
+            params = result.get("params")
 
-        if best_mse < self.calculation.best_mse:
-            self.calculation.best_mse = best_mse
-            self.calculation.mse_history.append((datetime.datetime.now(), best_mse))
-            logger.info("A new best MSE has been found in model calculation.")
+            logger.debug(f"Received new result for best_mse: {best_mse} with params: {params}")
 
-            self.calculation.handle_request_cycle(
-                "main_window", OperationType.PLOT_MSE_LINE, mse_data=self.calculation.mse_history
-            )
+            if best_mse < self.calculation.best_mse:
+                logger.debug(f"New best MSE found: {best_mse} (previous: {self.calculation.best_mse})")
+                self.calculation.best_mse = best_mse
+                self.calculation.mse_history.append((datetime.datetime.now(), best_mse))
+                logger.info("A new best MSE has been found in model calculation.")
 
-            console.log("\nNew best result found in model calculation:")
-            console.log(f"Best MSE: {best_mse:.4f}")
-            console.log(f"Parameters: {params}")
+                self.calculation.handle_request_cycle(
+                    "main_window", OperationType.PLOT_MSE_LINE, mse_data=self.calculation.mse_history
+                )
+
+                console.log("\nNew best result found in model calculation:")
+                console.log(f"Best MSE: {best_mse:.4f}")
+                console.log(f"Parameters: {params}")
+
+        except Exception as e:
+            logger.error(f"Error in ModelBasedCalculationStrategy: {e}")
+            console.log(f"Error in ModelBasedCalculationStrategy: {e}")
+            raise

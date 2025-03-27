@@ -523,7 +523,7 @@ class MainWindow(QMainWindow):
         params["experimental_data"] = series_entry.get("experimental_data")
         params["calculation_settings"] = series_entry.get("calculation_settings")
 
-        logger.debug(f"Emitting model_based_calculation_signal with params: {params}")
+        logger.info(f"Emitting model_based_calculation_signal with params: {params}")
         self.model_based_calculation_signal.emit(params)
 
     def update_model_simulation(self, series_name: str):

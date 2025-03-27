@@ -10,7 +10,7 @@ from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from scipy.optimize import OptimizeResult, differential_evolution
 
 from src.core.app_settings import OperationType
-from src.core.calculation_scenarios import SCENARIO_REGISTRY
+from src.core.calculation_scenarios import SCENARIO_REGISTRY, make_de_callback
 from src.core.calculation_thread import CalculationThread
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
@@ -93,11 +93,11 @@ class Calculations(BaseSlots):
 
             if optimization_method == "differential_evolution":
                 calc_params = params.get("calculation_settings", {}).get("method_parameters", {}).copy()
-                constraints = scenario_instance.get_constraints()
-                if constraints == []:
-                    logger.warning("No constraints provided.")
-                else:
-                    calc_params["constraints"] = constraints
+
+                if scenario_key == "model_based_calculation":
+                    calc_params["constraints"] = scenario_instance.get_constraints()
+                    calc_params["callback"] = make_de_callback(target_function, self)
+
                 self.start_differential_evolution(bounds=bounds, target_function=target_function, **calc_params)
             else:
                 logger.error(f"Unsupported optimization method: {optimization_method}")
@@ -143,7 +143,12 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(dict)
     def handle_new_best_result(self, result: dict):
-        if self.result_strategy:
-            self.result_strategy.handle(result)
-        else:
-            logger.warning("No strategy set. Best result will not be handled.")
+        try:
+            logger.debug(f"Handling new best result: {result}")
+            if self.result_strategy:
+                self.result_strategy.handle(result)
+            else:
+                logger.warning("No strategy set. Best result will not be handled.")
+        except Exception as e:
+            logger.error(f"Error handling new best result: {e}")
+            console.log(f"Error handling new best result: {e}")

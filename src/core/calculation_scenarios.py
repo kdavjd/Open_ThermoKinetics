@@ -2,6 +2,7 @@ from multiprocessing import Manager
 from typing import Callable, Dict
 
 import numpy as np
+from scipy.constants import R
 from scipy.integrate import solve_ivp
 from scipy.optimize import NonlinearConstraint
 
@@ -140,6 +141,73 @@ def constraint_fun(X, chains, num_reactions):
     return np.array([np.sum(contributions[chain]) - 1.0 for chain in chains])
 
 
+def ode_function(T, y, beta, params, species_list, reactions, num_species, num_reactions, R):
+    dYdt = np.zeros_like(y)
+    for i in range(num_reactions):
+        src = reactions[i]["from"]
+        tgt = reactions[i]["to"]
+        src_index = species_list.index(src)
+        tgt_index = species_list.index(tgt)
+        e_value = y[src_index]
+        model_param_index = 2 * num_reactions + i
+        model_index = int(np.clip(round(params[model_param_index]), 0, len(reactions[i]["allowed_models"]) - 1))
+        reaction_type = reactions[i]["allowed_models"][model_index]
+        model = NUC_MODELS_TABLE.get(reaction_type)
+        f_e = model["differential_form"](e_value) if model else e_value
+        logA = params[i]
+        Ea = params[num_reactions + i]
+        k_i = (10**logA * np.exp(-Ea * 1000 / (R * T))) / beta
+        rate = k_i * f_e
+        dYdt[src_index] -= rate
+        dYdt[tgt_index] += rate
+        dYdt[num_species + i] = rate
+    return dYdt
+
+
+def integrate_ode_for_beta(
+    beta, contributions, params, species_list, reactions, num_species, num_reactions, exp_temperature, exp_mass, R
+):
+    y0 = np.zeros(num_species + num_reactions)
+    if num_species > 0:
+        y0[0] = 1.0
+
+    def ode_wrapper(T, y):
+        return ode_function(T, y, beta, params, species_list, reactions, num_species, num_reactions, R)
+
+    sol = solve_ivp(ode_wrapper, [exp_temperature[0], exp_temperature[-1]], y0, t_eval=exp_temperature, method="RK45")
+    if not sol.success:
+        return 1e12
+    rates_int = sol.y[num_species : num_species + num_reactions, :]
+    M0 = exp_mass[0]
+    Mfin = exp_mass[-1]
+    int_sum = np.sum(contributions[:, np.newaxis] * rates_int, axis=0)
+    model_mass = M0 - (M0 - Mfin) * int_sum
+    mse_i = np.mean((model_mass - exp_mass) ** 2)
+    return mse_i
+
+
+def model_based_objective_function(
+    params, species_list, reactions, num_species, num_reactions, betas, all_exp_masses, exp_temperature, R
+):
+    total_mse = 0.0
+    contributions = params[3 * num_reactions : 4 * num_reactions]
+    for beta, exp_mass in zip(betas, all_exp_masses):
+        mse_i = integrate_ode_for_beta(
+            beta,
+            contributions,
+            params,
+            species_list,
+            reactions,
+            num_species,
+            num_reactions,
+            exp_temperature,
+            exp_mass,
+            R,
+        )
+        total_mse += mse_i
+    return total_mse
+
+
 class ModelBasedScenario(BaseCalculationScenario):
     def get_result_strategy_type(self) -> str:
         return "model_based_calculation"
@@ -162,8 +230,8 @@ class ModelBasedScenario(BaseCalculationScenario):
             bounds.append((logA_min, logA_max))
 
         for reaction in reactions:
-            Ea_min = reaction.get("Ea_min", 1)
-            Ea_max = reaction.get("Ea_max", 2000)
+            Ea_min = reaction.get("Ea_min", 1) * 1000  # to J/mol
+            Ea_max = reaction.get("Ea_max", 2000) * 1000  # to J/mol
             bounds.append((Ea_min, Ea_max))
 
         for reaction in reactions:
@@ -186,12 +254,8 @@ class ModelBasedScenario(BaseCalculationScenario):
                 raise ValueError("No valid reaction chains found.")
 
             def constraint_function(X):
-                try:
-                    contributions = X[3 * num_reactions : 4 * num_reactions]
-                    return np.array([np.sum(contributions[chain]) - 1.0 for chain in chains])
-                except Exception as e:
-                    logger.error(f"Error in constraint function: {e}")
-                    raise
+                contributions = X[3 * num_reactions : 4 * num_reactions]
+                return np.array([np.sum(contributions[chain]) - 1.0 for chain in chains])
 
             return [NonlinearConstraint(constraint_function, [0.0] * len(chains), [0.0] * len(chains))]
 
@@ -199,7 +263,7 @@ class ModelBasedScenario(BaseCalculationScenario):
             logger.error(f"Error in get_constraints: {e}")
             return []
 
-    def get_target_function(self) -> Callable:
+    def get_target_function(self) -> callable:
         scheme = self.params.get("reaction_scheme")
         reactions = scheme.get("reactions")
         components = scheme.get("components")
@@ -227,6 +291,7 @@ class ModelBasedScenario(BaseCalculationScenario):
 
         manager = Manager()
         best_mse = manager.Value("d", np.inf)
+        best_params = manager.list()
         lock = manager.Lock()
 
         return ModelBasedTargetFunction(
@@ -238,8 +303,8 @@ class ModelBasedScenario(BaseCalculationScenario):
             all_exp_masses,
             exp_temperature,
             best_mse,
+            best_params,
             lock,
-            self.calculations,
         )
 
 
@@ -254,8 +319,8 @@ class ModelBasedTargetFunction:
         all_exp_masses,
         exp_temperature,
         best_mse,
+        best_params,
         lock,
-        calculations,
     ):
         self.species_list = species_list
         self.reactions = reactions
@@ -265,89 +330,48 @@ class ModelBasedTargetFunction:
         self.all_exp_masses = all_exp_masses
         self.exp_temperature = exp_temperature
         self.best_mse = best_mse
+        self.best_params = best_params
         self.lock = lock
-        self.R = 8.314
-        self.calculations = calculations
+        self.R = R
 
     def __call__(self, params: np.ndarray) -> float:
-        total_mse = 0.0
-        n = self.num_reactions
-
-        contributions = params[3 * n : 4 * n]
-
-        def ode_func(T, y, beta):
-            dYdt = np.zeros_like(y)
-            conc = y[: self.num_species]
-            for i in range(n):
-                src = self.reactions[i]["from"]
-                tgt = self.reactions[i]["to"]
-                src_index = self.species_list.index(src)
-                tgt_index = self.species_list.index(tgt)
-                e_value = conc[src_index]
-
-                model_param_index = 2 * n + i
-                model_index = int(
-                    np.clip(round(params[model_param_index]), 0, len(self.reactions[i]["allowed_models"]) - 1)
-                )
-                reaction_type = self.reactions[i]["allowed_models"][model_index]
-                model = NUC_MODELS_TABLE.get(reaction_type)
-                f_e = model["differential_form"](e_value) if model else e_value
-
-                logA = params[i]
-                Ea = params[n + i]
-                k_i = (10**logA * np.exp(-Ea * 1000 / (self.R * T))) / beta
-
-                rate = k_i * f_e
-                dYdt[src_index] -= rate
-                dYdt[tgt_index] += rate
-                dYdt[self.num_species + i] = rate
-            return dYdt
-
-        for beta_val in self.betas:
-            mse_i = self.integrate_ode(beta_val, contributions, params, ode_func)
-            total_mse += mse_i
-
-        with self.lock:
-            if total_mse < self.best_mse.value:
-                self.best_mse.value = total_mse
-                self.calculations.new_best_result.emit(
-                    {
-                        "best_mse": total_mse,
-                        "params": params,
-                    }
-                )
-
-        return total_mse
-
-    def integrate_ode(self, beta_val, contributions, params, ode_func):
         try:
-            exp_mass_i = self.all_exp_masses[0]
-            T_array = self.exp_temperature
-
-            y0 = np.zeros(self.num_species + self.num_reactions)
-            if self.num_species > 0:
-                y0[0] = 1.0
-
-            sol = solve_ivp(
-                lambda T, y: ode_func(T, y, beta_val),
-                [T_array[0], T_array[-1]],
-                y0,
-                t_eval=T_array,
-                method="RK45",
+            total_mse = model_based_objective_function(
+                params,
+                self.species_list,
+                self.reactions,
+                self.num_species,
+                self.num_reactions,
+                self.betas,
+                self.all_exp_masses,
+                self.exp_temperature,
+                self.R,
             )
-            if not sol.success:
-                return 1e12
+            with self.lock:
+                if total_mse < self.best_mse.value:
+                    self.best_mse.value = total_mse
+                    del self.best_params[:]
+                    self.best_params.extend(params.tolist())
 
-            rates_int = sol.y[self.num_species : self.num_species + self.num_reactions, :]
-            M0 = exp_mass_i[0]
-            Mfin = exp_mass_i[-1]
-            int_sum = np.sum(contributions[:, np.newaxis] * rates_int, axis=0)
-            model_mass = M0 - (M0 - Mfin) * int_sum
-            mse_i = np.mean((model_mass - exp_mass_i) ** 2)
-            return mse_i
+            return total_mse
         except Exception as e:
-            logger.error(f"Error in ODE integration: {e}")
-            return 1e12
+            logger.error(f"Error in ModelBasedTargetFunction: {e}")
+            raise
+
+
+def make_de_callback(target_obj, calculations_instance):
+    def callback(x, convergence):
+        best_mse = target_obj.best_mse.value
+        best_params = list(target_obj.best_params)
+
+        calculations_instance.new_best_result.emit(
+            {
+                "best_mse": best_mse,
+                "params": best_params,
+            }
+        )
+
+    return callback
 
 
 SCENARIO_REGISTRY = {

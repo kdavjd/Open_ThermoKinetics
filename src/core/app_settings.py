@@ -51,19 +51,19 @@ class OperationType(Enum):
 
 MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
     "strategy": "best1bin",
-    "maxiter": 60,
-    "popsize": 3,
+    "maxiter": 200,
+    "popsize": 2,
     "tol": 0.01,
     "mutation": (0.5, 1),
     "recombination": 0.7,
     "seed": None,
     "callback": None,
-    "disp": False,
+    "disp": True,
     "polish": True,
     "init": "latinhypercube",
     "atol": 0,
     "updating": "deferred",
-    "workers": 1,
+    "workers": 4,
     "constraints": (),
 }
 
