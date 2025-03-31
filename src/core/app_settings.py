@@ -59,7 +59,7 @@ MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
     "seed": None,
     "callback": None,
     "disp": True,
-    "polish": True,
+    "polish": False,
     "init": "latinhypercube",
     "atol": 0,
     "updating": "deferred",

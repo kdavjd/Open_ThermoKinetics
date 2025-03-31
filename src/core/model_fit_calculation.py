@@ -1,11 +1,18 @@
 import numpy as np
 import pandas as pd
-from scipy import stats
 from scipy.constants import R
 
 from src.core.app_settings import NUC_MODELS_LIST, NUC_MODELS_TABLE, OperationType
 from src.core.base_signals import BaseSlots
 from src.core.logger_config import logger
+
+
+def r2_score(y_true, y_pred):
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    return 1 - ss_res / ss_tot
 
 
 class ModelFitCalculation(BaseSlots):
@@ -139,13 +146,17 @@ class DirectDiff:
                 }
             )
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(reverse_temperature[valid_mask], lhs[valid_mask])
+        x = reverse_temperature[valid_mask]
+        y = lhs[valid_mask]
+        slope, intercept = np.polyfit(x, y, 1)
+        y_pred = slope * x + intercept
+        r_value = r2_score(y, y_pred)
         Ea, A = self._calculate_direct_diff_params(slope, intercept, beta)
 
         return pd.DataFrame(
             {
                 "Model": [model_key],
-                "R2_score": [r_value**2],
+                "R2_score": [r_value],
                 "Ea": [Ea],
                 "A": [A],
             }
@@ -190,7 +201,10 @@ class DirectDiff:
         lhs = self._calculate_direct_diff_lhs(da_dT, f_a_val)
         temperature_clean, lhs_clean = self._filter_inf_data(lhs, trimmed_temperature)
         reverse_temperature = 1 / temperature_clean
-        slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
+
+        _x = reverse_temperature
+        _y = lhs_clean
+        slope, intercept = np.polyfit(_x, _y, 1)
         y = reverse_temperature * slope + intercept
 
         plot_df = pd.DataFrame({"reverse_temperature": reverse_temperature, "lhs_clean": lhs_clean, "y": y})
@@ -237,8 +251,13 @@ class CoatsRedfern:
         temperature_clean, lhs_clean = self._filter_inf_data(lhs, temperature)
         reverse_temperature = 1 / temperature_clean
         try:
-            slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
-        except ValueError:
+            x = reverse_temperature
+            y = lhs_clean
+            slope, intercept = np.polyfit(x, y, 1)
+            y_pred = slope * x + intercept
+            r_value = r2_score(y, y_pred)
+
+        except (ValueError, TypeError):
             return pd.DataFrame(
                 {
                     "Model": [model_name],
@@ -253,7 +272,7 @@ class CoatsRedfern:
         return pd.DataFrame(
             {
                 "Model": [model_name],
-                "R2_score": [r_value**2],
+                "R2_score": [r_value],
                 "Ea": [Ea],
                 "A": [A],
             }
@@ -299,7 +318,10 @@ class CoatsRedfern:
         lhs = self.calculate_coats_redfern_lhs(g_a_val, temperature_K)
         temperature_clean, lhs_clean = self._filter_inf_data(lhs, temperature_K)
         reverse_temperature = 1 / temperature_clean
-        slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
+
+        _x = reverse_temperature
+        _y = lhs_clean
+        slope, intercept = np.polyfit(_x, _y, 1)
         y = reverse_temperature * slope + intercept
 
         plot_df = pd.DataFrame({"reverse_temperature": reverse_temperature, "lhs_clean": lhs_clean, "y": y})
@@ -364,7 +386,10 @@ class FreemanCaroll:
 
         x_arr = np.array(x)
         y_arr = np.array(y)
-        slope, intercept, r_value, _, _ = stats.linregress(x_arr, y_arr)
+
+        slope, intercept = np.polyfit(x_arr, y_arr, 1)
+        y_pred = x_arr * slope + intercept
+        r_value = r2_score(y, y_pred)
         Ea = R * intercept
 
         temperature_array = np.array(temperature[1:])
@@ -374,7 +399,7 @@ class FreemanCaroll:
         return pd.DataFrame(
             {
                 "Model": [model_name],
-                "R2_score": [r_value**2],
+                "R2_score": [r_value],
                 "Ea": [Ea],
                 "A": [A],
             }
@@ -450,7 +475,7 @@ class FreemanCaroll:
         x_arr = np.array(x_vals)
         y_arr = np.array(y_vals)
 
-        slope, intercept, r_value, _, _ = stats.linregress(x_arr, y_arr)
+        slope, intercept = np.polyfit(x_arr, y_arr, 1)
         y_fit = slope * x_arr + intercept
         plot_df = pd.DataFrame({"reverse_temperature": x_arr, "lhs_clean": y_arr, "y": y_fit})
 
