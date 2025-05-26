@@ -103,6 +103,13 @@ class ModelBasedCalculationStrategy(BestResultStrategy):
         try:
             best_mse = result.get("best_mse")
             params = result.get("params")
+            reactions = self.calculation.calc_params["reaction_scheme"]["reactions"]
+            num_reactions = len(reactions)
+
+            logA = params[0 * num_reactions : 1 * num_reactions]
+            Ea = params[1 * num_reactions : 2 * num_reactions]
+            model_index = params[2 * num_reactions : 3 * num_reactions]
+            contributions = params[3 * num_reactions : 4 * num_reactions]
 
             logger.debug(f"Received new result for best_mse: {best_mse} with params: {params}")
 
@@ -116,9 +123,35 @@ class ModelBasedCalculationStrategy(BestResultStrategy):
                     "main_window", OperationType.PLOT_MSE_LINE, mse_data=self.calculation.mse_history
                 )
 
+                parameters_yaml = "parameters:\n"
+
+                for i, reaction in enumerate(reactions):
+                    reaction_desc = f"{reaction.get('from')} -> {reaction.get('to')}"
+                    try:
+                        logA_val = float(logA[i])
+                        ea_val = int(Ea[i])
+                        mod_idx = int(model_index[i])
+                        contribution_val = float(contributions[i])
+                    except Exception as e:
+                        logger.error(f"Error processing reaction {i}: {e}")
+                        continue
+
+                    allowed_models = reaction.get("allowed_models", [])
+                    try:
+                        model_str = allowed_models[mod_idx]
+                    except Exception as e:
+                        logger.error(f"Error processing model index for reaction {i}: {e}")
+                        model_str = "Unknown"
+
+                    parameters_yaml += f"{reaction_desc}:\n"
+                    parameters_yaml += f"    logA: {logA_val:.2f}\n"
+                    parameters_yaml += f"    Ea: {ea_val}\n"
+                    parameters_yaml += f"    model: {model_str}\n"
+                    parameters_yaml += f"    contribution: {contribution_val:.3f}\n"
+
                 console.log("\nNew best result found in model calculation:")
                 console.log(f"Best MSE: {best_mse:.4f}")
-                console.log(f"Parameters: {params}")
+                console.log(parameters_yaml.rstrip())
 
         except Exception as e:
             logger.error(f"Error in ModelBasedCalculationStrategy: {e}")

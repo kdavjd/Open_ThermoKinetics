@@ -369,6 +369,8 @@ class ModelBasedTargetFunction:
 
 def make_de_callback(target_obj, calculations_instance):
     def callback(x, convergence):
+        if calculations_instance.stop_event.is_set():
+            return True
         best_mse = target_obj.best_mse.value
         best_params = list(target_obj.best_params)
         calculations_instance.new_best_result.emit(
@@ -377,6 +379,7 @@ def make_de_callback(target_obj, calculations_instance):
                 "params": best_params,
             }
         )
+        return False
 
     return callback
 

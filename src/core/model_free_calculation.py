@@ -81,11 +81,11 @@ class ModelFreeCalculation(BaseSlots):
                 response["data"] = False
                 return
 
-            if fit_method != "master plots":
-                for beta_column in beta_columns:
-                    reaction_df[beta_column] = (
-                        reaction_df[beta_column].cumsum() / reaction_df[beta_column].cumsum().max()
-                    )
+            # if fit_method != "master plots":
+            #     for beta_column in beta_columns:
+            #         reaction_df[beta_column] = (
+            #             reaction_df[beta_column].cumsum() / reaction_df[beta_column].cumsum().max()
+            #         )
 
             reaction_results = strategy.calculate(reaction_df)
             result_data[reaction_name] = reaction_results

@@ -26,6 +26,7 @@ class Calculations(BaseSlots):
         self.best_combination: Optional[tuple] = None
         self.best_mse: float = float("inf")
         self.new_best_result.connect(self.handle_new_best_result)
+        self.calc_params = {}
         self.mse_history = []
         self.calculation_active = False
 
@@ -76,6 +77,7 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(dict)
     def run_calculation_scenario(self, params: dict):
+        self.calc_params = params.copy()
         scenario_key = params.get("calculation_scenario")
         if not scenario_key:
             logger.error("No 'calculation_scenario' provided in params.")
