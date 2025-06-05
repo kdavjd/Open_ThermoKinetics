@@ -1,642 +1,402 @@
-# Приложение для анализа кинетики твердофазных реакций: Комплексный архитектурный анализ
+# Архитектура приложения для анализа кинетики твердофазных реакций
 
-## Краткое содержание
+## Преимущества архитектуры - АРХИТЕКТУРНЫЙ МАНИФЕСТ
 
-Данный документ представляет комплексный анализ приложения для анализа кинетики твердофазных реакций с трех точек зрения: архитектуры программного обеспечения, разработки программного обеспечения и управления продуктом. Приложение представляет собой сложный настольный инструмент на базе PyQt6 для термокинетического анализа, реализующий комплексные математические модели и алгоритмы оптимизации для исследования кинетики твердофазных реакций.
+> **ЭТИ ПРИНЦИПЫ НЕ ДОЛЖНЫ НАРУШАТЬСЯ НИКОГДА!**
+
+### 1. Слабое связывание (Loose Coupling)
+- **Модули не знают о внутренней реализации друг друга**
+- **Коммуникация только через стандартизированный API**
+- **Легкое тестирование с mock-объектами**
+
+### 2. Асинхронная коммуникация
+- **Использование Qt сигналов для неблокирующих операций**
+- **Event loop для синхронных запросов когда нужно**
+- **Отсутствие прямых зависимостей между модулями**
+
+### 3. Централизованная маршрутизация
+- **Единая точка управления коммуникацией**
+- **Логирование всех межмодульных взаимодействий**
+- **Возможность добавления middleware (кэширование, валидация)**
+
+### 4. Расширяемость
+- **Новые модули легко интегрируются через BaseSlots**
+- **Не требуется изменение существующего кода**
+- **Поддержка различных паттернов коммуникации**
 
 ---
 
-## Перспектива архитектора программного обеспечения
+## Техническая архитектура системы
 
-### Обзор системной архитектуры
+Приложение построено на **модульной сигнально-управляемой архитектуре** с использованием PyQt6, реализующей паттерны **Publisher-Subscriber** и **Request-Response** для межмодульной коммуникации.
 
-Приложение следует **модульной, сигнально-управляемой архитектуре** с четким разделением обязанностей между графическим интерфейсом, основной логикой и уровнями управления данными.
+## Центральная система коммуникации: BaseSignals/BaseSlots
 
-```mermaid
-graph TB
-    subgraph "Уровень представления"
-        MW[MainWindow]
-        MT[MainTab]
-        TT[TableTab]
-        SB[SideBar]
-        SSH[SubSideHub]
-        PC[PlotCanvas]
-    end
-    
-    subgraph "Основная бизнес-логика"
-        CALC[Calculations]
-        MFC[ModelFreeCalculation]
-        MF[ModelFitCalculation]
-        CDO[CalculationsDataOperations]
-    end
-    
-    subgraph "Управление данными"
-        FD[FileData]
-        CD[CalculationsData]
-        SD[SeriesData]
-        AFO[ActiveFileOperations]
-    end
-    
-    subgraph "Уровень коммуникации"
-        BS[BaseSignals]
-        BSL[BaseSlots]
-    end
-    
-    MW --> MT
-    MW --> TT
-    MT --> SB
-    MT --> SSH
-    MT --> PC
-    
-    MW -.->|сигналы| BS
-    CALC -.->|сигналы| BS
-    MFC -.->|сигналы| BS
-    MF -.->|сигналы| BS
-    CDO -.->|сигналы| BS
-    FD -.->|сигналы| BS
-    CD -.->|сигналы| BS
-    SD -.->|сигналы| BS
-    AFO -.->|сигналы| BS
-    
-    BS --> BSL
-```
-
-### Ключевые архитектурные паттерны
-
-#### 1. Паттерн коммуникации на основе сигналов
-Приложение реализует **архитектуру издатель-подписчик** с использованием сигналов PyQt6 для слабого связывания между компонентами.
-
-```mermaid
-sequenceDiagram
-    participant GUI as Компонент GUI
-    participant MW as MainWindow
-    participant BS as BaseSignals
-    participant Core as Основной модуль
-    
-    GUI->>MW: Действие пользователя (отправка сигнала)
-    MW->>BS: Сигнал запроса
-    BS->>Core: Отправка запроса
-    Core->>BS: Сигнал ответа
-    BS->>MW: Отправка ответа
-    MW->>GUI: Обновление UI
-```
-
-#### 2. Паттерн стратегия для вычислений
-Различные методы вычислений реализованы с использованием паттерна стратегия, позволяющего динамический выбор алгоритмов.
+### Архитектура диспетчера сигналов
 
 ```mermaid
 classDiagram
-    class CalculationStrategy {
-        <<интерфейс>>
-        +calculate(data)
-        +prepare_plot_data(data)
+    class BaseSignals {
+        +request_signal: pyqtSignal
+        +response_signal: pyqtSignal
+        +components: Dict[str, tuple]
+        +__init__()
+        +register_component(name, process_req, process_resp)
+        +dispatch_request(params)
+        +dispatch_response(params)
     }
     
-    class LinearApproximation {
-        +calculate(data)
-        +prepare_plot_data(data)
-        +fetch_linear_approx_Ea(data)
-    }
-    
-    class Friedman {
-        +calculate(data)
-        +prepare_plot_data(data)
-        +fetch_friedman_Ea(data)
-    }
-    
-    class Kissinger {
-        +calculate(data)
-        +prepare_plot_data(data)
-        +fetch_kissinger_Ea(data)
-    }
-    
-    class Vyazovkin {
-        +calculate(data)
-        +prepare_plot_data(data)
-    }
-    
-    class MasterPlots {
-        +calculate(data)
-        +model_r2_scores(data)
-        +normalize_data(data)
-    }
-    
-    CalculationStrategy <|.. LinearApproximation
-    CalculationStrategy <|.. Friedman
-    CalculationStrategy <|.. Kissinger
-    CalculationStrategy <|.. Vyazovkin
-    CalculationStrategy <|.. MasterPlots
-```
-
-#### 3. Паттерн репозиторий для управления данными
-Доступ к данным абстрагирован через специализированные классы управления данными.
-
-```mermaid
-classDiagram
     class BaseSlots {
         +actor_name: str
         +signals: BaseSignals
+        +pending_requests: Dict[str, Dict]
+        +event_loops: Dict[str, QEventLoop]
+        +__init__(actor_name, signals)
+        +handle_request_cycle(target, operation, **kwargs)
+        +create_and_emit_request(target, operation, **kwargs)
+        +wait_for_response(request_id, timeout)
         +process_request(params)
         +process_response(params)
-        +handle_request_cycle(target, operation)
     }
     
-    class FileData {
-        +data: DataFrame
-        +original_data: dict
-        +operations_history: dict
-        +load_file(file_info)
-        +modify_data(func, params)
-    }
-    
-    class CalculationsData {
-        +_data: dict
-        +get_value(keys)
-        +set_value(keys, value)
-        +load_reactions(file_name)
-    }
-    
-    class SeriesData {
-        +series: dict
-        +add_series(data, masses, name)
-        +update_series(name, data)
-        +get_series(name, type)
-    }
-    
-    BaseSlots <|-- FileData
-    BaseSlots <|-- CalculationsData
-    BaseSlots <|-- SeriesData
+    BaseSignals -->|registers| BaseSlots : component registration
+    BaseSlots -->|uses| BaseSignals : signal communication
 ```
-
-### Поток взаимодействия компонентов
-
-```mermaid
-graph LR
-    subgraph "Поток данных"
-        A[Импорт файла] --> B[Обработка данных]
-        B --> C[Математический анализ]
-        C --> D[Визуализация]
-        D --> E[Экспорт результатов]
-    end
-    
-    subgraph "Компоненты"
-        F[FileData] --> G[CalculationsDataOperations]
-        G --> H[ModelFreeCalculation/ModelFitCalculation]
-        H --> I[PlotCanvas]
-        I --> J[Функции экспорта]
-    end
-    
-    A -.-> F
-    B -.-> G
-    C -.-> H
-    D -.-> I
-    E -.-> J
-```
-
-### Соображения масштабируемости
-
-1. **Модульный дизайн**: Легко добавлять новые методы вычислений или форматы данных
-2. **Развязка на основе сигналов**: Компоненты могут изменяться независимо
-3. **Безопасные для потоков вычисления**: Длительные вычисления выполняются в отдельных потоках
-4. **Расширяемый GUI**: Подключаемые компоненты боковой панели для различных типов анализа
-
----
-
-## Перспектива разработчика программного обеспечения
-
-### Организация и структура кода
-
-Кодовая база следует **чистой архитектуре** с четко определенными слоями и обязанностями:
-
-```
-src/
-├── core/                    # Бизнес-логика и управление данными
-│   ├── calculation.py       # Основной оркестратор вычислений
-│   ├── model_free_calculation.py
-│   ├── model_fit_calculation.py
-│   ├── calculation_scenarios.py
-│   ├── base_signals.py      # Инфраструктура коммуникации
-│   └── app_settings.py      # Конфигурация и константы
-├── gui/                     # Компоненты пользовательского интерфейса
-│   ├── main_window.py       # Главное окно приложения
-│   ├── main_tab/           # Основной интерфейс анализа
-│   └── table_tab/          # Представление таблицы данных
-└── tests/                   # Набор тестов (подразумевается)
-```
-
-### Ключевые детали технической реализации
-
-#### 1. Математический движок вычислений
-
-Приложение реализует сложные методы кинетического анализа:
-
-```mermaid
-graph TD
-    subgraph "Безмодельные методы"
-        A[Линейная аппроксимация]
-        B[Метод Фридмана]
-        C[Метод Киссинджера]
-        D[Метод Вязовкина]
-        E[Мастер-кривые]
-    end
-    
-    subgraph "Методы подгонки модели"
-        F[Прямое дифференцирование]
-        G[Коутс-Редферн]
-        H[Фриман-Кэрролл]
-    end
-    
-    subgraph "Модельные методы"
-        I[Дифференциальная эволюция]
-        J[Схемы реакций]
-        K[Деконволюция]
-    end
-    
-    L[Исходные данные] --> A
-    L --> B
-    L --> C
-    L --> D
-    L --> E
-    L --> F
-    L --> G
-    L --> H
-    L --> I
-    
-    A --> M[Энергия активации]
-    B --> M
-    C --> M
-    D --> M
-    F --> N[Кинетические параметры]
-    G --> N
-    H --> N
-    I --> O[Моделирование реакций]
-```
-
-#### 2. Архитектура коммуникации сигнал-слот
 
 ```python
-# Основной паттерн коммуникации
-class BaseSlots(QObject):
-    def handle_request_cycle(self, target: str, operation: str, **kwargs) -> Any:
-        request_id = self.create_and_emit_request(target, operation, **kwargs)
-        response_data = self.handle_response_data(request_id, operation)
-        return response_data
+# Центральный диспетчер сигналов
+class BaseSignals(QObject):
+    """Маршрутизатор запросов/ответов между компонентами"""
+    request_signal = pyqtSignal(dict)
+    response_signal = pyqtSignal(dict)
+    
+    def __init__(self):
+        super().__init__()
+        self.components: Dict[str, (Callable, Callable)] = {}
+        self.request_signal.connect(self.dispatch_request)
+        self.response_signal.connect(self.dispatch_response)
+    
+    def register_component(self, component_name: str, 
+                          process_request_method: Callable,
+                          process_response_method: Callable):
+        """Регистрация компонента в системе диспетчеризации"""
+        self.components[component_name] = (process_request_method, process_response_method)
 ```
 
-#### 3. Система потоков для вычислений
+### Базовый класс для модулей
+
+```python
+# Базовый класс для всех модулей системы
+class BaseSlots(QObject):
+    """Обеспечивает request/response механизм через сигналы и event loop"""
+    
+    def __init__(self, actor_name: str, signals: BaseSignals):
+        super().__init__()
+        self.actor_name = actor_name
+        self.signals = signals
+        self.pending_requests: Dict[str, Dict[str, Any]] = {}
+        self.event_loops: Dict[str, QEventLoop] = {}
+        # Автоматическая регистрация в диспетчере
+        self.signals.register_component(actor_name, self.process_request, self.process_response)
+    
+    def handle_request_cycle(self, target: str, operation: str, **kwargs) -> Any:
+        """Создать запрос, отправить и ждать ответа"""
+        request_id = self.create_and_emit_request(target, operation, **kwargs)
+        response_data = self.wait_for_response(request_id)
+        return self.handle_response_data(request_id, operation)
+```
+
+## Схема межмодульной коммуникации
+
+```mermaid
+graph TB
+    subgraph "GUI Layer"
+        MW[MainWindow<br/>BaseSlots]
+        CDO[CalculationsDataOperations<br/>BaseSlots]
+    end
+    
+    subgraph "Core Logic Layer" 
+        CALC[Calculations<br/>BaseSlots]
+        CD[CalculationsData<br/>BaseSlots]
+        FD[FileData<br/>BaseSlots]
+    end
+    
+    subgraph "Central Dispatcher"
+        BS[BaseSignals<br/>request_signal<br/>response_signal]
+    end
+    
+    MW -->|register_component| BS
+    CDO -->|register_component| BS
+    CALC -->|register_component| BS
+    CD -->|register_component| BS
+    FD -->|register_component| BS
+    
+    BS -->|dispatch_request| MW
+    BS -->|dispatch_request| CDO
+    BS -->|dispatch_request| CALC
+    BS -->|dispatch_request| CD
+    BS -->|dispatch_request| FD
+```
+
+## Практические примеры коммуникации
+
+### 1. Пример запроса из MainWindow в CalculationsDataOperations
+
+```python
+# В MainWindow
+def _handle_add_reaction(self, params: dict):
+    """Обработка добавления реакции"""
+    file_name = params.get("file_name")
+    reaction_name = params.get("reaction_name")
+    
+    # Синхронный запрос через BaseSlots
+    result = self.handle_request_cycle(
+        target="calculations_data_operations",  # Имя модуля-получателя
+        operation=OperationType.ADD_REACTION,   # Тип операции
+        path_keys=[file_name, reaction_name],   # Параметры
+        data=True
+    )
+    return result
+```
+
+### 2. Обработка запроса в CalculationsDataOperations
+
+```python
+# В CalculationsDataOperations 
+@pyqtSlot(dict)
+def process_request(self, params: dict):
+    """Обработка входящих запросов"""
+    path_keys = params.get("path_keys")
+    operation = params.get("operation")
+    
+    operations = {
+        OperationType.ADD_REACTION: self.add_reaction,
+        OperationType.REMOVE_REACTION: self.remove_reaction,
+        OperationType.UPDATE_VALUE: self.update_value,
+        OperationType.DECONVOLUTION: self.deconvolution,
+    }
+    
+    if operation in operations:
+        logger.debug(f"Processing operation '{operation}' with path_keys: {path_keys}")
+        answer = operations[operation](path_keys, params)
+        
+        # Возвращаем ответ отправителю
+        params["target"], params["actor"] = params["actor"], params["target"]
+        self.signals.response_signal.emit(params)
+```
+
+### 3. Каскадные запросы между модулями
 
 ```mermaid
 sequenceDiagram
-    participant UI as Пользовательский интерфейс
-    participant CALC as Calculations
-    participant THREAD as CalculationThread
-    participant ALG as Алгоритм
+    participant CDO as CalculationsDataOperations
+    participant FD as FileData
+    participant CD as CalculationsData
+    participant BS as BaseSignals
     
-    UI->>CALC: Запуск вычисления
-    CALC->>THREAD: Создание потока
-    THREAD->>ALG: Выполнение алгоритма
-    ALG-->>THREAD: Обновления прогресса
-    THREAD-->>CALC: Отправка прогресса
-    CALC-->>UI: Обновление прогресса
-    ALG->>THREAD: Финальный результат
-    THREAD->>CALC: Вычисление завершено
-    CALC->>UI: Отображение результатов
+    CDO->>CDO: add_reaction(path_keys, params)
+    
+    Note over CDO: 1. Проверка операции TO_DTG
+    CDO->>BS: handle_request_cycle("file_data", CHECK_OPERATION)
+    BS->>FD: dispatch_request(CHECK_OPERATION)
+    FD->>BS: response_signal.emit(is_executed=True)
+    BS->>CDO: dispatch_response(is_executed=True)
+    
+    Note over CDO: 2. Получение DataFrame
+    CDO->>BS: handle_request_cycle("file_data", GET_DF_DATA)
+    BS->>FD: dispatch_request(GET_DF_DATA)
+    FD->>BS: response_signal.emit(df=dataframe)
+    BS->>CDO: dispatch_response(df=dataframe)
+    
+    Note over CDO: 3. Сохранение данных реакции
+    CDO->>BS: handle_request_cycle("calculations_data", SET_VALUE)
+    BS->>CD: dispatch_request(SET_VALUE)
+    CD->>BS: response_signal.emit(is_exist=True)
+    BS->>CDO: dispatch_response(is_exist=True)
 ```
 
-### Реализованные лучшие практики разработки
+```python
+# В CalculationsDataOperations - цепочка запросов к другим модулям
+def add_reaction(self, path_keys: list, _params: dict):
+    """Добавление реакции с проверкой данных"""
+    file_name, reaction_name = path_keys
+    
+    # 1. Проверяем выполнена ли операция TO_DTG
+    is_executed = self.handle_request_cycle(
+        "file_data", 
+        OperationType.CHECK_OPERATION, 
+        file_name=file_name, 
+        checked_operation=OperationType.TO_DTG
+    )
+    
+    if is_executed:
+        # 2. Получаем DataFrame
+        df = self.handle_request_cycle(
+            "file_data", 
+            OperationType.GET_DF_DATA, 
+            file_name=file_name
+        )
+        
+        # 3. Сохраняем данные реакции
+        data = cft.generate_default_function_data(df)
+        is_exist = self.handle_request_cycle(
+            "calculations_data", 
+            OperationType.SET_VALUE, 
+            path_keys=path_keys.copy(), 
+            value=data
+        )
+```
 
-1. **Аннотации типов**: Комплексные аннотации типов по всей кодовой базе
-2. **Обработка ошибок**: Надежная обработка исключений с логированием
-3. **Логирование**: Структурированное логирование для отладки и мониторинга
-4. **Разделение ответственности**: Четкие границы между GUI, бизнес-логикой и данными
-5. **Управление конфигурацией**: Централизованные настройки в `app_settings.py`
+## Архитектурные паттерны
 
-### Метрики качества кода
+### 1. Request-Response Pattern
 
 ```mermaid
-pie title Распределение качества кода
-    "Основная логика" : 45
-    "Компоненты GUI" : 35
-    "Управление данными" : 15
-    "Конфигурация" : 5
+sequenceDiagram
+    participant Client as Client Module
+    participant BS as BaseSignals
+    participant Server as Server Module
+    
+    Client->>BS: request_signal.emit({<br/>target: "server",<br/>operation: "GET_DATA",<br/>request_id: "uuid"})
+    BS->>Server: dispatch_request(params)
+    Server->>Server: process_request(params)
+    Server->>BS: response_signal.emit({<br/>target: "client",<br/>data: result,<br/>request_id: "uuid"})
+    BS->>Client: dispatch_response(params)
+    Client->>Client: handle_response(data)
 ```
 
-### Стратегия тестирования
-
-Приложение выиграло бы от:
-- Модульных тестов для алгоритмов вычислений
-- Интеграционных тестов для коммуникации сигнал-слот
-- Автоматизированных тестов GUI для пользовательских рабочих процессов
-- Тестов производительности для больших наборов данных
-
----
-
-## Перспектива менеджера продукта
-
-### Обзор функций и ценностное предложение пользователя
-
-Приложение для анализа кинетики твердофазных реакций служит как **комплексный исследовательский инструмент** для термического анализа и кинетического моделирования, ориентированный на:
-
-1. **Академические исследователи** - Продвинутые возможности кинетического анализа
-2. **Промышленные ученые** - Контроль качества и характеризация материалов
-3. **Студенты** - Образовательный инструмент для изучения кинетического анализа
-
-### Основной набор функций
+### 2. Event Loop Synchronization
 
 ```mermaid
-mindmap
-  root((Приложение кинетики твердофазных реакций))
-    Управление данными
-      Импорт/Экспорт файлов
-      Поддержка множественных форматов
-      Предобработка данных
-      Управление сериями
-    Методы анализа
-      Безмодельный анализ
-        Линейная аппроксимация
-        Метод Фридмана
-        Метод Киссинджера
-        Метод Вязовкина
-        Мастер-кривые
-      Анализ подгонки модели
-        Прямое дифференцирование
-        Коутс-Редферн
-        Фриман-Кэрролл
-      Модельный анализ
-        Схемы реакций
-        Деконволюция
-        Оптимизация параметров
-    Визуализация
-      Интерактивные графики
-      Обновления в реальном времени
-      Возможности экспорта
-      Множественные типы графиков
-    Пользовательский опыт
-      Интуитивный интерфейс
-      Контекстные настройки
-      Отслеживание прогресса
-      Экспорт результатов
+sequenceDiagram
+    participant Module as Client Module
+    participant Loop as QEventLoop
+    participant Timer as QTimer
+    participant BS as BaseSignals
+    
+    Module->>Module: create_and_emit_request()
+    Module->>BS: request_signal.emit()
+    Module->>Loop: loop = QEventLoop()
+    Module->>Timer: timer.start(timeout)
+    Module->>Loop: loop.exec() [BLOCKS]
+    
+    Note over Module, Loop: Waiting for response...
+    
+    BS->>Module: response_signal received
+    Module->>Loop: loop.quit()
+    Module->>Timer: timer.stop()
+    Module->>Module: return response_data
 ```
 
-### Анализ пользовательского рабочего процесса
+```python
+def wait_for_response(self, request_id: str, timeout: int = 1000) -> Optional[dict]:
+    """Ожидание ответа с использованием QEventLoop"""
+    if request_id not in self.pending_requests:
+        return None
+    
+    # Создаем event loop для блокировки
+    loop = QEventLoop()
+    self.event_loops[request_id] = loop
+    
+    # Таймер для timeout
+    timer = QTimer()
+    timer.timeout.connect(loop.quit)
+    timer.start(timeout)
+    
+    # Блокируем выполнение до получения ответа
+    loop.exec()
+    
+    # Очищаем ресурсы
+    timer.stop()
+    self.event_loops.pop(request_id, None)
+    
+    return self.pending_requests.pop(request_id, {}).get("data")
+```
+
+### 3. Component Registration Pattern
 
 ```mermaid
-journey
-    title Рабочий процесс анализа пользователя
-    section Импорт данных
-      Загрузка экспериментальных данных: 5: Пользователь
-      Настройка формата данных: 4: Пользователь
-      Проверка качества данных: 3: Система
-    section Обработка данных
-      Выбор метода анализа: 5: Пользователь
-      Настройка параметров: 4: Пользователь
-      Применение предобработки: 3: Пользователь
-    section Выполнение анализа
-      Запуск вычислений: 5: Система
-      Мониторинг прогресса: 4: Пользователь
-      Проверка сходимости: 3: Пользователь
-    section Просмотр результатов
-      Изучение графиков: 5: Пользователь
-      Валидация результатов: 4: Пользователь
-      Экспорт результатов: 5: Пользователь
+sequenceDiagram
+    participant MW as MainWindow
+    participant BS as BaseSlots
+    participant Signals as BaseSignals
+    
+    MW->>MW: __init__(signals)
+    MW->>BS: BaseSlots(actor_name, signals)
+    BS->>BS: __init__(actor_name, signals)
+    BS->>Signals: register_component(actor_name, process_request, process_response)
+    Signals->>Signals: components[actor_name] = (process_request, process_response)
+    
+    Note over MW, Signals: Component автоматически зарегистрирован
+    
+    MW->>Signals: Альтернативно: signals.register_component()
 ```
 
-### Конкурентные преимущества
-
-1. **Комплексный охват методов**: Реализует множественные подходы к анализу в одном инструменте
-2. **Визуализация в реальном времени**: Интерактивная графика с немедленной обратной связью
-3. **Гибкая обработка данных**: Поддержка различных форматов экспериментальных данных
-4. **Точность исследовательского уровня**: Реализация рецензируемых алгоритмов
-5. **Расширяемая архитектура**: Легко добавлять новые методы и функции
-
-### Позиционирование на рынке
-
-```mermaid
-quadrantChart
-    title Позиционирование на рынке
-    x-axis Низкая сложность --> Высокая сложность
-    y-axis Низкая стоимость --> Высокая стоимость
-    
-    quadrant-1 Премиум специализированные
-    quadrant-2 Корпоративные решения
-    quadrant-3 Базовые инструменты
-    quadrant-4 Исследовательские платформы
-    
-    Коммерческое ПО: [0.8, 0.9]
-    Академические инструменты: [0.6, 0.3]
-    Данное приложение: [0.7, 0.2]
-    Базовые таблицы: [0.2, 0.1]
+```python
+# Автоматическая регистрация модулей при инициализации
+class MainWindow(QMainWindow):
+    def __init__(self, signals: BaseSignals):
+        super().__init__()
+        self.signals = signals
+        self.actor_name = "main_window"
+        
+        # Создание BaseSlots автоматически регистрирует компонент
+        self.base_slots = BaseSlots(actor_name=self.actor_name, signals=self.signals)
+        
+        # Альтернативный способ регистрации
+        self.signals.register_component(
+            self.actor_name, 
+            self.process_request, 
+            self.process_response
+        )
 ```
 
-### Рекомендации по дорожной карте разработки
+## Управление операциями через OperationType
 
-#### Фаза 1: Стабильность ядра (3 месяца)
-- Комплексный набор тестов
-- Оптимизация производительности
-- Завершение документации
-- Исправление ошибок и улучшения стабильности
-
-#### Фаза 2: Улучшенный пользовательский опыт (6 месяцев)
-- Улучшенная отзывчивость GUI
-- Лучшая обработка ошибок и обратная связь с пользователем
-- Рабочие процессы анализа на основе шаблонов
-- Возможности пакетной обработки
-
-#### Фаза 3: Продвинутые функции (12 месяцев)
-- Интеграция машинного обучения
-- Облачные вычисления
-- Функции совместной работы
-- API для программного доступа
-
-#### Фаза 4: Расширение экосистемы (18 месяцев)
-- Архитектура плагинов
-- Интеграция с лабораторным оборудованием
-- Мобильное приложение-компаньон
-- Образовательные модули
-
-### Ключевые показатели эффективности (KPI)
-
-1. **Принятие пользователями**
-   - Количество активных пользователей
-   - Уровень использования функций
-   - Метрики удержания пользователей
-
-2. **Техническая производительность**
-   - Валидация точности вычислений
-   - Бенчмарки времени обработки
-   - Оптимизация использования памяти
-
-3. **Удовлетворенность пользователей**
-   - Оценки удобства использования интерфейса
-   - Частота запросов функций
-   - Время разрешения отчетов об ошибках
-
----
-
-## Техническое углубление в архитектуру
-
-### Архитектура потока данных
-
-```mermaid
-graph TB
-    subgraph "Входной слой"
-        A[Импорт файлов]
-        B[Ручной ввод]
-        C[Данные серий]
-    end
+```python
+# Централизованное определение типов операций
+class OperationType(Enum):
+    # Data operations
+    GET_VALUE = "get_value"
+    SET_VALUE = "set_value"
+    REMOVE_VALUE = "remove_value"
     
-    subgraph "Слой обработки"
-        D[Валидация данных]
-        E[Предобработка]
-        F[Движок вычислений]
-        G[Оптимизация]
-    end
+    # File operations  
+    LOAD_FILE = "load_file"
+    GET_DF_DATA = "get_df_data"
+    PLOT_DF = "plot_df"
     
-    subgraph "Слой анализа"
-        H[Безмодельные методы]
-        I[Методы подгонки модели]
-        J[Модельные методы]
-        K[Деконволюция]
-    end
-    
-    subgraph "Выходной слой"
-        L[Визуализация]
-        M[Статистический анализ]
-        N[Экспорт результатов]
-        O[Генерация отчетов]
-    end
-    
-    A --> D
-    B --> D
-    C --> D
-    D --> E
-    E --> F
-    F --> G
-    F --> H
-    F --> I
-    F --> J
-    F --> K
-    H --> L
-    I --> L
-    J --> L
-    K --> L
-    L --> M
-    M --> N
-    M --> O
+    # Calculation operations
+    ADD_REACTION = "add_reaction"
+    REMOVE_REACTION = "remove_reaction"
+    DECONVOLUTION = "deconvolution"
+    MODEL_BASED_CALCULATION = "model_based_calculation"
 ```
 
-### Сценарии вычислений и стратегии
+## Потенциальные улучшения архитектуры
 
-```mermaid
-classDiagram
-    class BaseCalculationScenario {
-        <<абстрактный>>
-        +params: dict
-        +calculations: Calculations
-        +get_bounds(): list
-        +get_target_function(): Callable
-        +get_optimization_method(): str
-        +get_result_strategy_type(): str
-    }
-    
-    class DeconvolutionScenario {
-        +get_bounds(): list
-        +get_target_function(): Callable
-        +get_optimization_method(): str
-        +get_result_strategy_type(): str
-    }
-    
-    class ModelBasedScenario {
-        +get_bounds(): list
-        +get_target_function(): Callable
-        +get_optimization_method(): str
-        +get_result_strategy_type(): str
-    }
-    
-    class ModelBasedTargetFunction {
-        +species_list: list
-        +reactions: list
-        +num_species: int
-        +num_reactions: int
-        +betas: list
-        +all_exp_masses: list
-        +exp_temperature: array
-        +__call__(params): float
-    }
-    
-    BaseCalculationScenario <|-- DeconvolutionScenario
-    BaseCalculationScenario <|-- ModelBasedScenario
-    ModelBasedScenario --> ModelBasedTargetFunction
+### 1. Добавление типизации запросов
+```python
+from typing import TypedDict
+
+class RequestParams(TypedDict):
+    actor: str
+    target: str  
+    operation: OperationType
+    request_id: str
+    # Дополнительные поля в зависимости от операции
 ```
 
-### Архитектура компонентов GUI
-
-```mermaid
-graph TB
-    subgraph "Главное окно"
-        MW[MainWindow]
-        MW --> MT[MainTab]
-        MW --> TT[TableTab]
-    end
+### 2. Middleware для обработки запросов
+```python
+class RequestMiddleware:
+    def process_request(self, params: dict) -> dict:
+        # Валидация, логирование, кэширование
+        pass
     
-    subgraph "Компоненты главной вкладки"
-        MT --> SB[SideBar]
-        MT --> SSH[SubSideHub]
-        MT --> PC[PlotCanvas]
-        MT --> CW[ConsoleWidget]
-    end
-    
-    subgraph "Компоненты боковой панели"
-        SSH --> DSB[DeconvolutionSubBar]
-        SSH --> MFSB[ModelFreeSubBar]
-        SSH --> MFISB[ModelFitSubBar]
-        SSH --> MB[ModelBasedTab]
-        SSH --> ESB[ExperimentSubBar]
-        SSH --> SSB[SeriesSubBar]
-    end
-    
-    subgraph "Модельные компоненты"
-        MB --> MS[ModelsScheme]
-        MB --> MP[ModelParams]
-        MB --> CB[CalcButtons]
-    end
+    def process_response(self, params: dict) -> dict:
+        # Пост-обработка ответов
+        pass
 ```
 
----
-
-## Рекомендации по реализации
-
-### Для архитекторов программного обеспечения
-
-1. **Реализовать паттерн автоматический выключатель**: Для изящной обработки сбоев вычислений
-2. **Добавить слой кэширования**: Кэшировать часто используемые вычисления и промежуточные результаты
-3. **Реализовать архитектуру плагинов**: Разрешить расширения третьих лиц для новых методов вычислений
-4. **Добавить управление конфигурацией**: Внешние файлы конфигурации для различных сред развертывания
-
-### Для разработчиков программного обеспечения
-
-1. **Комплексный набор тестов**: Модульные тесты, интеграционные тесты и автоматизация GUI
-2. **Документация кода**: Полная документация API и комментарии к коду
-3. **Профилирование производительности**: Выявление и оптимизация узких мест в вычислениях
-4. **Управление памятью**: Оптимизация использования памяти для больших наборов данных
-5. **Восстановление после ошибок**: Реализация надежной обработки ошибок и механизмов восстановления
-
-### Для менеджеров продукта
-
-1. **Исследование пользователей**: Проведение интервью с целевыми пользователями для валидации приоритетов функций
-2. **Конкурентный анализ**: Регулярный анализ конкурирующих инструментов и их функций
-3. **Аналитика использования**: Реализация аналитики для понимания паттернов использования функций
-4. **Стратегия документации**: Комплексные руководства пользователя и обучающие материалы
-5. **Создание сообщества**: Развитие пользовательского сообщества для обратной связи и запросов функций
-
----
-
-## Заключение
-
-Приложение для анализа кинетики твердофазных реакций представляет собой хорошо спроектированный инструмент исследовательского уровня для термического анализа. Его модульный дизайн, комплексный набор функций и расширяемая архитектура хорошо позиционируют его для продолжения разработки и принятия в научном сообществе. Паттерн коммуникации на основе сигналов и методы вычислений на основе стратегий обеспечивают отличные основы для будущих улучшений и масштабируемости.
-
-Приложение успешно балансирует сложность и удобство использования, предлагая сложные возможности анализа при сохранении интуитивного пользовательского интерфейса. При правильном тестировании, документации и вовлечении сообщества этот инструмент имеет значительный потенциал стать стандартом в области исследований кинетики твердофазных реакций.
-
----
-
-*Данный анализ был создан путем комплексного обзора кода и архитектурного исследования кодовой базы приложения для анализа кинетики твердофазных реакций.*
+Данная архитектура обеспечивает масштабируемость, поддерживаемость и тестируемость приложения, позволяя легко добавлять новые модули и изменять существующие без нарушения работы системы.

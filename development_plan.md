@@ -110,16 +110,15 @@ GUI событие обрабатывается через established signal ro
 
 ```python
 def _handle_model_based_calculation(self, params):
-    """Обработчик MODEL_BASED_CALCULATION из GUI"""
+    """
+    СУЩЕСТВУЮЩИЙ обработчик уже поддерживает routing через params
+    Обработка происходит через: self.signals.request_model_based_calculation.emit(params)
     
-    # 1. Валидация параметров
-    optimization_method = params.get('optimization_method')
-    
-    # 2. Routing к соответствующему методу
-    if optimization_method == 'differential_evolution':
-        self.signals.request_model_based_differential_evolution.emit(params)
-    elif optimization_method == 'basinhopping':  # NEW
-        self.signals.request_model_based_basinhopping.emit(params)
+    В params уже содержится calculation_settings с method="basinhopping"
+    Дополнительной логики НЕ ТРЕБУЕТСЯ - все routing в run_calculation_scenario()
+    """
+    # СУЩЕСТВУЮЩИЙ код остается без изменений
+    self.signals.request_model_based_calculation.emit(params)
 ```
 
 #### Configuration Management via app_settings.py
@@ -156,19 +155,22 @@ BASINHOPPING_PARAMETERS = {
 graph TB
     subgraph "GUI Layer"
         MBT[ModelBasedTab] --> CSD[CalculationSettingsDialog]
-        CSD --> |optimization_method| MW[MainWindow]
+        CSD --> |params with method='basinhopping'| MW[MainWindow]
     end
     
-    subgraph "Signal Routing"
-        MW --> |emit signal| BS[BaseSignals]
-        BS --> |request_model_based_basinhopping| C[Calculations]
+    subgraph "Signal Routing - СУЩЕСТВУЮЩАЯ"
+        MW --> |_handle_model_based_calculation| MW
+        MW --> |request_model_based_calculation| BS[BaseSignals]
+        BS --> |СУЩЕСТВУЮЩИЙ сигнал| C[Calculations]
     end
     
-    subgraph "Calculation Layer"
+    subgraph "Calculation Layer - НОВАЯ ЛОГИКА"
+        C --> |run_calculation_scenario| C
+        C --> |check method=='basinhopping'| C
+        C --> |start_basinhopping| C
         C --> |create scenario| MBS[ModelBasedScenario]
-        MBS --> |get_bounds()| C
-        MBS --> |get_target_function()| C
-        C --> |start_basinhopping()| CT[CalculationThread]
+        MBS --> |get_bounds/target_function| C
+        C --> |start_calculation_thread| CT[CalculationThread]
     end
     
     subgraph "Optimization Layer"
@@ -178,26 +180,41 @@ graph TB
     end
 ```
 
+**Ключевые принципы архитектуры**:
+- ✅ BaseSignals НЕ изменяется - используем существующие сигналы
+- ✅ MainWindow НЕ требует новых обработчиков
+- ✅ Вся новая логика в Calculations.run_calculation_scenario()
+- ✅ Полное переиспользование существующей инфраструктуры
+
 ## Подробная архитектурная реализация
 
-### Этап 1: Расширение BaseSignals для поддержки basinhopping (Day 1)
+### Этап 1: Подготовка констант и настроек (Day 1)
 
-#### 1.1 Обновление base_signals.py
+#### 1.1 ~~Обновление base_signals.py~~ - НЕ ТРЕБУЕТСЯ
 
-**Файл**: `src/core/base_signals.py`
+**ВАЖНО**: Класс `BaseSignals` НЕ ТРЕБУЕТ изменений. 
 
-**Критически важные изменения**:
+**ОБОСНОВАНИЕ**: Новый метод `basinhopping` будет использовать **существующую архитектуру сигналов**:
+- `MainWindow._handle_model_based_calculation()` будет вызываться с `method="basinhopping"` в `calculation_settings`
+- Далее сигнал будет направлен в `Calculations.run_calculation_scenario()` через существующие сигналы
+- В `run_calculation_scenario()` будет добавлена обработка `method == "basinhopping"`
 
+**Архитектурный паттерн**:
 ```python
-class BaseSignals(QObject):
-    # ...existing signals...
-    
-    # НОВЫЕ СИГНАЛЫ для basinhopping
-    request_model_based_basinhopping = pyqtSignal(dict)  # GUI -> Calculations
-    model_based_basinhopping_finished = pyqtSignal(dict)  # Calculations -> GUI
-```
+# В main_window.py
+def _handle_model_based_calculation(self, params: dict):
+    # params содержит method="basinhopping" в calculation_settings
+    # Используем СУЩЕСТВУЮЩИЙ сигнал
+    self.signals.request_model_based_calculation.emit(params)
 
-**Обоснование**: Все коммуникации в проекте ДОЛЖНЫ идти через BaseSignals. Это обеспечивает loose coupling и следует архитектурному паттерну проекта.
+# В calculation.py  
+def run_calculation_scenario(self, scenario_key: str, params: dict):
+    # Создаем scenario instance из scenario_key
+    scenario_instance = self._create_scenario_instance(scenario_key, params)
+    method = scenario_instance.get_optimization_method()  # Возвращает 'method' из params
+    if method == 'basinhopping':
+        self.start_basinhopping(scenario_instance)  # НОВЫЙ метод
+```
 
 #### 1.2 Обновление app_settings.py
 
@@ -248,25 +265,8 @@ BASINHOPPING_MINIMIZERS = [
 from scipy.optimize import differential_evolution, basinhopping, OptimizeResult
 
 class Calculations(BaseSlots):
-    def __init__(self):
-        super().__init__()
-        # Регистрация НОВОГО сигнала
-        self.signals.request_model_based_basinhopping.connect(
-            self.handle_model_based_basinhopping
-        )
-    
-    def handle_model_based_basinhopping(self, params: dict):
-        """Обработчик сигнала для basinhopping оптимизации"""
-        try:
-            self.run_calculation_scenario(
-                scenario_key='model_based_calculation',
-                params=params
-            )
-        except Exception as e:
-            logger.error(f"Basin-hopping calculation failed: {e}")
-            self.emit_calculation_error(str(e))
-    
-    def start_basinhopping(self, scenario: BaseCalculationScenario):
+    # НЕ ТРЕБУЕТСЯ изменений в __init__ - используем существующую архитектуру
+      def start_basinhopping(self, scenario: BaseCalculationScenario):
         """
         Запуск basinhopping оптимизации строго по паттерну start_differential_evolution
         
@@ -275,10 +275,11 @@ class Calculations(BaseSlots):
         # 1. Извлечение конфигурации из сценария (identical pattern)
         bounds = scenario.get_bounds()
         target_function = scenario.get_target_function()
-        optimization_method = scenario.get_optimization_method()
         
-        # 2. Параметры из app_settings (identical pattern)
+        # 2. Параметры из method_parameters в params (identical pattern)
+        method_params = scenario.params.get('calculation_settings', {}).get('method_parameters', {})
         bh_params = app_settings.BASINHOPPING_PARAMETERS.copy()
+        bh_params.update(method_params)  # Override defaults with user settings
         
         # 3. Генерация x0 из bounds
         x0 = self._generate_initial_point_from_bounds(bounds)
@@ -338,23 +339,24 @@ class Calculations(BaseSlots):
             
             return False  # False продолжает оптимизацию
         
-        return callback
-    
-    def run_calculation_scenario(self, scenario_key: str, params: dict):
-        """Обновление для поддержки basinhopping"""
-        # ...existing code...
+        return callback      def run_calculation_scenario(self, scenario_key: str, params: dict):
+        """ОБНОВЛЕНИЕ существующего метода для поддержки basinhopping"""
+        # Создаем scenario instance из scenario_key и params
+        scenario_instance = self._create_scenario_instance(scenario_key, params)
         
-        # ДОБАВИТЬ в существующий код:
-        optimization_method = params.get('calculation_settings', {}).get('optimization_method', 'differential_evolution')
+        # Получаем optimization method из scenario
+        method = scenario_instance.get_optimization_method()  # Возвращает params['calculation_settings']['method']
+        bounds = scenario_instance.get_bounds()
+        target_function = scenario_instance.get_target_function()
         
-        if optimization_method == 'differential_evolution':
-            # ...existing differential_evolution code...
-            self.start_differential_evolution(scenario)
-        elif optimization_method == 'basinhopping':
-            # НОВЫЙ код для basinhopping
-            self.start_basinhopping(scenario)
+        if method == "differential_evolution":
+            calc_params = params.get("calculation_settings", {}).get("method_parameters", {}).copy()
+            self.start_differential_evolution(bounds=bounds, target_function=target_function, **calc_params)
+        elif method == "basinhopping":
+            # НОВЫЙ код для basinhopping - scenario уже содержит все нужные параметры
+            self.start_basinhopping(scenario_instance)
         else:
-            logger.error(f"Unsupported optimization method: {optimization_method}")
+            logger.error(f"Unsupported optimization method: {method}")
             return
 ```
 
@@ -370,26 +372,19 @@ class BaseCalculationScenario:
     
     def get_optimization_method(self) -> str:
         """
-        Возвращает метод оптимизации из params
-        
-        ВАЖНО: Fallback на differential_evolution для backward compatibility
+        СУЩЕСТВУЮЩИЙ метод уже поддерживает получение method из params
+        НЕ ТРЕБУЕТ изменений - только нужно использовать правильный ключ
         """
-        calculation_settings = self.params.get('calculation_settings', {})
-        return calculation_settings.get('optimization_method', 'differential_evolution')
+        # Существующая реализация:
+        # return self.params.get("calculation_settings", {}).get("method", "differential_evolution")
+        # Будет работать с новыми параметрами автоматически
+        pass
 
 class ModelBasedScenario(BaseCalculationScenario):
-    """Обновление для специфичных параметров basinhopping"""
+    """МИНИМАЛЬНЫЕ изменения - метод get_optimization_method уже существует"""
     
-    def get_basinhopping_parameters(self) -> dict:
-        """Возвращает пользовательские параметры для basinhopping"""
-        calculation_settings = self.params.get('calculation_settings', {})
-        method_parameters = calculation_settings.get('method_parameters', {})
-        
-        # Merge с defaults из app_settings
-        final_params = app_settings.BASINHOPPING_PARAMETERS.copy()
-        final_params.update(method_parameters)
-        
-        return final_params
+    # НЕ ТРЕБУЕТСЯ добавлять get_basinhopping_parameters
+    # Все параметры уже передаются через calculation_settings -> method_parameters
 ```
 
 ### Этап 3: GUI Integration - CalculationSettingsDialog (Day 2-3)
@@ -503,14 +498,13 @@ class CalculationSettingsDialog(QDialog):
         self.optimization_method = method_key
         
         if method_key == 'differential_evolution':
-            self.method_params_widget.setCurrentWidget(self.de_params_widget)
-        elif method_key == 'basinhopping':
+            self.method_params_widget.setCurrentWidget(self.de_params_widget)        elif method_key == 'basinhopping':
             self.method_params_widget.setCurrentWidget(self.bh_params_widget)
     
     def get_calculation_settings(self) -> dict:
-        """Возвращает настройки для выбранного метода"""
+        """Возвращает настройки в формате, совместимом с существующей архитектурой"""
         settings = {
-            'optimization_method': self.optimization_method,
+            'method': self.optimization_method,  # ВАЖНО: используем ключ 'method'
             'method_parameters': {}
         }
         
@@ -531,59 +525,35 @@ class CalculationSettingsDialog(QDialog):
         return settings
 ```
 
-### Этап 4: MainWindow Signal Routing (Day 3)
+### Этап 4: MainWindow Updates (Day 3)
 
-#### 4.1 Обновление main_window.py
+#### 4.1 ~~Обновление main_window.py~~ - МИНИМАЛЬНЫЕ ИЗМЕНЕНИЯ
 
 **Файл**: `src/gui/main_window.py`
 
-**ТОЧНОЕ следование паттерну _handle_model_based_calculation**:
+**ВАЖНО**: MainWindow НЕ ТРЕБУЕТ значительных изменений, используется существующая архитектура:
 
 ```python
 class MainWindow(QMainWindow, BaseSlots):
-    def __init__(self):
-        super().__init__()
-        # ...existing code...
-        
-        # НОВОЕ: Подключение basinhopping сигнала
-        self.signals.request_model_based_basinhopping.connect(
-            self._handle_model_based_basinhopping
-        )
+    # НЕ ТРЕБУЕТСЯ изменений в __init__ - нет новых сигналов
     
     def _handle_model_based_calculation(self, params: dict):
-        """ОБНОВЛЕНИЕ существующего метода"""
-        # Извлекаем метод оптимизации
-        calculation_settings = params.get('calculation_settings', {})
-        optimization_method = calculation_settings.get('optimization_method', 'differential_evolution')
+        """
+        СУЩЕСТВУЮЩИЙ метод уже поддерживает routing через params
+        Дополнительных изменений НЕ ТРЕБУЕТСЯ - все работает через:
+        self.signals.request_model_based_calculation.emit(params)
         
-        # Routing на основе метода оптимизации
-        if optimization_method == 'differential_evolution':
-            # Существующий код
-            self.signals.request_model_based_differential_evolution.emit(params)
-        elif optimization_method == 'basinhopping':
-            # НОВЫЙ routing
-            self.signals.request_model_based_basinhopping.emit(params)
-        else:
-            logger.error(f"Unknown optimization method: {optimization_method}")
-    
-    def _handle_model_based_basinhopping(self, params: dict):
-        """НОВЫЙ обработчик для basinhopping (mirror of differential_evolution)"""
-        try:
-            # Identical pattern to _handle_model_based_differential_evolution
-            response = self.handle_request_cycle(
-                target='Calculations',
-                operation='model_based_basinhopping',
-                **params
-            )
-            
-            # Handle response identical to existing pattern
-            if response:
-                self._display_optimization_results(response, 'basinhopping')
-                
-        except Exception as e:
-            logger.error(f"Basin-hopping calculation failed: {e}")
-            self._show_error_message(f"Ошибка вычислений: {e}")
+        Метод уже передает все params в Calculations.run_calculation_scenario()
+        где и будет добавлена обработка method="basinhopping"
+        """
+        # Существующий код остается без изменений
+        self.signals.request_model_based_calculation.emit(params)
 ```
+
+**Обоснование**: 
+- Существующий `_handle_model_based_calculation` уже передает все параметры
+- В `params` уже содержится `calculation_settings` с `method`
+- Вся логика routing будет в `Calculations.run_calculation_scenario()`
 
 ### Этап 5: ModelBased GUI Component Updates (Day 3)
 
@@ -608,11 +578,10 @@ class ModelBased(QWidget, BaseSlots):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self.current_calculation_settings = dialog.get_calculation_settings()
             self._update_settings_display()
-    
-    def _update_settings_display(self):
+      def _update_settings_display(self):
         """НОВЫЙ метод для отображения текущих настроек"""
         if hasattr(self, 'current_calculation_settings'):
-            method_key = self.current_calculation_settings.get('optimization_method', 'differential_evolution')
+            method_key = self.current_calculation_settings.get('method', 'differential_evolution')
             method_name = app_settings.OPTIMIZATION_METHODS.get(method_key, method_key)
             
             # Обновляем label или tooltip для показа текущего метода
@@ -629,9 +598,9 @@ class ModelBased(QWidget, BaseSlots):
         if hasattr(self, 'current_calculation_settings'):
             params['calculation_settings'] = self.current_calculation_settings
         else:
-            # Default settings
+            # Default settings (совместимы с существующей архитектурой)
             params['calculation_settings'] = {
-                'optimization_method': 'differential_evolution',
+                'method': 'differential_evolution',  # ВАЖНО: используем 'method'
                 'method_parameters': {}
             }
         
@@ -644,12 +613,18 @@ class ModelBased(QWidget, BaseSlots):
 
 ```mermaid
 graph LR
-    GUI[ModelBased GUI] --> |emit| MW[MainWindow]
-    MW --> |route signal| BS[BaseSignals]
-    BS --> |request_basinhopping| CALC[Calculations]
+    GUI[ModelBased GUI] --> |emit calculation| MW[MainWindow]
+    MW --> |_handle_model_based_calculation| MW
+    MW --> |existing signal| BS[BaseSignals]
+    BS --> |request_model_based_calculation| CALC[Calculations]
+    CALC --> |run_calculation_scenario| CALC
+    CALC --> |optimization_method check| CALC
+    CALC --> |start_basinhopping()| CALC
     CALC --> |result signal| MW
     MW --> |update GUI| GUI
 ```
+
+**ВАЖНО**: Используется СУЩЕСТВУЮЩИЙ сигнал `request_model_based_calculation`, новые сигналы НЕ добавляются.
 
 ### 2. Threading Safety Pattern
 
@@ -716,20 +691,19 @@ except Exception as e:
 ```mermaid
 gantt
     title Basin-hopping Integration Timeline
-    dateFormat  YYYY-MM-DD
-    section Day 1
-    BaseSignals Updates           :d1-1, 2024-01-01, 4h
-    app_settings Constants        :d1-2, after d1-1, 2h
-    Calculations.start_basinhopping :d1-3, after d1-2, 6h
+    dateFormat  YYYY-MM-DD    section Day 1
+    app_settings Constants        :d1-1, 2024-01-01, 2h
+    Calculations.start_basinhopping :d1-2, after d1-1, 8h
+    Testing core functionality    :d1-3, after d1-2, 2h
     
     section Day 2
     Scenario Updates              :d2-1, 2024-01-02, 2h
     GUI Dialog Implementation     :d2-2, after d2-1, 8h
     
     section Day 3
-    MainWindow Signal Routing     :d3-1, 2024-01-03, 3h
-    ModelBased Integration        :d3-2, after d3-1, 3h
-    Testing & Debugging           :d3-3, after d3-2, 4h
+    ModelBased Integration        :d3-1, 2024-01-03, 4h
+    Testing & Debugging           :d3-2, after d3-1, 6h
+    Documentation                 :d3-3, after d3-2, 2h
 ```
 
 Данный архитектурный план обеспечивает seamless интеграцию basinhopping оптимизации при strict adherence к established patterns проекта.
@@ -950,13 +924,18 @@ EXPERIMENTAL_FEATURES = {
 ```python
 # В calculation.py  
 def run_calculation_scenario(self, scenario_key: str, params: dict):
-    optimization_method = params.get('optimization_method', 'differential_evolution')
+    # Создаем scenario instance
+    scenario_instance = self._create_scenario_instance(scenario_key, params)
+    method = scenario_instance.get_optimization_method()
     
     # Fallback mechanism
-    if optimization_method == 'basinhopping':
+    if method == 'basinhopping':
         if not EXPERIMENTAL_FEATURES['basinhopping_optimization']['enabled']:
             logger.warning("Basin-hopping disabled, falling back to differential_evolution")
-            optimization_method = 'differential_evolution'
+            # Обновляем method в params для fallback
+            params['calculation_settings']['method'] = 'differential_evolution'
+            scenario_instance = self._create_scenario_instance(scenario_key, params)
+            method = 'differential_evolution'
     
     # Continue with selected/fallback method
 ```
