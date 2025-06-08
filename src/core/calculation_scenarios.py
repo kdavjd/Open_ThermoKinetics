@@ -19,7 +19,7 @@ class BaseCalculationScenario:
     def get_bounds(self) -> list[tuple]:
         raise NotImplementedError
 
-    def get_target_function(self) -> Callable:
+    def get_target_function(self, **kwargs) -> Callable:
         raise NotImplementedError
 
     def get_optimization_method(self) -> str:
@@ -43,7 +43,7 @@ class DeconvolutionScenario(BaseCalculationScenario):
     def get_result_strategy_type(self) -> str:
         return "deconvolution"
 
-    def get_target_function(self) -> Callable:
+    def get_target_function(self, **kwargs) -> Callable:
         reaction_variables = self.params["reaction_variables"]
         reaction_combinations = self.params["reaction_combinations"]
         experimental_data = self.params["experimental_data"]
@@ -266,7 +266,7 @@ class ModelBasedScenario(BaseCalculationScenario):
             logger.error(f"Error in get_constraints: {e}")
             return []
 
-    def get_target_function(self) -> callable:
+    def get_target_function(self, **kwargs) -> callable:
         scheme = self.params.get("reaction_scheme")
         reactions = scheme.get("reactions")
         components = scheme.get("components")

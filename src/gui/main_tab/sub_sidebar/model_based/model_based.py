@@ -82,42 +82,67 @@ MODEL_BASED_TAB_LAYOUT = {
 
 class ReactionTable(QTableWidget):
     def __init__(self, parent=None):
-        super().__init__(3, 4, parent)
+        super().__init__(3, 4, parent)  # Back to 4 columns without Best Value
         self.setHorizontalHeaderLabels(["Parameter", "Value", "Min", "Max"])
 
-        self.setColumnHidden(2, True)
-        self.setColumnHidden(3, True)
+        self.setColumnHidden(2, True)  # Min column
+        self.setColumnHidden(3, True)  # Max column
 
+        # Ea row
         self.setItem(0, 0, QTableWidgetItem("Ea, kJ"))
         self.activation_energy_edit = QLineEdit()
         self.setCellWidget(0, 1, self.activation_energy_edit)
+
         self.ea_min_item = QLineEdit()
         self.setCellWidget(0, 2, self.ea_min_item)
         self.ea_max_item = QLineEdit()
         self.setCellWidget(0, 3, self.ea_max_item)
 
+        # log(A) row
         self.setItem(1, 0, QTableWidgetItem("log(A)"))
         self.log_a_edit = QLineEdit()
         self.setCellWidget(1, 1, self.log_a_edit)
+
         self.log_a_min_item = QLineEdit()
         self.setCellWidget(1, 2, self.log_a_min_item)
         self.log_a_max_item = QLineEdit()
         self.setCellWidget(1, 3, self.log_a_max_item)
 
+        # contribution row
         self.setItem(2, 0, QTableWidgetItem("contribution"))
         self.contribution_edit = QLineEdit()
         self.setCellWidget(2, 1, self.contribution_edit)
+
         self.contribution_min_item = QLineEdit()
         self.setCellWidget(2, 2, self.contribution_min_item)
         self.contribution_max_item = QLineEdit()
         self.setCellWidget(2, 3, self.contribution_max_item)
-
         self.defaults = ReactionDefaults()
 
     def set_ranges_visible(self, visible: bool):
-        self.setColumnHidden(2, not visible)
-        self.setColumnHidden(3, not visible)
+        self.setColumnHidden(2, not visible)  # Min column
+        self.setColumnHidden(3, not visible)  # Max column
         self.viewport().update()
+
+    def update_value_with_best(self, best_data: dict):
+        """Update the Value fields directly with best optimization results and trigger save"""
+        if not best_data:
+            return
+
+        # Update Ea value
+        ea_val = best_data.get("Ea")
+        if ea_val is not None:
+            self.activation_energy_edit.setText(f"{ea_val:.1f}")
+
+        # Update log(A) value
+        log_a_val = best_data.get("logA")
+        if log_a_val is not None:
+            self.log_a_edit.setText(f"{log_a_val:.2f}")
+
+        # Update contribution value
+        contribution_val = best_data.get("contribution")
+        if contribution_val is not None:
+            self.contribution_edit.setText(f"{contribution_val:.3f}")
 
     def update_table(self, reaction_data: dict):
         if not reaction_data:
@@ -350,6 +375,7 @@ class ModelBasedTab(QWidget):
         self._reactions_list = []
         self._calculation_method = None
         self._calculation_method_params = {}
+        self._best_values_cache = {}
 
         main_layout = QVBoxLayout(self)
         self.setLayout(main_layout)
@@ -430,6 +456,35 @@ class ModelBasedTab(QWidget):
 
         main_layout.addLayout(bottom_layout)
 
+    def update_best_values(self, best_values_data: dict):
+        if not best_values_data:
+            logger.debug("ModelBasedTab.update_best_values: No data provided")
+            return
+
+        reaction_index = best_values_data.get("reaction_index", 0)
+
+        self._best_values_cache[reaction_index] = {
+            "Ea": best_values_data.get("Ea"),
+            "logA": best_values_data.get("logA"),
+            "contribution": best_values_data.get("contribution"),
+        }
+
+        logger.debug(f"ModelBasedTab.update_best_values: Cached best values for reaction {reaction_index}")
+        current_index = self.reactions_combo.currentIndex()
+        if reaction_index == current_index:
+            logger.debug(
+                f"ModelBasedTab.update_best_values: " f"Updating Value fields for current reaction {reaction_index}"
+            )
+
+            self.reaction_table.update_value_with_best(self._best_values_cache[reaction_index])
+
+            self._on_params_changed()
+        else:
+            logger.debug(
+                f"ModelBasedTab.update_best_values: Reaction {reaction_index} is not currently selected "
+                f"(current: {current_index}), values cached for later display"
+            )
+
     def on_adjuster_value_changed(self, parameter_name: str, new_value: float):
         if parameter_name == "Ea":
             self.reaction_table.activation_energy_edit.setText(str(new_value))
@@ -477,6 +532,11 @@ class ModelBasedTab(QWidget):
         if 0 <= index < len(self._reactions_list):
             reaction_data = self._reactions_list[index]
             self.reaction_table.update_table(reaction_data)
+            if index in self._best_values_cache:
+                logger.debug(
+                    f"ModelBasedTab._on_reactions_combo_changed: " f"Applying cached best values for reaction {index}"
+                )
+                self.reaction_table.update_value_with_best(self._best_values_cache[index])
 
             default_reaction = ReactionDefaults()
             ea_value = reaction_data.get("Ea", default_reaction.Ea_default)
@@ -502,6 +562,7 @@ class ModelBasedTab(QWidget):
                 self.reaction_type_combo.setCurrentText(new_reaction_type)
                 self.reaction_type_combo.blockSignals(was_blocked)
         else:
+            self.reaction_table.update_table({})
             self.reaction_table.update_table({})
 
     @pyqtSlot()

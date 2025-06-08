@@ -2,11 +2,7 @@ from multiprocessing import Manager
 from typing import Callable, Optional
 
 from core.base_signals import BaseSlots
-from core.calculation_results_strategies import (
-    BestResultStrategy,
-    DeconvolutionStrategy,
-    ModelBasedCalculationStrategy,
-)
+from core.calculation_results_strategies import BestResultStrategy, DeconvolutionStrategy, ModelBasedCalculationStrategy
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from scipy.optimize import OptimizeResult, differential_evolution
 
@@ -89,14 +85,14 @@ class Calculations(BaseSlots):
             return
 
         scenario_instance = scenario_cls(params, self)
-
         try:
             bounds = scenario_instance.get_bounds()
             for lb, ub in bounds:
                 if ub < lb:
                     console.log("Invalid bounds: upper bound is less than lower bound.")
                     raise ValueError("Invalid bounds: upper bound is less than lower bound.")
-            target_function = scenario_instance.get_target_function()
+            # NEW: Pass calculations instance to scenario
+            target_function = scenario_instance.get_target_function(calculations_instance=self)
             optimization_method = scenario_instance.get_optimization_method()
             strategy_type = scenario_instance.get_result_strategy_type()
 

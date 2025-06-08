@@ -47,6 +47,7 @@ class OperationType(Enum):
     GET_MODEL_FREE_REACTION_DF = "get_model_free_reaction_df"
     PLOT_MODEL_FIT_RESULT = "plot_model_fit_result"
     PLOT_MODEL_FREE_RESULT = "plot_model_free_result"
+    UPDATE_MODEL_BASED_BEST_VALUES = "update_model_based_best_values"
 
 
 MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
@@ -63,7 +64,7 @@ MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
     "init": "latinhypercube",
     "atol": 0,
     "updating": "deferred",
-    "workers": 4,
+    "workers": 1,  # Changed from 4 to 1 to avoid multiprocessing issues
     "constraints": (),
 }
 
