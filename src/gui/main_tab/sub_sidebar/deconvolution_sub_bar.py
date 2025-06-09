@@ -27,6 +27,7 @@ from PyQt6.QtWidgets import (
 from src.core.app_settings import MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS, OperationType
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
+from src.gui.main_tab.sub_sidebar.deconvolution.config import DeconvolutionConfig
 
 
 class FileTransferButtons(QWidget):
@@ -39,10 +40,11 @@ class FileTransferButtons(QWidget):
         """
         super().__init__(parent)
 
+        self.config = DeconvolutionConfig()
         self.layout = QVBoxLayout(self)
 
-        self.load_reactions_button = QPushButton("import")
-        self.export_reactions_button = QPushButton("export")
+        self.load_reactions_button = QPushButton(self.config.labels.import_button)
+        self.export_reactions_button = QPushButton(self.config.labels.export_button)
 
         self.buttons_layout = QHBoxLayout()
         self.buttons_layout.addWidget(self.load_reactions_button)

@@ -23,23 +23,17 @@ from src.core.app_settings import MODEL_FIT_METHODS, OperationType
 from src.core.curve_fitting import CurveFitting as cft
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
-
-
-class DialogDimensions:
-    MIN_WINDOW_WIDTH = 300
-    FIELD_WIDTH = 290
-    HEATING_RATE_WIDTH = 80
-    FILE_IMPUT_ROW_HEIGHT = 50
-    ADD_BUTTON_HEIGHT = 40
-    WINDOW_PADDING = 50
+from src.gui.main_tab.sub_sidebar.series.config import SeriesConfig
 
 
 class DeconvolutionResultsLoadDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setWindowTitle("load deconvolution results")
-        self.setMinimumWidth(DialogDimensions.MIN_WINDOW_WIDTH)
+        self.config = SeriesConfig()
+
+        self.setWindowTitle(self.config.dialog.deconvolution_results_title)
+        self.setMinimumWidth(self.config.dialog.min_window_width)
 
         self.layout = QVBoxLayout(self)
 
@@ -48,7 +42,7 @@ class DeconvolutionResultsLoadDialog(QDialog):
         self.file_inputs = []
         self.file_count = 1
 
-        self.add_button = QPushButton("add file", self)
+        self.add_button = QPushButton(self.config.dialog.add_file_button_text, self)
         self.add_button.clicked.connect(self.add_file_input)
 
         self.layout.addLayout(self.form_layout)
@@ -74,11 +68,11 @@ class DeconvolutionResultsLoadDialog(QDialog):
         file_layout.addWidget(file_input)
         file_layout.addWidget(heating_rate_input)
 
-        heating_rate_input.setFixedWidth(DialogDimensions.HEATING_RATE_WIDTH)
+        heating_rate_input.setFixedWidth(self.config.dialog.heating_rate_width)
         file_input.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
-        file_layout.setStretch(0, DialogDimensions.FIELD_WIDTH - DialogDimensions.HEATING_RATE_WIDTH)
-        file_layout.setStretch(1, DialogDimensions.HEATING_RATE_WIDTH)
+        file_layout.setStretch(0, self.config.dialog.field_width - self.config.dialog.heating_rate_width)
+        file_layout.setStretch(1, self.config.dialog.heating_rate_width)
 
         self.form_layout.addLayout(file_layout)
 
@@ -86,9 +80,9 @@ class DeconvolutionResultsLoadDialog(QDialog):
         self.file_count += 1
 
         new_height = (
-            (self.file_count - 1) * DialogDimensions.FILE_IMPUT_ROW_HEIGHT
-            + DialogDimensions.ADD_BUTTON_HEIGHT
-            + DialogDimensions.WINDOW_PADDING
+            (self.file_count - 1) * self.config.dialog.file_input_row_height
+            + self.config.dialog.add_button_height
+            + self.config.dialog.window_padding
         )
         self.setFixedHeight(new_height)
 

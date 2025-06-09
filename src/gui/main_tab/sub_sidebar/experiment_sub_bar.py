@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QPushButt
 
 from src.core.app_settings import OperationType, SideBarNames
 from src.core.logger_config import logger
+from src.gui.main_tab.sub_sidebar.experiment.config import ExperimentConfig
 
 
 class SmoothingBlock(QWidget):
@@ -13,22 +14,23 @@ class SmoothingBlock(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.config = ExperimentConfig()
         self.setLayout(QVBoxLayout())
 
         # Initialize smoothing method selection
         self.smoothing_method = QComboBox()
-        self.smoothing_method.addItems(["Savitzky-Golay", "Other"])
+        self.smoothing_method.addItems(self.config.smoothing.smoothing_methods)
 
         # Initialize window size and polynomial order inputs
-        self.n_window = QLineEdit("1")
-        self.n_poly = QLineEdit("0")
+        self.n_window = QLineEdit(self.config.smoothing.window_size_default)
+        self.n_poly = QLineEdit(self.config.smoothing.polynomial_order_default)
 
         # Initialize specific settings selection
         self.spec_settings = QComboBox()
-        self.spec_settings.addItems(["Nearest", "Other"])
+        self.spec_settings.addItems(self.config.smoothing.spec_settings)
 
         # Initialize apply button
-        self.apply_button = QPushButton("apply")
+        self.apply_button = QPushButton(self.config.labels.apply_button)
 
         # Layout for smoothing method
         layout = QVBoxLayout()

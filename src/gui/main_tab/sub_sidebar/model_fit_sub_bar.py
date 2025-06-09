@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.app_settings import MODEL_FIT_ANNOTATION_CONFIG, MODEL_FIT_METHODS, NUC_MODELS_LIST, OperationType
+from src.gui.main_tab.sub_sidebar.model_fit.config import ModelFitConfig
 
 
 class ModelFitSubBar(QWidget):
@@ -28,6 +29,8 @@ class ModelFitSubBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.config = ModelFitConfig()
+
         self.layout = QVBoxLayout(self)
 
         self.model_combobox = QComboBox(self)
@@ -36,27 +39,24 @@ class ModelFitSubBar(QWidget):
 
         self.form_layout = QFormLayout()
         self.alpha_min_input = QLineEdit(self)
-        self.alpha_min_input.setText("0.005")
-        self.alpha_min_input.setToolTip("alpha_min - minimum conversion value for calculation")
-        self.form_layout.addRow("α_min:", self.alpha_min_input)
+        self.alpha_min_input.setText(self.config.defaults.alpha_min)
+        self.alpha_min_input.setToolTip(self.config.ui.alpha_min_tooltip)
+        self.form_layout.addRow(self.config.ui.alpha_min_label, self.alpha_min_input)
 
         self.alpha_max_input = QLineEdit(self)
-        self.alpha_max_input.setText("0.995")
-        self.alpha_max_input.setToolTip("alpha_max - maximum conversion value for calculation")
-        self.form_layout.addRow("α_max:", self.alpha_max_input)
+        self.alpha_max_input.setText(self.config.defaults.alpha_max)
+        self.alpha_max_input.setToolTip(self.config.ui.alpha_max_tooltip)
+        self.form_layout.addRow(self.config.ui.alpha_max_label, self.alpha_max_input)
 
         self.valid_proportion_input = QLineEdit(self)
-        self.valid_proportion_input.setText("0.8")
-        self.valid_proportion_input.setToolTip(
-            "valid proportion - the proportion of values in the model calculation that is not infinity or NaN. "
-            "If it is smaller, the model is ignored."
-        )
-        self.form_layout.addRow("valid proportion:", self.valid_proportion_input)
+        self.valid_proportion_input.setText(self.config.defaults.valid_proportion)
+        self.valid_proportion_input.setToolTip(self.config.ui.valid_proportion_tooltip)
+        self.form_layout.addRow(self.config.ui.valid_proportion_label, self.valid_proportion_input)
 
         self.layout.addLayout(self.form_layout)
 
         # Calculate button
-        self.calculate_button = QPushButton("calculate", self)
+        self.calculate_button = QPushButton(self.config.ui.calculate_button_text, self)
         self.calculate_button.clicked.connect(self.on_calculate_clicked)
         self.layout.addWidget(self.calculate_button)
 
@@ -79,16 +79,16 @@ class ModelFitSubBar(QWidget):
 
         self.results_table = QTableWidget(self)
         self.results_table.setColumnCount(4)
-        self.results_table.setHorizontalHeaderLabels(["Model", "R2_score", "Ea", "A"])
+        self.results_table.setHorizontalHeaderLabels(self.config.ui.table_headers)
         self.layout.addWidget(self.results_table)
 
         # Drop-down for NUC models, plot button and settings button
         self.plot_layout = QHBoxLayout()
         self.plot_model_combobox = QComboBox(self)
         self.plot_model_combobox.addItems(NUC_MODELS_LIST)
-        self.plot_button = QPushButton("plot", self)
+        self.plot_button = QPushButton(self.config.ui.plot_button_text, self)
         self.plot_button.clicked.connect(self.on_plot_clicked)
-        self.settings_button = QPushButton("settings", self)
+        self.settings_button = QPushButton(self.config.ui.settings_button_text, self)
         self.settings_button.clicked.connect(self.on_settings_clicked)
         self.plot_layout.addWidget(self.plot_model_combobox)
         self.plot_layout.addWidget(self.plot_button)
@@ -240,8 +240,9 @@ class ModelFitSubBar(QWidget):
 class ModelFitAnnotationSettingsDialog(QDialog):
     def __init__(self, parent, is_annotate, config):
         super().__init__(parent)
-        self.setWindowTitle("annotation settings")
-        self.resize(300, 300)
+        self.config = config
+        self.setWindowTitle(self.config.dialog.annotation_settings_title)
+        self.resize(self.config.dialog.annotation_settings_width, self.config.dialog.annotation_settings_height)
         layout = QVBoxLayout(self)
         form_layout = QFormLayout()
 
