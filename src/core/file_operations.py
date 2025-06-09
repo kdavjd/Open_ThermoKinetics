@@ -13,14 +13,13 @@ class ActiveFileOperations(BaseSlots):
         operation = params.get("operation")
         actor = params.get("actor")
         logger.debug(f"{self.actor_name} processing request '{operation}' from '{actor}'")
+
         response = params.copy()
 
         if operation == OperationType.TO_DTG:
             response["data"] = self.diff_function
-
-        if operation == OperationType.TO_A_T:
+        elif operation == OperationType.TO_A_T:
             response["data"] = self.to_a_t_function
-
         else:
             logger.warning(f"{self.actor_name} received unknown operation '{operation}'")
 

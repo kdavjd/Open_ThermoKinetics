@@ -2,15 +2,14 @@ from functools import reduce
 
 import pandas as pd
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QMainWindow, QTabWidget
+from PyQt6.QtWidgets import QMainWindow
 
 from src.core.app_settings import OperationType
 from src.core.base_signals import BaseSignals, BaseSlots
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
+from src.gui.application.tab_container import TabContainer
 from src.gui.config import get_app_config, get_localization
-from src.gui.main_tab.main_tab import MainTab
-from src.gui.table_tab.table_tab import TableTab
 
 
 class MainWindow(QMainWindow):
@@ -28,14 +27,13 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(config.window.min_width, config.window.min_height)
         self.resize(config.window.default_width, config.window.default_height)
 
-        self.tabs = QTabWidget(self)
-        self.setCentralWidget(self.tabs)
+        # Create tab container
+        self.tab_container = TabContainer(self)
+        self.setCentralWidget(self.tab_container.get_widget())
 
-        self.main_tab = MainTab(self)
-        self.table_tab = TableTab(self)
-
-        self.tabs.addTab(self.main_tab, loc.get_string("application.tabs.main"))
-        self.tabs.addTab(self.table_tab, loc.get_string("application.tabs.analysis"))
+        # Get references to tabs for compatibility
+        self.main_tab = self.tab_container.get_main_tab()
+        self.table_tab = self.tab_container.get_table_tab()
 
         self.signals = signals
         self.actor_name = "main_window"

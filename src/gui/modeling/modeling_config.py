@@ -268,3 +268,8 @@ class ModelingConfig:
         self.model_fit_sub_bar = self.model_fit_sub_bar or ModelFitSubBarConfig()
         self.series_dialogs = self.series_dialogs or SeriesDialogConfig()
         self.model_based_scheme = self.model_based_scheme or ModelBasedConfig()
+
+
+def get_modeling_config() -> ModelingConfig:
+    """Get the default modeling configuration instance"""
+    return ModelingConfig()
