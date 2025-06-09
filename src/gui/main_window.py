@@ -2,14 +2,14 @@ from functools import reduce
 
 import pandas as pd
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QMainWindow, QTabWidget
+from PyQt6.QtWidgets import QMainWindow
 
 from src.core.app_settings import OperationType
 from src.core.base_signals import BaseSignals, BaseSlots
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
-from src.gui.main_tab.main_tab import MainTab
-from src.gui.table_tab.table_tab import TableTab
+from src.gui.application.tab_container import TabContainer
+from src.gui.config import get_app_config, get_localization
 
 
 class MainWindow(QMainWindow):
@@ -18,16 +18,22 @@ class MainWindow(QMainWindow):
 
     def __init__(self, signals: BaseSignals):
         super().__init__()
-        self.setWindowTitle("Open ThermoKinetics")
+        # Get configuration and localization
+        config = get_app_config()
+        loc = get_localization()
 
-        self.tabs = QTabWidget(self)
-        self.setCentralWidget(self.tabs)
+        # Configure window using configuration system
+        self.setWindowTitle(loc.get_string("application.title"))
+        self.setMinimumSize(config.window.min_width, config.window.min_height)
+        self.resize(config.window.default_width, config.window.default_height)
 
-        self.main_tab = MainTab(self)
-        self.table_tab = TableTab(self)
+        # Create tab container
+        self.tab_container = TabContainer(self)
+        self.setCentralWidget(self.tab_container.get_widget())
 
-        self.tabs.addTab(self.main_tab, "Main")
-        self.tabs.addTab(self.table_tab, "Table")
+        # Get references to tabs for compatibility
+        self.main_tab = self.tab_container.get_main_tab()
+        self.table_tab = self.tab_container.get_table_tab()
 
         self.signals = signals
         self.actor_name = "main_window"
@@ -48,27 +54,28 @@ class MainWindow(QMainWindow):
         actor = params.get("actor")
         response = params.copy()
         logger.debug(f"{self.actor_name} handle request '{operation}' from '{actor}'")
-        if operation == OperationType.GET_FILE_NAME:
-            response["data"] = self.main_tab.sidebar.active_file_item.text()
 
-        elif operation == OperationType.PLOT_DF:
-            df = params.get("df", None)
-            self.main_tab.plot_canvas.plot_data_from_dataframe(df) if df is not None else logger.error(
-                f"{self.actor_name} no df"
-            )
-            response["data"] = df is not None
+        # Use operation handlers dictionary for routing
+        operation_handlers = {
+            OperationType.GET_FILE_NAME: self._handle_get_file_name,
+            OperationType.PLOT_DF: self._handle_plot_df,
+            OperationType.PLOT_MSE_LINE: self._handle_plot_mse_line,
+            OperationType.CALCULATION_FINISHED: self._handle_calculation_finished,
+            OperationType.UPDATE_MODEL_BASED_BEST_VALUES: self._handle_update_model_based_best_values,
+        }
 
-        elif operation == OperationType.PLOT_MSE_LINE:
-            mse_data = params.get("mse_data", [])
-            self.main_tab.plot_canvas.plot_mse_history(mse_data)
-            response["data"] = True
-
-        elif operation == OperationType.CALCULATION_FINISHED:
-            self.main_tab.sub_sidebar.deconvolution_sub_bar.calc_buttons.revert_to_default()
-            response["data"] = True
-
+        handler = operation_handlers.get(operation)
+        if handler:
+            try:
+                result = handler(params)
+                response["data"] = result if result is not None else True
+            except Exception as e:
+                logger.error(f"Error in handler for operation '{operation}': {e}")
+                response["data"] = {"success": False, "error": str(e)}
         else:
             logger.warning(f"{self.actor_name} received unknown operation '{operation}'")
+            response["data"] = {"success": False, "error": f"Unknown operation: {operation}"}
+
         response["target"], response["actor"] = response["actor"], response["target"]
         self.signals.response_signal.emit(response)
 
@@ -89,7 +96,8 @@ class MainWindow(QMainWindow):
         logger.info(f"{self.actor_name} handle_request_from_main_tab '{operation}' with {params=}")
 
         operation_handlers = {
-            OperationType.DIFFERENTIAL: self._handle_differential,
+            OperationType.TO_DTG: self._handle_differential,
+            OperationType.TO_A_T: self._handle_to_a_t,
             OperationType.ADD_REACTION: self._handle_add_reaction,
             OperationType.HIGHLIGHT_REACTION: self._handle_highlight_reaction,
             OperationType.REMOVE_REACTION: self._handle_remove_reaction,
@@ -112,6 +120,7 @@ class MainWindow(QMainWindow):
             OperationType.MODEL_BASED_CALCULATION: self._handle_model_based_calculation,
             OperationType.MODEL_FIT_CALCULATION: self._handle_model_fit_calculation,
             OperationType.MODEL_FREE_CALCULATION: self._handle_model_free_calculation,
+            OperationType.UPDATE_MODEL_BASED_BEST_VALUES: self._handle_update_model_based_best_values,
         }
 
         handler = operation_handlers.get(operation)
@@ -119,6 +128,31 @@ class MainWindow(QMainWindow):
             handler(params)
         else:
             logger.error(f"{self.actor_name} unknown operation: {operation},\n\n {params=}")
+
+    def _handle_get_file_name(self, params: dict):
+        """Handle GET_FILE_NAME operation"""
+        return self.main_tab.sidebar.active_file_item.text()
+
+    def _handle_plot_df(self, params: dict):
+        """Handle PLOT_DF operation"""
+        df = params.get("df", None)
+        if df is not None:
+            self.main_tab.plot_canvas.plot_data_from_dataframe(df)
+            return True
+        else:
+            logger.error(f"{self.actor_name} no df")
+            return False
+
+    def _handle_plot_mse_line(self, params: dict):
+        """Handle PLOT_MSE_LINE operation"""
+        mse_data = params.get("mse_data", [])
+        self.main_tab.plot_canvas.plot_mse_history(mse_data)
+        return True
+
+    def _handle_calculation_finished(self, params: dict):
+        """Handle CALCULATION_FINISHED operation"""
+        self.main_tab.sub_sidebar.deconvolution_sub_bar.calc_buttons.revert_to_default()
+        return True
 
     def _handle_model_free_calculation(self, params: dict):
         series_name = params.get("series_name")
@@ -172,6 +206,7 @@ class MainWindow(QMainWindow):
         keys = [series_name, "model_fit_results", fit_method, reaction_n, beta]
         result_df = self.handle_request_cycle("series_data", OperationType.GET_SERIES_VALUE, keys=keys)
         if not self._is_valid_result_data(result_df, series_name, fit_method):
+            logger.debug(f"{self.actor_name} invalid result data for {keys=}")
             return
         params["model_series"] = result_df[result_df["Model"] == model].copy()
 
@@ -379,9 +414,18 @@ class MainWindow(QMainWindow):
         self.main_tab.sub_sidebar.model_based.update_scheme_data(scheme_data)
         self.update_model_simulation(series_name)
 
+    def _handle_to_a_t(self, params):
+        params["function"] = self.handle_request_cycle("active_file_operations", OperationType.TO_A_T)
+        is_modifyed = self.handle_request_cycle("file_data", OperationType.TO_A_T, **params)
+        if is_modifyed:
+            df = self.handle_request_cycle("file_data", OperationType.GET_DF_DATA, **params)
+            self.main_tab.plot_canvas.plot_data_from_dataframe(df)
+        else:
+            logger.error(f"{self.actor_name} no response in handle_request_from_main_tab")
+
     def _handle_differential(self, params):
-        params["function"] = self.handle_request_cycle("active_file_operations", OperationType.DIFFERENTIAL)
-        is_modifyed = self.handle_request_cycle("file_data", OperationType.DIFFERENTIAL, **params)
+        params["function"] = self.handle_request_cycle("active_file_operations", OperationType.TO_DTG)
+        is_modifyed = self.handle_request_cycle("file_data", OperationType.TO_DTG, **params)
         if is_modifyed:
             df = self.handle_request_cycle("file_data", OperationType.GET_DF_DATA, **params)
             self.main_tab.plot_canvas.plot_data_from_dataframe(df)
@@ -512,8 +556,40 @@ class MainWindow(QMainWindow):
         params["experimental_data"] = series_entry.get("experimental_data")
         params["calculation_settings"] = series_entry.get("calculation_settings")
 
-        logger.debug(f"Emitting model_based_calculation_signal with params: {params}")
+        logger.info(f"Emitting model_based_calculation_signal with params: {params}")
         self.model_based_calculation_signal.emit(params)
+
+    def _handle_update_model_based_best_values(self, params: dict):
+        """
+        Handle real-time best values updates from MODEL_BASED optimization.
+        Routes the best parameter values to the ModelBasedTab for display.
+
+        Args:
+            params: Dictionary containing best parameter values from optimization
+                   Format: {
+                       "reaction_index": int,    # Index of the reaction being optimized
+                       "Ea": float,             # Best activation energy value
+                       "logA": float,           # Best log(A) value
+                       "contribution": float,   # Best contribution value
+                       "mse": float             # Current best MSE value
+                   }
+        """
+        logger.debug(f"MainWindow._handle_update_model_based_best_values: Received best values: {params}")
+
+        # Extract best values data
+        best_values_data = {
+            "reaction_index": params.get("reaction_index", 0),
+            "Ea": params.get("Ea"),
+            "logA": params.get("logA"),
+            "contribution": params.get("contribution"),
+        }  # Route to ModelBasedTab for display update
+        try:
+            self.main_tab.sub_sidebar.model_based.update_best_values(best_values_data)
+            logger.debug("MainWindow: Successfully routed best values to ModelBasedTab")
+            return {"success": True, "message": "Best values updated successfully"}
+        except Exception as e:
+            logger.error(f"MainWindow: Failed to update best values in ModelBasedTab: {e}")
+            return {"success": False, "error": str(e)}
 
     def update_model_simulation(self, series_name: str):
         series_entry = self.handle_request_cycle(
@@ -546,5 +622,5 @@ class MainWindow(QMainWindow):
         if isinstance(result_df, pd.DataFrame):
             if result_df.empty:
                 console.log("\nThe model fit result is empty.\n")
-            return False
+                return False
         return True

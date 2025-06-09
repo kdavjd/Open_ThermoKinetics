@@ -18,7 +18,9 @@ from PyQt6.QtWidgets import (
 
 from src.core.app_settings import OperationType, SideBarNames
 from src.core.logger_config import logger
-from src.gui.main_tab.load_file_button import LoadButton
+from src.gui.experiment.load_file_button import LoadButton
+
+from .navigation_config import NavigationConfig, SidebarDimensions
 
 
 class SideBar(QWidget):
@@ -38,12 +40,14 @@ class SideBar(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.config = NavigationConfig()
+        self.dimensions = SidebarDimensions()
         self.layout = QVBoxLayout()
 
         self.tree_view = QTreeView()
         self.tree_view.clicked.connect(self.on_item_clicked)
         self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["app tree"])
+        self.model.setHorizontalHeaderLabels(self.config.tree_header_labels)
         self.tree_view.setModel(self.model)
 
         # Initialize experiment data section

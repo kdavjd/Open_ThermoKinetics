@@ -1,13 +1,15 @@
 from enum import Enum
 
 import numpy as np
+from numba import njit
 
 
 class OperationType(Enum):
     ADD_REACTION = "add_reaction"
     REMOVE_REACTION = "remove_reaction"
     HIGHLIGHT_REACTION = "highlight_reaction"
-    DIFFERENTIAL = "differential"
+    TO_A_T = "to_a_t"
+    TO_DTG = "to_dtg"
     RESET_FILE_DATA = "reset_file_data"
     IMPORT_REACTIONS = "import_reactions"
     EXPORT_REACTIONS = "export_reactions"
@@ -31,7 +33,7 @@ class OperationType(Enum):
     SET_VALUE = "set_value"
     REMOVE_VALUE = "remove_value"
     GET_FULL_DATA = "get_full_data"
-    CHECK_DIFFERENTIAL = "check_differential"
+    CHECK_OPERATION = "check_differential"
     GET_DF_DATA = "get_df_data"
     GET_ALL_DATA = "get_all_data"
     LOAD_FILE = "load_file"
@@ -45,23 +47,24 @@ class OperationType(Enum):
     GET_MODEL_FREE_REACTION_DF = "get_model_free_reaction_df"
     PLOT_MODEL_FIT_RESULT = "plot_model_fit_result"
     PLOT_MODEL_FREE_RESULT = "plot_model_free_result"
+    UPDATE_MODEL_BASED_BEST_VALUES = "update_model_based_best_values"
 
 
 MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
     "strategy": "best1bin",
-    "maxiter": 60,
-    "popsize": 3,
+    "maxiter": 200,
+    "popsize": 2,
     "tol": 0.01,
     "mutation": (0.5, 1),
     "recombination": 0.7,
     "seed": None,
     "callback": None,
-    "disp": False,
-    "polish": True,
+    "disp": True,
+    "polish": False,
     "init": "latinhypercube",
     "atol": 0,
     "updating": "deferred",
-    "workers": 1,
+    "workers": 1,  # Changed from 4 to 1 to avoid multiprocessing issues
     "constraints": (),
 }
 
@@ -82,129 +85,6 @@ MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
     "workers": 1,
     "constraints": (),
 }
-
-
-NUC_MODELS_TABLE = {
-    "F1/3": {"differential_form": lambda e: (3 / 2) * e ** (1 / 3), "integral_form": lambda e: 1 - e ** (2 / 3)},
-    "F3/4": {"differential_form": lambda e: 4 * e ** (3 / 4), "integral_form": lambda e: 1 - e ** (1 / 4)},
-    "F3/2": {"differential_form": lambda e: 2 * e ** (3 / 2), "integral_form": lambda e: e ** (-1 / 2) - 1},
-    "F2": {"differential_form": lambda e: e**2, "integral_form": lambda e: e ** (-1) - 1},
-    "F3": {"differential_form": lambda e: e**3, "integral_form": lambda e: e ** (-2) - 1},
-    "F1/A1": {"differential_form": lambda e: e, "integral_form": lambda e: -np.log(e)},
-    "A2": {
-        "differential_form": lambda e: 2 * e * (-np.log(e)) ** (1 / 2),
-        "integral_form": lambda e: (-np.log(e)) ** (1 / 2),
-    },
-    "A3": {
-        "differential_form": lambda e: 3 * e * (-np.log(e)) ** (2 / 3),
-        "integral_form": lambda e: (-np.log(e)) ** (1 / 3),
-    },
-    "A4": {
-        "differential_form": lambda e: 4 * e * (-np.log(e)) ** (3 / 4),
-        "integral_form": lambda e: (-np.log(e)) ** (1 / 4),
-    },
-    "A2/3": {
-        "differential_form": lambda e: (2 / 3) * e * (-np.log(e)) ** (-1 / 2),
-        "integral_form": lambda e: (-np.log(e)) ** (3 / 2),
-    },
-    "A3/2": {
-        "differential_form": lambda e: (3 / 2) * e * (-np.log(e)) ** (1 / 3),
-        "integral_form": lambda e: (-np.log(e)) ** (2 / 3),
-    },
-    "A3/4": {
-        "differential_form": lambda e: (3 / 4) * e * (-np.log(e)) ** (-1 / 3),
-        "integral_form": lambda e: (-np.log(e)) ** (4 / 3),
-    },
-    "A5/2": {
-        "differential_form": lambda e: (5 / 2) * e * (-np.log(e)) ** (3 / 5),
-        "integral_form": lambda e: (-np.log(e)) ** (2 / 5),
-    },
-    "F0/R1/P1": {"differential_form": lambda e: np.full_like(e, 1), "integral_form": lambda e: 1 - e},
-    "R2": {"differential_form": lambda e: 2 * e ** (1 / 2), "integral_form": lambda e: 1 - e ** (1 / 2)},
-    "R3": {"differential_form": lambda e: 3 * e ** (2 / 3), "integral_form": lambda e: 1 - e ** (1 / 3)},
-    "P3/2": {
-        "differential_form": lambda e: (2 / 3) / (1 - e) ** (1 / 2),
-        "integral_form": lambda e: (1 - e) ** (3 / 2),
-    },
-    "P2": {"differential_form": lambda e: 2 * (1 - e) ** (1 / 2), "integral_form": lambda e: (1 - e) ** (1 / 2)},
-    "P3": {"differential_form": lambda e: 3 * (1 - e) ** (2 / 3), "integral_form": lambda e: (1 - e) ** (1 / 3)},
-    "P4": {"differential_form": lambda e: 4 * (1 - e) ** (3 / 4), "integral_form": lambda e: (1 - e) ** (1 / 4)},
-    "E1": {"differential_form": lambda e: 1 - e, "integral_form": lambda e: np.log(1 - e)},
-    "E2": {"differential_form": lambda e: (1 - e) / 2, "integral_form": lambda e: np.log((1 - e) ** 2)},
-    "D1": {"differential_form": lambda e: 1 / (2 * (1 - e)), "integral_form": lambda e: (1 - e) ** 2},
-    "D2": {"differential_form": lambda e: 1 / (-np.log(e)), "integral_form": lambda e: (1 - e) + e * np.log(e)},
-    "D3": {
-        "differential_form": lambda e: ((3 / 2) * e ** (2 / 3)) / (1 - e ** (1 / 3)),
-        "integral_form": lambda e: (1 - e ** (1 / 3)) ** 2,
-    },
-    "D4": {
-        "differential_form": lambda e: (3 / 2) / (e ** (-1 / 3) - 1),
-        "integral_form": lambda e: 1 - (2 * (1 - e) / 3) - e ** (2 / 3),
-    },
-    "D5": {
-        "differential_form": lambda e: ((3 / 2) * e ** (4 / 3)) / (e ** (-1 / 3) - 1),
-        "integral_form": lambda e: (e ** (-1 / 3) - 1) ** 2,
-    },
-    "D6": {
-        "differential_form": lambda e: ((3 / 2) * (1 + e) ** (2 / 3)) / ((1 + e) ** (1 / 3) - 1),
-        "integral_form": lambda e: ((1 + e) ** (1 / 3) - 1) ** 2,
-    },
-    "D7": {
-        "differential_form": lambda e: (3 / 2) / (1 - (1 + e) ** (-1 / 3)),
-        "integral_form": lambda e: 1 + (2 * (1 - e) / 3) - (1 + e) ** (2 / 3),
-    },
-    "D8": {
-        "differential_form": lambda e: ((3 / 2) * (1 + e) ** (4 / 3)) / (1 - (1 + e) ** (-1 / 3)),
-        "integral_form": lambda e: ((1 + e) ** (-1 / 3) - 1) ** 2,
-    },
-    "G1": {"differential_form": lambda e: 1 / (2 * e), "integral_form": lambda e: 1 - e**2},
-    "G2": {"differential_form": lambda e: 1 / (3 * e**2), "integral_form": lambda e: 1 - e**3},
-    "G3": {"differential_form": lambda e: 1 / (4 * e**3), "integral_form": lambda e: 1 - e**4},
-    "G4": {"differential_form": lambda e: (1 / 2) * e * (-np.log(e)), "integral_form": lambda e: (-np.log(e)) ** 2},
-    "G5": {
-        "differential_form": lambda e: (1 / 3) * e * (-np.log(e)) ** 2,
-        "integral_form": lambda e: (-np.log(e)) ** 3,
-    },
-    "G6": {
-        "differential_form": lambda e: (1 / 4) * e * (-np.log(e)) ** 3,
-        "integral_form": lambda e: (-np.log(e)) ** 4,
-    },
-    "G7": {
-        "differential_form": lambda e: (1 / 4) * e ** (1 / 2) / (1 - e ** (1 / 2)),
-        "integral_form": lambda e: (1 - e ** (1 / 2)) ** (1 / 2),
-    },
-    "G8": {
-        "differential_form": lambda e: (1 / 3) * e ** (2 / 3) / (1 - e ** (1 / 3)),
-        "integral_form": lambda e: (1 - e ** (1 / 3)) ** (1 / 2),
-    },
-    "B1": {"differential_form": lambda e: 1 / ((1 - e) - e), "integral_form": lambda e: np.log((1 - e) / e)},
-}
-
-
-def clip_fraction(e, eps=1e-8):
-    e = np.clip(e, eps, 1 - eps)
-    return e
-
-
-def clip_fraction_decorator(eps=1e-8):
-    def decorator(func):
-        def wrapper(e, *args, **kwargs):
-            e_clamped = clip_fraction(e, eps=eps)
-            return func(e_clamped, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-NUC_MODELS_LIST = sorted(NUC_MODELS_TABLE.keys())
-for key in NUC_MODELS_LIST:
-    if key in NUC_MODELS_TABLE:
-        df = NUC_MODELS_TABLE[key]["differential_form"]
-        itg = NUC_MODELS_TABLE[key]["integral_form"]
-        NUC_MODELS_TABLE[key]["differential_form"] = clip_fraction_decorator()(df)
-        NUC_MODELS_TABLE[key]["integral_form"] = clip_fraction_decorator()(itg)
-
 
 MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
 MODEL_FREE_METHODS = [
@@ -246,3 +126,607 @@ class SideBarNames(Enum):
     EXPERIMENTS = "experiments"
     SERIES = "series"
     DECONVOLUTION = "deconvolution"
+
+
+def ensure_array(func):
+    def wrapper(e, *args, **kwargs):
+        e_array = np.asarray(e)
+        return func(e_array, *args, **kwargs)
+
+    return wrapper
+
+
+@njit
+def clip_fraction(e, eps=1e-8):
+    return np.clip(e, eps, 1 - eps)
+
+
+@ensure_array
+@njit
+def differential_F1_3(e):
+    e = clip_fraction(e)
+    return (3.0 / 2.0) * e ** (1.0 / 3.0)
+
+
+@ensure_array
+@njit
+def integral_F1_3(e):
+    e = clip_fraction(e)
+    return 1 - e ** (2.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_F3_4(e):
+    e = clip_fraction(e)
+    return 4.0 * e ** (3.0 / 4.0)
+
+
+@ensure_array
+@njit
+def integral_F3_4(e):
+    e = clip_fraction(e)
+    return 1 - e ** (1.0 / 4.0)
+
+
+@ensure_array
+@njit
+def differential_F3_2(e):
+    e = clip_fraction(e)
+    return 2.0 * e ** (3.0 / 2.0)
+
+
+@ensure_array
+@njit
+def integral_F3_2(e):
+    e = clip_fraction(e)
+    return e ** (-1.0 / 2.0) - 1
+
+
+@ensure_array
+@njit
+def differential_F2(e):
+    e = clip_fraction(e)
+    return e**2
+
+
+@ensure_array
+@njit
+def integral_F2(e):
+    e = clip_fraction(e)
+    return e ** (-1.0) - 1
+
+
+@ensure_array
+@njit
+def differential_F3(e):
+    e = clip_fraction(e)
+    return e**3
+
+
+@ensure_array
+@njit
+def integral_F3(e):
+    e = clip_fraction(e)
+    return e ** (-2.0) - 1
+
+
+@ensure_array
+@njit
+def differential_F1_A1(e):
+    e = clip_fraction(e)
+    return e
+
+
+@ensure_array
+@njit
+def integral_F1_A1(e):
+    e = clip_fraction(e)
+    return -np.log(e)
+
+
+@ensure_array
+@njit
+def differential_A2(e):
+    e = clip_fraction(e)
+    return 2.0 * e * (-np.log(e)) ** 0.5
+
+
+@ensure_array
+@njit
+def integral_A2(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** 0.5
+
+
+@ensure_array
+@njit
+def differential_A3(e):
+    e = clip_fraction(e)
+    return 3.0 * e * (-np.log(e)) ** (2.0 / 3.0)
+
+
+@ensure_array
+@njit
+def integral_A3(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** (1.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_A4(e):
+    e = clip_fraction(e)
+    return 4.0 * e * (-np.log(e)) ** (3.0 / 4.0)
+
+
+@ensure_array
+@njit
+def integral_A4(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** (1.0 / 4.0)
+
+
+@ensure_array
+@njit
+def differential_A2_3(e):
+    e = clip_fraction(e)
+    return (2.0 / 3.0) * e * (-np.log(e)) ** (-0.5)
+
+
+@ensure_array
+@njit
+def integral_A2_3(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** (3.0 / 2.0)
+
+
+@ensure_array
+@njit
+def differential_A3_2(e):
+    e = clip_fraction(e)
+    return (3.0 / 2.0) * e * (-np.log(e)) ** (1.0 / 3.0)
+
+
+@ensure_array
+@njit
+def integral_A3_2(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** (2.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_A3_4(e):
+    e = clip_fraction(e)
+    return (3.0 / 4.0) * e * (-np.log(e)) ** (-1.0 / 3.0)
+
+
+@ensure_array
+@njit
+def integral_A3_4(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** (4.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_A5_2(e):
+    e = clip_fraction(e)
+    return (5.0 / 2.0) * e * (-np.log(e)) ** (3.0 / 5.0)
+
+
+@ensure_array
+@njit
+def integral_A5_2(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** (2.0 / 5.0)
+
+
+@ensure_array
+@njit
+def differential_F0_R1_P1(e):
+    e = clip_fraction(e)
+    return np.full_like(e, 1)
+
+
+@ensure_array
+@njit
+def integral_F0_R1_P1(e):
+    e = clip_fraction(e)
+    return 1 - e
+
+
+@ensure_array
+@njit
+def differential_R2(e):
+    e = clip_fraction(e)
+    return 2.0 * e**0.5
+
+
+@ensure_array
+@njit
+def integral_R2(e):
+    e = clip_fraction(e)
+    return 1 - e**0.5
+
+
+@ensure_array
+@njit
+def differential_R3(e):
+    e = clip_fraction(e)
+    return 3.0 * e ** (2.0 / 3.0)
+
+
+@ensure_array
+@njit
+def integral_R3(e):
+    e = clip_fraction(e)
+    return 1 - e ** (1.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_P3_2(e):
+    e = clip_fraction(e)
+    return (2.0 / 3.0) / (1 - e) ** 0.5
+
+
+@ensure_array
+@njit
+def integral_P3_2(e):
+    e = clip_fraction(e)
+    return (1 - e) ** (3.0 / 2.0)
+
+
+@ensure_array
+@njit
+def differential_P2(e):
+    e = clip_fraction(e)
+    return 2.0 * (1 - e) ** 0.5
+
+
+@ensure_array
+@njit
+def integral_P2(e):
+    e = clip_fraction(e)
+    return (1 - e) ** 0.5
+
+
+@ensure_array
+@njit
+def differential_P3(e):
+    e = clip_fraction(e)
+    return 3.0 * (1 - e) ** (2.0 / 3.0)
+
+
+@ensure_array
+@njit
+def integral_P3(e):
+    e = clip_fraction(e)
+    return (1 - e) ** (1.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_P4(e):
+    e = clip_fraction(e)
+    return 4.0 * (1 - e) ** (3.0 / 4.0)
+
+
+@ensure_array
+@njit
+def integral_P4(e):
+    e = clip_fraction(e)
+    return (1 - e) ** (1.0 / 4.0)
+
+
+@ensure_array
+@njit
+def differential_E1(e):
+    e = clip_fraction(e)
+    return 1 - e
+
+
+@ensure_array
+@njit
+def integral_E1(e):
+    e = clip_fraction(e)
+    return np.log(1 - e)
+
+
+@ensure_array
+@njit
+def differential_E2(e):
+    e = clip_fraction(e)
+    return (1 - e) / 2.0
+
+
+@ensure_array
+@njit
+def integral_E2(e):
+    e = clip_fraction(e)
+    return np.log((1 - e) ** 2)
+
+
+@ensure_array
+@njit
+def differential_D1(e):
+    e = clip_fraction(e)
+    return 1.0 / (2.0 * (1 - e))
+
+
+@ensure_array
+@njit
+def integral_D1(e):
+    e = clip_fraction(e)
+    return (1 - e) ** 2
+
+
+@ensure_array
+@njit
+def differential_D2(e):
+    e = clip_fraction(e)
+    return 1.0 / (-np.log(e))
+
+
+@ensure_array
+@njit
+def integral_D2(e):
+    e = clip_fraction(e)
+    return (1 - e) + e * np.log(e)
+
+
+@ensure_array
+@njit
+def differential_D3(e):
+    e = clip_fraction(e)
+    return ((3.0 / 2.0) * e ** (2.0 / 3.0)) / (1 - e ** (1.0 / 3.0))
+
+
+@ensure_array
+@njit
+def integral_D3(e):
+    e = clip_fraction(e)
+    return (1 - e ** (1.0 / 3.0)) ** 2
+
+
+@ensure_array
+@njit
+def differential_D4(e):
+    e = clip_fraction(e)
+    return (3.0 / 2.0) / (e ** (-1.0 / 3.0) - 1)
+
+
+@ensure_array
+@njit
+def integral_D4(e):
+    e = clip_fraction(e)
+    return 1 - (2 * (1 - e) / 3.0) - e ** (2.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_D5(e):
+    e = clip_fraction(e)
+    return ((3.0 / 2.0) * e ** (4.0 / 3.0)) / (e ** (-1.0 / 3.0) - 1)
+
+
+@ensure_array
+@njit
+def integral_D5(e):
+    e = clip_fraction(e)
+    return (e ** (-1.0 / 3.0) - 1) ** 2
+
+
+@ensure_array
+@njit
+def differential_D6(e):
+    e = clip_fraction(e)
+    return ((3.0 / 2.0) * (1 + e) ** (2.0 / 3.0)) / ((1 + e) ** (1.0 / 3.0) - 1)
+
+
+@ensure_array
+@njit
+def integral_D6(e):
+    e = clip_fraction(e)
+    return ((1 + e) ** (1.0 / 3.0) - 1) ** 2
+
+
+@ensure_array
+@njit
+def differential_D7(e):
+    e = clip_fraction(e)
+    return (3.0 / 2.0) / (1 - (1 + e) ** (-1.0 / 3.0))
+
+
+@ensure_array
+@njit
+def integral_D7(e):
+    e = clip_fraction(e)
+    return 1 + (2 * (1 - e) / 3.0) - (1 + e) ** (2.0 / 3.0)
+
+
+@ensure_array
+@njit
+def differential_D8(e):
+    e = clip_fraction(e)
+    return ((3.0 / 2.0) * (1 + e) ** (4.0 / 3.0)) / (1 - (1 + e) ** (-1.0 / 3.0))
+
+
+@ensure_array
+@njit
+def integral_D8(e):
+    e = clip_fraction(e)
+    return ((1 + e) ** (-1.0 / 3.0) - 1) ** 2
+
+
+@ensure_array
+@njit
+def differential_G1(e):
+    e = clip_fraction(e)
+    return 1.0 / (2.0 * e)
+
+
+@ensure_array
+@njit
+def integral_G1(e):
+    e = clip_fraction(e)
+    return 1 - e**2
+
+
+@ensure_array
+@njit
+def differential_G2(e):
+    e = clip_fraction(e)
+    return 1.0 / (3.0 * e**2)
+
+
+@ensure_array
+@njit
+def integral_G2(e):
+    e = clip_fraction(e)
+    return 1 - e**3
+
+
+@ensure_array
+@njit
+def differential_G3(e):
+    e = clip_fraction(e)
+    return 1.0 / (4.0 * e**3)
+
+
+@ensure_array
+@njit
+def integral_G3(e):
+    e = clip_fraction(e)
+    return 1 - e**4
+
+
+@ensure_array
+@njit
+def differential_G4(e):
+    e = clip_fraction(e)
+    return (1.0 / 2.0) * e * (-np.log(e))
+
+
+@ensure_array
+@njit
+def integral_G4(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** 2
+
+
+@ensure_array
+@njit
+def differential_G5(e):
+    e = clip_fraction(e)
+    return (1.0 / 3.0) * e * (-np.log(e)) ** 2
+
+
+@ensure_array
+@njit
+def integral_G5(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** 3
+
+
+@ensure_array
+@njit
+def differential_G6(e):
+    e = clip_fraction(e)
+    return (1.0 / 4.0) * e * (-np.log(e)) ** 3
+
+
+@ensure_array
+@njit
+def integral_G6(e):
+    e = clip_fraction(e)
+    return (-np.log(e)) ** 4
+
+
+@ensure_array
+@njit
+def differential_G7(e):
+    e = clip_fraction(e)
+    return (1.0 / 4.0) * e**0.5 / (1 - e**0.5)
+
+
+@ensure_array
+@njit
+def integral_G7(e):
+    e = clip_fraction(e)
+    return (1 - e**0.5) ** 0.5
+
+
+@ensure_array
+@njit
+def differential_G8(e):
+    e = clip_fraction(e)
+    return (1.0 / 3.0) * e ** (2.0 / 3.0) / (1 - e ** (1.0 / 3.0))
+
+
+@ensure_array
+@njit
+def integral_G8(e):
+    e = clip_fraction(e)
+    return (1 - e ** (1.0 / 3.0)) ** 0.5
+
+
+@ensure_array
+@njit
+def differential_B1(e):
+    e = clip_fraction(e)
+    return 1.0 / ((1 - e) - e)
+
+
+@ensure_array
+@njit
+def integral_B1(e):
+    e = clip_fraction(e)
+    return np.log((1 - e) / e)
+
+
+NUC_MODELS_TABLE = {
+    "F1/3": {"differential_form": differential_F1_3, "integral_form": integral_F1_3},
+    "F3/4": {"differential_form": differential_F3_4, "integral_form": integral_F3_4},
+    "F3/2": {"differential_form": differential_F3_2, "integral_form": integral_F3_2},
+    "F2": {"differential_form": differential_F2, "integral_form": integral_F2},
+    "F3": {"differential_form": differential_F3, "integral_form": integral_F3},
+    "F1/A1": {"differential_form": differential_F1_A1, "integral_form": integral_F1_A1},
+    "A2": {"differential_form": differential_A2, "integral_form": integral_A2},
+    "A3": {"differential_form": differential_A3, "integral_form": integral_A3},
+    "A4": {"differential_form": differential_A4, "integral_form": integral_A4},
+    "A2/3": {"differential_form": differential_A2_3, "integral_form": integral_A2_3},
+    "A3/2": {"differential_form": differential_A3_2, "integral_form": integral_A3_2},
+    "A3/4": {"differential_form": differential_A3_4, "integral_form": integral_A3_4},
+    "A5/2": {"differential_form": differential_A5_2, "integral_form": integral_A5_2},
+    "F0/R1/P1": {"differential_form": differential_F0_R1_P1, "integral_form": integral_F0_R1_P1},
+    "R2": {"differential_form": differential_R2, "integral_form": integral_R2},
+    "R3": {"differential_form": differential_R3, "integral_form": integral_R3},
+    "P3/2": {"differential_form": differential_P3_2, "integral_form": integral_P3_2},
+    "P2": {"differential_form": differential_P2, "integral_form": integral_P2},
+    "P3": {"differential_form": differential_P3, "integral_form": integral_P3},
+    "P4": {"differential_form": differential_P4, "integral_form": integral_P4},
+    "E1": {"differential_form": differential_E1, "integral_form": integral_E1},
+    "E2": {"differential_form": differential_E2, "integral_form": integral_E2},
+    "D1": {"differential_form": differential_D1, "integral_form": integral_D1},
+    "D2": {"differential_form": differential_D2, "integral_form": integral_D2},
+    "D3": {"differential_form": differential_D3, "integral_form": integral_D3},
+    "D4": {"differential_form": differential_D4, "integral_form": integral_D4},
+    "D5": {"differential_form": differential_D5, "integral_form": integral_D5},
+    "D6": {"differential_form": differential_D6, "integral_form": integral_D6},
+    "D7": {"differential_form": differential_D7, "integral_form": integral_D7},
+    "D8": {"differential_form": differential_D8, "integral_form": integral_D8},
+    "G1": {"differential_form": differential_G1, "integral_form": integral_G1},
+    "G2": {"differential_form": differential_G2, "integral_form": integral_G2},
+    "G3": {"differential_form": differential_G3, "integral_form": integral_G3},
+    "G4": {"differential_form": differential_G4, "integral_form": integral_G4},
+    "G5": {"differential_form": differential_G5, "integral_form": integral_G5},
+    "G6": {"differential_form": differential_G6, "integral_form": integral_G6},
+    "G7": {"differential_form": differential_G7, "integral_form": integral_G7},
+    "G8": {"differential_form": differential_G8, "integral_form": integral_G8},
+    "B1": {"differential_form": differential_B1, "integral_form": integral_B1},
+}
+
+NUC_MODELS_LIST = sorted(NUC_MODELS_TABLE.keys())

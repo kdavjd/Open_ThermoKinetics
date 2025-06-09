@@ -167,7 +167,9 @@ class CalculationsDataOperations(BaseSlots):
             _params (dict): Additional parameters (unused directly).
         """
         file_name, reaction_name = path_keys
-        is_executed = self.handle_request_cycle("file_data", OperationType.CHECK_DIFFERENTIAL, file_name=file_name)
+        is_executed = self.handle_request_cycle(
+            "file_data", OperationType.CHECK_OPERATION, file_name=file_name, checked_operation=OperationType.TO_DTG
+        )
 
         if is_executed:
             df = self.handle_request_cycle("file_data", OperationType.GET_DF_DATA, file_name=file_name)

@@ -24,7 +24,8 @@ from src.core.app_settings import (
 )
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
-from src.gui.main_tab.plot_canvas.anchor_group import HeightAnchorGroup, PositionAnchorGroup
+from src.gui.visualization.anchor_management import AnchorManager
+from src.gui.visualization.plot_controls import PlotControls
 
 plt.style.use(["science", "no-latex", "nature", "grid"])
 
@@ -42,11 +43,8 @@ class PlotCanvas(QWidget):
         axes: Matplotlib Axes instance.
         toolbar: NavigationToolbar for the canvas.
         lines (Dict[str, Line2D]): Dictionary of line objects keyed by their name.
-        background: Stored background for efficient redrawing.
-        dragging_anchor: The currently dragged anchor line object (if any).
-        dragging_anchor_group: Which group ('position' or 'height') is being dragged.
-        position_anchor_group: An instance of PositionAnchorGroup.
-        height_anchor_group: An instance of HeightAnchorGroup.
+        anchor_manager: Manages interactive anchors on the plot.
+        plot_controls: Handles mouse events and interactions.
     """
 
     update_value = pyqtSignal(list)
@@ -70,39 +68,18 @@ class PlotCanvas(QWidget):
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
-        self.background = None
-        self.dragging_anchor = None
-        self.dragging_anchor_group = None
-        self.cid_draw = None
-        self.cid_press = None
-        self.cid_release = None
-        self.cid_motion = None
+        # Initialize anchor management and plot controls
+        self.anchor_manager = AnchorManager(self.axes)
+        self.plot_controls = PlotControls(self.canvas, self.axes, self.anchor_manager)
+
+        # Connect signals
+        self.plot_controls.update_value.connect(self.update_value)
 
         self.mock_plot()
 
     def toggle_event_connections(self, enable: bool):
-        if enable:
-            self.cid_draw = self.canvas.mpl_connect("draw_event", self.on_draw)
-            self.cid_press = self.canvas.mpl_connect("button_press_event", self.on_click)
-            self.cid_release = self.canvas.mpl_connect("button_release_event", self.on_release)
-            self.cid_motion = self.canvas.mpl_connect("motion_notify_event", self.on_motion)
-        else:
-            self.canvas.mpl_disconnect(self.cid_draw)
-            self.canvas.mpl_disconnect(self.cid_press)
-            self.canvas.mpl_disconnect(self.cid_release)
-            self.canvas.mpl_disconnect(self.cid_motion)
-
-    def on_draw(self, event):
-        """
-        Handle the draw_event to capture the background after the figure is first drawn.
-        This background can be restored later for performance.
-        """
-        logger.debug("Capturing the canvas background after initial draw.")
-        self.background = self.canvas.copy_from_bbox(self.figure.bbox)
-
-    def restore_background(self):
-        """Restore the previously saved background to the canvas."""
-        self.canvas.restore_region(self.background)
+        """Toggle mouse event connections on/off."""
+        self.plot_controls.toggle_event_connections(enable)
 
     def mock_plot(self, data=None):  # noqa: C901
         def get_random_line_style_and_width():
@@ -290,8 +267,7 @@ class PlotCanvas(QWidget):
 
         Args:
             keys: A tuple containing (file_name, reaction_name).
-            values: A list containing [x_values, y_values].
-        """
+            values: A list containing [x_values, y_values]."""
         file_name, reaction_name = keys
         x, y = values
 
@@ -308,70 +284,22 @@ class PlotCanvas(QWidget):
     @pyqtSlot(dict)
     def add_anchors(self, reaction_data: dict):
         """
-        Slot to add anchors to the plot based on given reaction data. This will create
-        both position and height anchor groups and plot their initial positions.
+        Slot to add anchors to the plot based on given reaction data.
+        Delegates to anchor manager.
 
         Args:
             reaction_data: A dictionary containing reaction coefficients and bounds.
         """
-        logger.debug(f"Received reaction data for anchors: {reaction_data}")
-
-        center_params = reaction_data["coeffs"][2]
-        upper_params = reaction_data["upper_bound_coeffs"][2]
-        lower_params = reaction_data["lower_bound_coeffs"][2]
-
-        # Create anchor groups
-        self.position_anchor_group = PositionAnchorGroup(self.axes, center_params, upper_params, lower_params)
-        self.height_anchor_group = HeightAnchorGroup(self.axes, center_params, upper_params, lower_params)
-
+        self.anchor_manager.add_anchors(reaction_data)
         self.canvas.draw_idle()
-        self.figure.tight_layout()
+        self.figure.tight_layout()  # Removed methods that are now handled by PlotControls:
 
-    def find_dragging_anchor(self, event, anchor_group):
-        """
-        Determine if the mouse click event took place on any of the anchors in the given group.
-
-        Args:
-            event: Matplotlib mouse event.
-            anchor_group: The anchor group to check.
-
-        Returns:
-            The anchor line object if an anchor was clicked, else None.
-        """
-        if anchor_group.center.contains(event)[0]:
-            return anchor_group.center
-        elif anchor_group.upper_bound.contains(event)[0] or anchor_group.lower_bound.contains(event)[0]:
-            return anchor_group.upper_bound if anchor_group.upper_bound.contains(event)[0] else anchor_group.lower_bound
-        return None
-
-    def log_anchor_positions(self, anchor_group):
-        """
-        Log positions of the provided anchor group for debugging purposes.
-
-        Args:
-            anchor_group: An instance of an anchor group.
-        """
-        anchor_group.log_anchor_positions()
-
-    def update_anchor_position(self, event, anchor_group, axis):
-        """
-        Update the position of the currently dragged anchor in the specified anchor group.
-
-        Args:
-            event: Matplotlib mouse event containing the new coordinates.
-            anchor_group: The anchor group to be updated.
-            axis: 'x' or 'y' axis along which to update the anchor.
-        """
-        if self.dragging_anchor == anchor_group.center:
-            if axis == "x":
-                anchor_group.set_center_position(event.xdata)
-            else:
-                anchor_group.set_center_position(event.ydata)
-        elif self.dragging_anchor in [anchor_group.upper_bound, anchor_group.lower_bound]:
-            if axis == "x":
-                anchor_group.set_bound_position(self.dragging_anchor, event.xdata)
-            else:
-                anchor_group.set_bound_position(self.dragging_anchor, event.ydata)
+    # - find_dragging_anchor()  -> moved to PlotControls
+    # - log_anchor_positions()  -> moved to AnchorManager
+    # - update_anchor_position() -> moved to PlotControls
+    # - on_click() -> moved to PlotControls
+    # - on_release() -> moved to PlotControls
+    # - on_motion() -> moved to PlotControls
 
     def on_click(self, event):
         """

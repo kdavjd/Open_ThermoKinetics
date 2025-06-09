@@ -6,7 +6,6 @@
 ## Implemented Methods
 <div style="text-align: justify;">
 
-
 Open ThermoKinetics includes implementations of numerous kinetic analysis methods, organized as follows:
 
 + **Model-fitting methods**:
@@ -15,6 +14,7 @@ Open ThermoKinetics includes implementations of numerous kinetic analysis method
 + **Model-free (isoconversional) methods:**:
   + *Differential:*
     - [X] Friedman (FR)
+    - [X] Kissinger (KSG)
   + *Integral:*
     + *Approximate:*
       - [X] Ozawa–Flynn–Wall (OFW)
@@ -34,6 +34,14 @@ Open ThermoKinetics includes implementations of numerous kinetic analysis method
     - [X] Vyazovkin's equation
     - [X] Farjas's equation
 
+
+Data preparation
++ **Deconvolution functions**:
+  - [X] Gaussian
+  - [X] Fraser-Suzuki
+  - [X] Asymmetric double sigmoid
+
+
 </div>
 
 ## Getting Started
@@ -41,3 +49,5 @@ To start using Open ThermoKinetics, follow these steps to install the software f
 
 1. **Download the latest release:**  
    Visit the project’s **Releases** page (on GitHub or the project website) and download the latest release package for your platform. This may be a compressed archive (ZIP/TAR) or an installer/executable for the tool.
+
+2. **Load TGA data:**

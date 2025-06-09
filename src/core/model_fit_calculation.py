@@ -1,11 +1,18 @@
 import numpy as np
 import pandas as pd
-from scipy import stats
 from scipy.constants import R
 
 from src.core.app_settings import NUC_MODELS_LIST, NUC_MODELS_TABLE, OperationType
 from src.core.base_signals import BaseSlots
 from src.core.logger_config import logger
+
+
+def r2_score(y_true, y_pred):
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    return 1 - ss_res / ss_tot
 
 
 class ModelFitCalculation(BaseSlots):
@@ -139,13 +146,28 @@ class DirectDiff:
                 }
             )
 
-        slope, intercept, r_value, p_value, std_err = stats.linregress(reverse_temperature[valid_mask], lhs[valid_mask])
+        try:
+            x = reverse_temperature[valid_mask]
+            y = lhs[valid_mask]
+            slope, intercept = np.polyfit(x, y, 1)
+            y_pred = slope * x + intercept
+            r_value = r2_score(y, y_pred)
+        except (ValueError, TypeError):
+            return pd.DataFrame(
+                {
+                    "Model": [model_key],
+                    "R2_score": [None],
+                    "Ea": [None],
+                    "A": [None],
+                }
+            )
+
         Ea, A = self._calculate_direct_diff_params(slope, intercept, beta)
 
         return pd.DataFrame(
             {
                 "Model": [model_key],
-                "R2_score": [r_value**2],
+                "R2_score": [r_value],
                 "Ea": [Ea],
                 "A": [A],
             }
@@ -180,7 +202,7 @@ class DirectDiff:
 
         beta_column = [col for col in reaction_df.columns if col != "temperature"][0]
         da_dT = reaction_df[beta_column]
-        conversion = da_dT.cumsum()
+        conversion = da_dT.cumsum() / da_dT.cumsum().max()
         trimmed_temperature, trimmed_conversion = self._trim_conversion(temperature_K, conversion)
         da_dT = trimmed_conversion.diff()
 
@@ -190,8 +212,21 @@ class DirectDiff:
         lhs = self._calculate_direct_diff_lhs(da_dT, f_a_val)
         temperature_clean, lhs_clean = self._filter_inf_data(lhs, trimmed_temperature)
         reverse_temperature = 1 / temperature_clean
-        slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
-        y = reverse_temperature * slope + intercept
+
+        try:
+            _x = reverse_temperature
+            _y = lhs_clean
+            slope, intercept = np.polyfit(_x, _y, 1)
+            y = reverse_temperature * slope + intercept
+        except (ValueError, TypeError):
+            plot_df = pd.DataFrame({"reverse_temperature": [], "lhs_clean": [], "y": []})
+            plot_kwargs = {
+                "title": f"Model: {model_row['Model']} - Error",
+                "xlabel": "1/T",
+                "ylabel": r"$\ln\left(\frac{da}{dT}\dot \frac{1}{f(a)}\right)$",
+                "annotation": "Error in polyfit calculation",
+            }
+            return plot_df, plot_kwargs
 
         plot_df = pd.DataFrame({"reverse_temperature": reverse_temperature, "lhs_clean": lhs_clean, "y": y})
 
@@ -237,8 +272,12 @@ class CoatsRedfern:
         temperature_clean, lhs_clean = self._filter_inf_data(lhs, temperature)
         reverse_temperature = 1 / temperature_clean
         try:
-            slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
-        except ValueError:
+            x = reverse_temperature
+            y = lhs_clean
+            slope, intercept = np.polyfit(x, y, 1)
+            y_pred = slope * x + intercept
+            r_value = r2_score(y, y_pred)
+        except (ValueError, TypeError):
             return pd.DataFrame(
                 {
                     "Model": [model_name],
@@ -247,13 +286,12 @@ class CoatsRedfern:
                     "A": [None],
                 }
             )
-
         Ea, A = self.calculate_coats_redfern_params(slope, intercept, beta, temperature)
 
         return pd.DataFrame(
             {
                 "Model": [model_name],
-                "R2_score": [r_value**2],
+                "R2_score": [r_value],
                 "Ea": [Ea],
                 "A": [A],
             }
@@ -292,15 +330,28 @@ class CoatsRedfern:
 
         beta_column = [col for col in reaction_df.columns if col != "temperature"][0]
         da_dT = reaction_df[beta_column]
-        conversion = da_dT.cumsum()
+        conversion = da_dT.cumsum() / da_dT.cumsum().max()
         model_func = NUC_MODELS_TABLE[model_row["Model"]]["integral_form"]
 
         g_a_val = model_func(1 - conversion)
         lhs = self.calculate_coats_redfern_lhs(g_a_val, temperature_K)
         temperature_clean, lhs_clean = self._filter_inf_data(lhs, temperature_K)
         reverse_temperature = 1 / temperature_clean
-        slope, intercept, r_value, _, _ = stats.linregress(reverse_temperature, lhs_clean)
-        y = reverse_temperature * slope + intercept
+
+        try:
+            _x = reverse_temperature
+            _y = lhs_clean
+            slope, intercept = np.polyfit(_x, _y, 1)
+            y = reverse_temperature * slope + intercept
+        except (ValueError, TypeError):
+            plot_df = pd.DataFrame({"reverse_temperature": [], "lhs_clean": [], "y": []})
+            plot_kwargs = {
+                "title": f"Model: {model_row['Model']} - Error",
+                "xlabel": "1/T",
+                "ylabel": r"$\ln \frac{g(a)}{T^2}$",
+                "annotation": "Error in polyfit calculation",
+            }
+            return plot_df, plot_kwargs
 
         plot_df = pd.DataFrame({"reverse_temperature": reverse_temperature, "lhs_clean": lhs_clean, "y": y})
 
@@ -364,7 +415,21 @@ class FreemanCaroll:
 
         x_arr = np.array(x)
         y_arr = np.array(y)
-        slope, intercept, r_value, _, _ = stats.linregress(x_arr, y_arr)
+
+        try:
+            slope, intercept = np.polyfit(x_arr, y_arr, 1)
+            y_pred = x_arr * slope + intercept
+            r_value = r2_score(y, y_pred)
+        except (ValueError, TypeError):
+            return pd.DataFrame(
+                {
+                    "Model": [model_name],
+                    "R2_score": [None],
+                    "Ea": [None],
+                    "A": [None],
+                }
+            )
+
         Ea = R * intercept
 
         temperature_array = np.array(temperature[1:])
@@ -374,7 +439,7 @@ class FreemanCaroll:
         return pd.DataFrame(
             {
                 "Model": [model_name],
-                "R2_score": [r_value**2],
+                "R2_score": [r_value],
                 "Ea": [Ea],
                 "A": [A],
             }
@@ -410,11 +475,10 @@ class FreemanCaroll:
         x-axes: Δln(f(a))/Δ(1/T)
         y-axes: Δln(da/dT)/Δ(1/T)
         """
-
         temperature_K = reaction_df["temperature"] + 273.15
         beta_column = [col for col in reaction_df.columns if col != "temperature"][0]
         da_dT = reaction_df[beta_column]
-        conversion = da_dT.cumsum()
+        conversion = da_dT.cumsum() / da_dT.cumsum().max()
         conversion_series = pd.Series(conversion)
         da_dT_series = conversion_series.diff().astype(float)
         epsilon = 1e-8
@@ -450,8 +514,19 @@ class FreemanCaroll:
         x_arr = np.array(x_vals)
         y_arr = np.array(y_vals)
 
-        slope, intercept, r_value, _, _ = stats.linregress(x_arr, y_arr)
-        y_fit = slope * x_arr + intercept
+        try:
+            slope, intercept = np.polyfit(x_arr, y_arr, 1)
+            y_fit = slope * x_arr + intercept
+        except (ValueError, TypeError):
+            plot_df = pd.DataFrame({"reverse_temperature": [], "lhs_clean": [], "y": []})
+            plot_kwargs = {
+                "title": f"Model: {model_row['Model']} - Error",
+                "xlabel": r"$\Delta \ln(f(a)) / \Delta(1/T)$",
+                "ylabel": r"$\Delta \ln(da/dT) / \Delta(1/T)$",
+                "annotation": "Error in polyfit calculation",
+            }
+            return plot_df, plot_kwargs
+
         plot_df = pd.DataFrame({"reverse_temperature": x_arr, "lhs_clean": y_arr, "y": y_fit})
 
         model_name = model_row["Model"]

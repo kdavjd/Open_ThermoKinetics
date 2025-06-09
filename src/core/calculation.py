@@ -1,16 +1,13 @@
+from multiprocessing import Manager
 from typing import Callable, Optional
 
 from core.base_signals import BaseSlots
-from core.calculation_results_strategies import (
-    BestResultStrategy,
-    DeconvolutionStrategy,
-    ModelBasedCalculationStrategy,
-)
+from core.calculation_results_strategies import BestResultStrategy, DeconvolutionStrategy, ModelBasedCalculationStrategy
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from scipy.optimize import OptimizeResult, differential_evolution
 
 from src.core.app_settings import OperationType
-from src.core.calculation_scenarios import SCENARIO_REGISTRY
+from src.core.calculation_scenarios import SCENARIO_REGISTRY, make_de_callback
 from src.core.calculation_thread import CalculationThread
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
@@ -25,8 +22,12 @@ class Calculations(BaseSlots):
         self.best_combination: Optional[tuple] = None
         self.best_mse: float = float("inf")
         self.new_best_result.connect(self.handle_new_best_result)
+        self.calc_params = {}
         self.mse_history = []
         self.calculation_active = False
+
+        self.manager = Manager()
+        self.stop_event = self.manager.Event()
 
         self.deconvolution_strategy = DeconvolutionStrategy(self)
         self.model_based_calculation_strategy = ModelBasedCalculationStrategy(self)
@@ -41,6 +42,7 @@ class Calculations(BaseSlots):
             raise ValueError(f"Unknown strategy type: {strategy_type}")
 
     def start_calculation_thread(self, func: Callable, *args, **kwargs) -> None:
+        self.stop_event.clear()
         self.calculation_active = True
         self.thread = CalculationThread(func, *args, **kwargs)
         self.thread.result_ready.connect(self._calculation_finished)
@@ -49,10 +51,14 @@ class Calculations(BaseSlots):
     def stop_calculation(self):
         if self.thread and self.thread.isRunning():
             logger.info("Stopping current calculation...")
+            self.stop_event.set()
             self.calculation_active = False
             self.result_strategy = None
             self.thread.requestInterruption()
+            console.log("\nCalculation thread has been requested to stop. Wait for it to finish.")
             return True
+        else:
+            logger.info("No active calculation to stop.")
         return False
 
     @pyqtSlot(dict)
@@ -67,6 +73,7 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(dict)
     def run_calculation_scenario(self, params: dict):
+        self.calc_params = params.copy()
         scenario_key = params.get("calculation_scenario")
         if not scenario_key:
             logger.error("No 'calculation_scenario' provided in params.")
@@ -78,10 +85,14 @@ class Calculations(BaseSlots):
             return
 
         scenario_instance = scenario_cls(params, self)
-
         try:
             bounds = scenario_instance.get_bounds()
-            target_function = scenario_instance.get_target_function()
+            for lb, ub in bounds:
+                if ub < lb:
+                    console.log("Invalid bounds: upper bound is less than lower bound.")
+                    raise ValueError("Invalid bounds: upper bound is less than lower bound.")
+            # NEW: Pass calculations instance to scenario
+            target_function = scenario_instance.get_target_function(calculations_instance=self)
             optimization_method = scenario_instance.get_optimization_method()
             strategy_type = scenario_instance.get_result_strategy_type()
 
@@ -89,6 +100,10 @@ class Calculations(BaseSlots):
 
             if optimization_method == "differential_evolution":
                 calc_params = params.get("calculation_settings", {}).get("method_parameters", {}).copy()
+
+                if scenario_key == "model_based_calculation":
+                    calc_params["constraints"] = scenario_instance.get_constraints()
+                    calc_params["callback"] = make_de_callback(target_function, self)
 
                 self.start_differential_evolution(bounds=bounds, target_function=target_function, **calc_params)
             else:
@@ -109,7 +124,12 @@ class Calculations(BaseSlots):
     @pyqtSlot(object)
     def _calculation_finished(self, result):
         try:
-            if isinstance(result, OptimizeResult):
+            if isinstance(result, Exception):
+                if str(result) == "array must not contain infs or NaNs":
+                    console.log("\nСalculation was successfully terminated.")
+                else:
+                    logger.error(f"Calculation error: {result}")
+            elif isinstance(result, OptimizeResult):
                 x = result.x
                 fun = result.fun
                 logger.info(f"Calculation completed. Optimal parameters: {x}, fun={fun}")
@@ -119,8 +139,7 @@ class Calculations(BaseSlots):
             else:
                 logger.info("Calculation finished with a non-OptimizeResult object.")
                 console.log(f"Calculation result: {result}")
-
-        except ValueError as e:
+        except Exception as e:
             logger.error(f"Error processing the result: {e}")
             console.log("An error occurred while processing the result. Check logs for details.")
 
@@ -133,7 +152,12 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(dict)
     def handle_new_best_result(self, result: dict):
-        if self.result_strategy:
-            self.result_strategy.handle(result)
-        else:
-            logger.warning("No strategy set. Best result will not be handled.")
+        try:
+            logger.debug(f"Handling new best result: {result}")
+            if self.result_strategy:
+                self.result_strategy.handle(result)
+            else:
+                logger.warning("No strategy set. Best result will not be handled.")
+        except Exception as e:
+            logger.error(f"Error handling new best result: {e}")
+            console.log(f"Error handling new best result: {e}")
