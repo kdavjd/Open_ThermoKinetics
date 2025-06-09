@@ -23,11 +23,9 @@ from src.gui.dialogs.model_dialogs import CalculationSettingsDialog, ModelsSelec
 
 # Import table components for backward compatibility
 from src.gui.main_tab.sub_sidebar.model_based.reaction_table import ModelReactionTable
-from src.gui.tabs.model_based_tab import ModelBasedTab
 
 # Re-export all components for backward compatibility
 __all__ = [
-    "ModelBasedTab",
     "CalculationSettingsDialog",
     "ModelsSelectionDialog",
     "ModelReactionTable",

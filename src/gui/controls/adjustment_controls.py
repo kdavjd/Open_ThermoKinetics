@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.gui.config import get_modeling_config
+from src.gui.modeling.modeling_config import get_modeling_config
 
 
 class AdjustmentRowWidget(QWidget):

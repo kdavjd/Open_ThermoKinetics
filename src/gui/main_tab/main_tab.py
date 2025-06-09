@@ -6,8 +6,8 @@ from src.core.logger_config import logger
 from src.gui.config import get_app_config
 from src.gui.console_widget import ConsoleWidget
 from src.gui.main_tab.plot_canvas.plot_canvas import PlotCanvas
-from src.gui.main_tab.sidebar import SideBar
 from src.gui.main_tab.sub_sidebar.sub_side_hub import SubSideHub
+from src.gui.navigation.sidebar import SideBar
 
 
 class MainTab(QWidget):

@@ -17,8 +17,8 @@ from src.core.logger_config import logger
 from src.gui.controls.adjustment_controls import AdjustingSettingsBox
 from src.gui.controls.model_calculation_controls import ModelCalcButtons, RangeAndCalculateWidget
 from src.gui.dialogs.model_dialogs import CalculationSettingsDialog
-from src.gui.main_tab.sub_sidebar.model_based.models_scheme import ModelsScheme
 from src.gui.modeling.modeling_config import get_modeling_config
+from src.gui.modeling.models_scheme import ModelsScheme
 from src.gui.tables.reaction_table import ModelReactionTable
 
 

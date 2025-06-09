@@ -1,12 +1,12 @@
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from src.core.app_settings import SideBarNames
-from src.gui.main_tab.sub_sidebar.deconvolution_sub_bar import DeconvolutionSubBar
+from src.gui.analysis.panels.deconvolution_panel import DeconvolutionPanel
+from src.gui.analysis.panels.model_fit_panel import ModelFitPanel
+from src.gui.analysis.panels.model_free_panel import ModelFreePanel
 from src.gui.main_tab.sub_sidebar.experiment_sub_bar import ExperimentSubBar
-from src.gui.main_tab.sub_sidebar.model_based.model_based import ModelBasedTab
-from src.gui.main_tab.sub_sidebar.model_fit_sub_bar import ModelFitSubBar
-from src.gui.main_tab.sub_sidebar.model_free_sub_bar import ModelFreeSubBar
 from src.gui.main_tab.sub_sidebar.series_sub_bar import SeriesSubBar
+from src.gui.tabs.model_based_tab import ModelBasedTab
 
 
 class SubSideHub(QWidget):
@@ -14,12 +14,12 @@ class SubSideHub(QWidget):
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
 
-        self.deconvolution_sub_bar = DeconvolutionSubBar(self)
-        self.model_fit_sub_bar = ModelFitSubBar(self)
+        self.deconvolution_sub_bar = DeconvolutionPanel(self)
+        self.model_fit_sub_bar = ModelFitPanel(self)
         self.experiment_sub_bar = ExperimentSubBar(self)
         self.model_based = ModelBasedTab(self)
         self.series_sub_bar = SeriesSubBar(self)
-        self.model_free_sub_bar = ModelFreeSubBar(self)
+        self.model_free_sub_bar = ModelFreePanel(self)
 
         self.deconvolution_sub_bar.hide()
         self.model_fit_sub_bar.hide()
