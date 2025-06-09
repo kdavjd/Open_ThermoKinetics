@@ -181,221 +181,187 @@ graph TB
 3. **Model-Based Chain**: ModelsScheme → SeriesData → ModelCalcButtons → Calculations
 4. **Visualization Chain**: Data Changes → PlotCanvas → Anchor Updates → GUI Feedback
 
-## Refactoring Principles
+## Module Organization Principles
 
-### 1. Entity-Based Organization
-Transform from action-based to domain entity structure:
-```
-OLD: deconvolution_sub_bar.py
-NEW: experiment/analysis/deconvolution.py
-```
+### 1. Entity-Based Structure
+Follow the existing `main_tab` pattern where each UI entity becomes a module:
+- `main_tab` → 4 widgets (sidebar, sub_sidebar, plot_canvas, console) → 4 modules
+- Large widgets (>350 lines) become modules with sub-entities
+- Each module has: orchestrating file + config.py + child entities
 
-### 2. File Size Constraint
-- Maximum 350 lines per file
-- Split large files into focused modules
-- One primary class per file
+### 2. Orchestrating File Pattern
+Each module contains:
+- **Orchestrating file**: Main class that coordinates child components (e.g., `main_tab.py`, `deconvolution_panel.py`)
+- **config.py**: Module-specific configuration and constants
+- **Child entities**: Focused components implementing specific UI functionality
 
-### 3. Configuration Extraction
-- Extract magic values to dataclass structures
-- Centralize UI constants and layout parameters
-- Move string literals to localization files
+### 3. Naming Conventions
+- **Modules**: Noun-based names representing UI entities (`sidebar/`, `plot_canvas/`, `reaction_scheme/`)
+- **Files**: Descriptive nouns without "-er" suffix (`navigation.py`, not `navigator.py`)
+- **Classes**: CamelCase matching file purpose (`ReactionTable`, `SchemeEditor`)
 
-### 4. Import Standardization
-- Use absolute imports exclusively
-- Consistent import organization
-- Clear dependency structure
+### 4. Size Constraints
+- **Target**: Files ≤ 350 lines
+- **Rule**: When entity exceeds 350 lines → convert to module
+- **Priority**: Logical entity separation over strict line limits
 
 ## New Module Structure
 
-### Core Domain Modules
+Following the established pattern from `main_tab` (4 widgets: sidebar, sub_sidebar, plot_canvas, console), the structure should reflect actual UI entities and their hierarchical relationships:
 
 ```
 src/gui/
 ├── __main__.py                    # Entry point (unchanged)
-├── application/
-│   ├── main_window.py            # Main application window (< 350 lines)
-│   ├── tab_container.py          # Tab management
-│   └── application_config.py     # App-level configuration dataclasses
-├── experiment/
-│   ├── data_view.py              # Experiment data display
-│   ├── file_operations.py        # File loading and management
-│   ├── data_transforms.py        # Data manipulation controls
-│   └── experiment_config.py      # Experiment-related constants
-├── analysis/
-│   ├── deconvolution.py          # Peak deconvolution analysis
-│   ├── model_fitting.py          # Model fitting analysis
-│   ├── model_free.py             # Model-free analysis
-│   ├── series_analysis.py        # Series data analysis
-│   └── analysis_config.py        # Analysis constants and defaults
-├── modeling/
-│   ├── reaction_scheme.py        # Reaction scheme editor
-│   ├── reaction_table.py         # Reaction parameter table
-│   ├── parameter_adjustment.py   # Parameter adjustment widgets
-│   ├── simulation_controls.py    # Simulation controls
-│   └── modeling_config.py        # Modeling constants
-├── visualization/
-│   ├── plot_canvas.py            # Main plotting component
-│   ├── anchor_management.py      # Plot anchor controls
-│   ├── plot_controls.py          # Plot interaction controls
-│   └── visualization_config.py   # Plot styling and constants
-├── sidebar/
-│   ├── navigation.py             # File/series navigation
-│   ├── calculation_menu.py       # Calculation type selection
-│   ├── settings_panel.py         # Application settings
-│   └── sidebar_config.py         # Sidebar layout constants
-├── tables/
-│   ├── data_table.py             # Data table display
-│   ├── results_table.py          # Results table display
-│   └── table_config.py           # Table formatting constants
-├── dialogs/
-│   ├── file_dialogs.py           # File selection dialogs
-│   ├── settings_dialogs.py       # Configuration dialogs
-│   ├── calculation_dialogs.py    # Calculation parameter dialogs
-│   └── dialog_config.py          # Dialog constants
-├── controls/
-│   ├── buttons.py                # Reusable button components
-│   ├── inputs.py                 # Form input components
-│   ├── selection.py              # Selection components
-│   └── controls_config.py        # Control styling constants
-├── localization/
-│   ├── strings_en.py             # English strings
-│   ├── strings_ru.py             # Russian strings (optional)
-│   └── localization_manager.py   # String management
-└── resources/
-    ├── styles.py                 # UI styling constants
-    ├── icons.py                  # Icon resource management
-    └── layouts.py                # Layout configuration dataclasses
+├── main_window.py                # Main application window (< 350 lines)
+├── console_widget.py             # Console widget (unchanged if < 350 lines)
+├── main_tab/                     # Main tab module (follows existing pattern)
+│   ├── main_tab.py              # Orchestrating file
+│   ├── config.py                # Main tab configuration
+│   ├── sidebar/                 # Navigation and file operations
+│   │   ├── sidebar.py           # Orchestrating file
+│   │   ├── config.py            # Sidebar configuration
+│   │   ├── file_navigation.py   # File tree and selection
+│   │   ├── series_navigation.py # Series selection and management
+│   │   └── load_button.py       # File loading button (if separate entity)
+│   ├── sub_sidebar/             # Analysis panels module
+│   │   ├── sub_side_hub.py      # Orchestrating file
+│   │   ├── config.py            # Sub-sidebar configuration
+│   │   ├── experiment/          # Experiment analysis panel
+│   │   │   ├── experiment_panel.py
+│   │   │   ├── config.py
+│   │   │   ├── action_buttons.py
+│   │   │   └── data_transform.py
+│   │   ├── deconvolution/       # Deconvolution analysis panel (>350 lines → module)
+│   │   │   ├── deconvolution_panel.py  # Orchestrating file
+│   │   │   ├── config.py               # Deconvolution constants
+│   │   │   ├── reaction_table.py       # Reactions management table
+│   │   │   ├── calculation_controls.py # Optimization controls
+│   │   │   ├── coefficients_view.py    # Coefficients display
+│   │   │   └── settings_dialog.py      # Calculation settings
+│   │   ├── model_based/         # Model-based analysis module (>350 lines → module)
+│   │   │   ├── model_based_panel.py    # Orchestrating file
+│   │   │   ├── config.py               # Model-based constants
+│   │   │   ├── reaction_scheme/        # Reaction scheme editor (>350 lines → module)
+│   │   │   │   ├── scheme_editor.py    # Orchestrating file
+│   │   │   │   ├── config.py           # Scheme editor constants
+│   │   │   │   ├── scheme_canvas.py    # Graphics canvas
+│   │   │   │   ├── component_node.py   # Reaction components
+│   │   │   │   └── connection_arrow.py # Reaction connections
+│   │   │   ├── parameter_table.py      # Kinetic parameters table
+│   │   │   ├── adjustment_controls.py  # Parameter adjustment widgets
+│   │   │   └── simulation_controls.py  # Calculation controls
+│   │   ├── model_fit/           # Model-fit analysis panel
+│   │   │   ├── model_fit_panel.py
+│   │   │   ├── config.py
+│   │   │   ├── method_selection.py
+│   │   │   └── results_view.py
+│   │   ├── model_free/          # Model-free analysis panel
+│   │   │   ├── model_free_panel.py
+│   │   │   ├── config.py
+│   │   │   ├── method_selection.py
+│   │   │   └── results_view.py
+│   │   └── series/              # Series analysis panel
+│   │       ├── series_panel.py
+│   │       ├── config.py
+│   │       ├── data_loading.py
+│   │       └── results_view.py
+│   ├── plot_canvas/             # Plotting module (>350 lines → module)
+│   │   ├── plot_canvas.py       # Orchestrating file
+│   │   ├── config.py            # Plot configuration
+│   │   ├── anchor/              # Anchor management (if >350 lines → module)
+│   │   │   ├── anchor_group.py  # Orchestrating file
+│   │   │   ├── config.py        # Anchor constants
+│   │   │   ├── anchor_point.py  # Individual anchor
+│   │   │   └── anchor_line.py   # Anchor guidelines
+│   │   ├── plot_interaction.py  # Mouse/keyboard interactions
+│   │   └── plot_styling.py      # Plot appearance management
+│   └── console/                 # Console integration (if needed as separate module)
+│       ├── console_widget.py
+│       └── config.py
+├── table_tab/                   # Table tab module (follows existing pattern)
+│   ├── table_tab.py            # Orchestrating file
+│   ├── config.py               # Table tab configuration
+│   ├── data_table/             # Main data table (if >350 lines → module)
+│   │   ├── data_table.py       # Orchestrating file
+│   │   ├── config.py           # Table configuration
+│   │   ├── table_view.py       # Table display
+│   │   ├── column_controls.py  # Column management
+│   │   └── export_controls.py  # Data export
+│   └── results_table/          # Results table (if >350 lines → module)
+│       ├── results_table.py
+│       ├── config.py
+│       ├── results_view.py
+│       └── formatting.py
+├── dialogs/                     # Reusable dialogs
+│   ├── config.py               # Dialog constants
+│   ├── file_dialog.py          # File operations
+│   ├── settings_dialog.py      # Application settings
+│   └── calculation_dialog.py   # Calculation parameters
+├── widgets/                     # Reusable UI components
+│   ├── config.py               # Widget constants
+│   ├── buttons.py              # Custom buttons
+│   ├── inputs.py               # Input controls
+│   ├── tables.py               # Table components
+│   └── plots.py                # Plot components
+└── resources/                   # UI resources and constants
+    ├── config.py               # Global UI configuration
+    ├── styles.py               # Styling constants
+    ├── strings.py              # UI text constants
+    └── icons.py                # Icon management
 ```
 
-## Configuration Dataclasses
+## Configuration Structure
 
-### Application Configuration
+### Module Configuration Pattern
+Each module follows the pattern: `module_name/config.py` with dataclass constants:
+
 ```python
-# src/gui/application/application_config.py
+# src/gui/main_tab/config.py
 from dataclasses import dataclass
-from typing import Tuple
 
 @dataclass
-class WindowConfig:
-    title: str = "Open ThermoKinetics"
-    min_width: int = 1200
-    min_height: int = 800
-    default_width: int = 1600
-    default_height: int = 1000
+class MainTabConfig:
+    min_width_sidebar: int = 220
+    min_width_sub_sidebar: int = 220
+    min_width_console: int = 150
+    min_width_plot_canvas: int = 500
+    splitter_width: int = 100
+    min_height: int = 700
 
-@dataclass
-class TabConfig:
-    main_tab_name: str = "Main"
-    table_tab_name: str = "Table"
-
-@dataclass
-class SplitterConfig:
-    sidebar_ratio: float = 0.2
-    sub_sidebar_ratio: float = 0.2
-    console_ratio: float = 0.15
-    plot_ratio: float = 0.45
-```
-
-### Analysis Configuration
-```python
-# src/gui/analysis/analysis_config.py
-from dataclasses import dataclass
-from typing import List, Tuple
-
-@dataclass
-class ModelFreeConfig:
-    methods: List[str] = ("linear approximation", "Friedman")
-    alpha_min_default: float = 0.005
-    alpha_max_default: float = 0.995
-    ea_min_default: float = 10.0
-    ea_max_default: float = 2000.0
-    plot_types: List[str] = ("y(α)", "g(α)", "z(α)")
-
-@dataclass
-class ModelFitConfig:
-    methods: List[str] = ("direct-diff", "Coats-Redfern")
-    alpha_min_default: float = 0.005
-    alpha_max_default: float = 0.995
-    valid_proportion_default: float = 0.8
-
+# src/gui/main_tab/sub_sidebar/deconvolution/config.py
 @dataclass
 class DeconvolutionConfig:
-    default_functions: List[str] = ("ads", "gauss", "fraser")
-    optimization_methods: List[str] = ("differential_evolution", "minimize")
+    default_functions: list[str] = ("ads", "gauss", "fraser")
+    optimization_methods: list[str] = ("differential_evolution", "minimize")
     max_iterations_default: int = 200
     population_size_default: int = 15
-```
+    table_column_widths: dict[str, int] = (
+        {"function": 100, "h": 80, "z": 80, "w": 80}
+    )
 
-### Modeling Configuration
-```python
-# src/gui/modeling/modeling_config.py
-from dataclasses import dataclass
-from typing import Tuple, List
-
+# src/gui/main_tab/plot_canvas/config.py
 @dataclass
-class ReactionDefaults:
-    ea_default: float = 120.0
-    log_a_default: float = 8.0
-    contribution_default: float = 0.5
-    ea_range: Tuple[float, float] = (1.0, 2000.0)
-    log_a_range: Tuple[float, float] = (-100.0, 100.0)
-    contribution_range: Tuple[float, float] = (0.01, 1.0)
-
-@dataclass
-class AdjustmentConfig:
-    button_size: int = 24
-    slider_min: int = -5
-    slider_max: int = 5
-    slider_tick_interval: int = 1
-    decimals: int = 3
-
-@dataclass
-class SchemeConfig:
-    node_width: float = 40.0
-    node_height: float = 40.0
-    node_spacing_x: float = 80.0
-    node_spacing_y: float = 60.0
-    arrow_width: float = 2.0
-    available_models: List[str] = ("F1/3", "F3/4", "F3/2", "F2", "F3", "A2", "R3", "D1")
-```
-
-### Visualization Configuration
-```python
-# src/gui/visualization/visualization_config.py
-from dataclasses import dataclass
-from typing import Dict, Any
-
-@dataclass
-class PlotConfig:
+class PlotCanvasConfig:
     style: str = "science"
     figure_dpi: int = 100
-    default_colors: List[str] = ("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728")
+    default_colors: list[str] = ("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728")
     line_width: float = 1.5
     marker_size: float = 4.0
-
-@dataclass
-class AnnotationConfig:
-    default_fontsize: int = 8
-    default_facecolor: str = "white"
-    default_edgecolor: str = "black"
-    default_alpha: float = 1.0
-    delta_x_default: float = 0.02
-    delta_y_default: float = 0.02
-
-@dataclass
-class AnchorConfig:
-    anchor_size: float = 8.0
-    anchor_color: str = "red"
-    line_color: str = "gray"
-    line_style: str = "--"
+    min_width: int = 500
 ```
 
-## Localization Structure
-
-### String Management
+### Global UI Configuration
 ```python
-# src/gui/localization/strings_en.py
+# src/gui/resources/config.py
 from dataclasses import dataclass
+
+@dataclass
+class GlobalUIConfig:
+    app_title: str = "Open ThermoKinetics"
+    min_window_width: int = 1200
+    min_window_height: int = 800
+    default_window_width: int = 1600
+    default_window_height: int = 1000
 
 @dataclass
 class UIStrings:
@@ -410,17 +376,8 @@ class UIStrings:
     reset: str = "Reset"
     cancel: str = "Cancel"
     
-    # Labels
-    alpha_min: str = "α_min:"
-    alpha_max: str = "α_max:"
-    ea_min: str = "Ea min, kJ:"
-    ea_max: str = "Ea max, kJ:"
-    method: str = "Method:"
-    reaction: str = "Reaction:"
-    
-    # Menu items
-    file_menu: str = "File"
-    calculation_menu: str = "Calculation"
+    # Analysis panels
+    deconvolution: str = "Deconvolution"
     model_fit: str = "Model Fit"
     model_free: str = "Model Free"
     model_based: str = "Model Based"
@@ -429,187 +386,465 @@ class UIStrings:
     invalid_input: str = "Invalid input value"
     file_not_found: str = "File not found"
     calculation_error: str = "Calculation error occurred"
-    
-    # Status messages
-    calculation_started: str = "Calculation started"
-    calculation_finished: str = "Calculation finished"
-    file_loaded: str = "File loaded successfully"
-
-# src/gui/localization/localization_manager.py
-from typing import Dict, Any
-from .strings_en import UIStrings
-
-class LocalizationManager:
-    def __init__(self, language: str = "en"):
-        self.language = language
-        self.strings = self._load_strings(language)
-    
-    def _load_strings(self, language: str) -> UIStrings:
-        if language == "en":
-            return UIStrings()
-        # Add other languages as needed
-        return UIStrings()
-    
-    def get(self, key: str) -> str:
-        return getattr(self.strings, key, key)
 ```
 
-## Refactoring Steps
+## Example Refactored Components
 
-### Phase 1: Extract Configurations (Week 1)
-1. Create configuration dataclasses for each domain
-2. Extract magic values from existing files
-3. Create localization structure
-4. Extract string literals
-
-### Phase 2: Split Large Files (Week 2)
-1. **main_window.py** → Split into:
-   - `application/main_window.py` (core window logic)
-   - `application/tab_container.py` (tab management)
-   
-2. **plot_canvas.py** → Split into:
-   - `visualization/plot_canvas.py` (main plotting)
-   - `visualization/plot_controls.py` (interaction controls)
-   - `visualization/anchor_management.py` (anchor handling)
-
-3. **deconvolution_sub_bar.py** → Split into:
-   - `analysis/deconvolution.py` (main UI)
-   - `controls/calculation_controls.py` (calculation buttons)
-   - `tables/coefficients_table.py` (coefficients table)
-   - `dialogs/calculation_dialogs.py` (settings dialog)
-
-### Phase 3: Refactor Model-Based Components (Week 3)
-1. **model_based.py** → Split into:
-   - `modeling/reaction_table.py` (reaction parameters table)
-   - `modeling/parameter_adjustment.py` (adjustment widgets)
-   - `modeling/simulation_controls.py` (calculation controls)
-   - `dialogs/calculation_dialogs.py` (settings dialogs)
-
-2. **models_scheme.py** → Refactor into:
-   - `modeling/reaction_scheme.py` (scheme editor)
-   - `modeling/scheme_graphics.py` (graphics components)
-
-### Phase 4: Create Domain Modules (Week 4)
-1. Create experiment module with file operations
-2. Create analysis module with all analysis components
-3. Create sidebar module with navigation components
-4. Create controls module with reusable components
-5. Create dialogs module with all dialog components
-
-### Phase 5: Update Imports and Integration (Week 5)
-1. Convert all imports to absolute imports
-2. Update signal connections
-3. Integrate configuration dataclasses
-4. Integrate localization manager
-5. Update __main__.py entry point
-
-## Example Refactored Component
-
-### Before (deconvolution_sub_bar.py - 913 lines)
+### Before: Monolithic deconvolution_sub_bar.py (790 lines)
 ```python
-# Multiple classes in one file with hardcoded values
+# Old structure - single large file
 class DeconvolutionSubBar(QWidget):
     def __init__(self, parent=None):
         # ... 200+ lines of UI setup with magic numbers
         self.button.setFixedSize(80, 30)  # Magic values
         self.label.setText("Calculate")   # Hardcoded string
+        # ... 300+ lines of table setup
+        # ... 250+ lines of calculation controls
 ```
 
-### After (analysis/deconvolution.py - <350 lines)
+### After: Modular deconvolution/ structure
 ```python
-from src.gui.analysis.analysis_config import DeconvolutionConfig
-from src.gui.localization.localization_manager import LocalizationManager
-from src.gui.controls.buttons import CalculationButton
-from src.gui.tables.coefficients_table import CoefficientsTable
+# src/gui/main_tab/sub_sidebar/deconvolution/deconvolution_panel.py (~150 lines)
+from .config import DeconvolutionConfig
+from .reaction_table import ReactionTable
+from .calculation_controls import CalculationControls
+from .coefficients_view import CoefficientsView
 
 class DeconvolutionPanel(QWidget):
+    update_value = pyqtSignal(dict)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.config = DeconvolutionConfig()
-        self.strings = LocalizationManager().strings
+        self._setup_ui()
+        self._connect_signals()
+    
+    def _setup_ui(self):
+        self.layout = QVBoxLayout(self)
+        
+        # Child components with clear responsibilities
+        self.reaction_table = ReactionTable(self)
+        self.calculation_controls = CalculationControls(self)
+        self.coefficients_view = CoefficientsView(self)
+        
+        self.layout.addWidget(self.reaction_table)
+        self.layout.addWidget(self.calculation_controls)
+        self.layout.addWidget(self.coefficients_view)
+    
+    def _connect_signals(self):
+        # Signal routing between child components
+        self.reaction_table.reaction_selected.connect(
+            self.coefficients_view.display_coefficients
+        )
+        self.calculation_controls.calculation_started.connect(
+            self.update_value.emit
+        )
+
+# src/gui/main_tab/sub_sidebar/deconvolution/config.py
+from dataclasses import dataclass
+
+@dataclass
+class DeconvolutionConfig:
+    default_functions: list[str] = ("ads", "gauss", "fraser")
+    optimization_methods: list[str] = ("differential_evolution", "minimize")
+    max_iterations_default: int = 200
+    population_size_default: int = 15
+    
+    # Table configuration
+    table_column_widths: dict[str, int] = None
+    
+    def __post_init__(self):
+        if self.table_column_widths is None:
+            self.table_column_widths = {
+                "function": 100, "h": 80, "z": 80, "w": 80,
+                "ads1": 80, "ads2": 80
+            }
+    
+    # Button sizes
+    button_width: int = 80
+    button_height: int = 30
+    
+    # UI strings
+    calculate_text: str = "Calculate"
+    settings_text: str = "Settings"
+    reset_text: str = "Reset"
+
+# src/gui/main_tab/sub_sidebar/deconvolution/reaction_table.py (~200 lines)
+from PyQt6.QtWidgets import QTableWidget, QVBoxLayout, QWidget
+from PyQt6.QtCore import pyqtSignal
+
+from .config import DeconvolutionConfig
+
+class ReactionTable(QWidget):
+    reaction_added = pyqtSignal(dict)
+    reaction_removed = pyqtSignal(dict)
+    reaction_selected = pyqtSignal(str)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.config = DeconvolutionConfig()
+        self._setup_table()
+    
+    def _setup_table(self):
+        self.layout = QVBoxLayout(self)
+        self.table = QTableWidget(self)
+        
+        # Configure table using config values
+        self._setup_columns()
+        self.layout.addWidget(self.table)
+    
+    def _setup_columns(self):
+        columns = list(self.config.table_column_widths.keys())
+        self.table.setColumnCount(len(columns))
+        self.table.setHorizontalHeaderLabels(columns)
+        
+        for i, (col_name, width) in enumerate(self.config.table_column_widths.items()):
+            self.table.setColumnWidth(i, width)
+    
+    # ... rest of focused table logic
+```
+
+### Model-Based Scheme Editor Refactoring
+```python
+# src/gui/main_tab/sub_sidebar/model_based/reaction_scheme/scheme_editor.py
+from .config import SchemeConfig
+from .scheme_canvas import SchemeCanvas
+from .component_node import ComponentNode
+from .connection_arrow import ConnectionArrow
+
+class SchemeEditor(QWidget):
+    scheme_change_signal = pyqtSignal(dict)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.config = SchemeConfig()
         self._setup_ui()
     
     def _setup_ui(self):
-        # Clean, focused UI setup using configuration
-        self.calc_button = CalculationButton(
-            text=self.strings.calculate,
-            parent=self
-        )
-        # ... rest of UI setup
+        self.layout = QVBoxLayout(self)
+        self.canvas = SchemeCanvas(self)
+        self.layout.addWidget(self.canvas)
+    
+    # ... focused scheme editing logic
+
+# src/gui/main_tab/sub_sidebar/model_based/reaction_scheme/config.py
+@dataclass
+class SchemeConfig:
+    # Node styling
+    node_width: float = 40.0
+    node_height: float = 40.0
+    node_spacing_x: float = 80.0
+    node_spacing_y: float = 60.0
+    
+    # Arrow styling
+    arrow_width: float = 2.0
+    arrow_color: str = "#333333"
+    
+    # Available kinetic models
+    available_models: list[str] = None
+    
+    def __post_init__(self):
+        if self.available_models is None:
+            self.available_models = [
+                "F1/3", "F3/4", "F3/2", "F2", "F3", 
+                "A2", "R3", "D1"
+            ]
+```
+
+## Refactoring Steps
+
+### Phase 1: Extract Configurations (Week 1)
+1. **Create config.py files** for each existing module following the pattern:
+   - `src/gui/main_tab/config.py`
+   - `src/gui/main_tab/sidebar/config.py`
+   - `src/gui/main_tab/plot_canvas/config.py`
+   - `src/gui/main_tab/sub_sidebar/config.py`
+   - `src/gui/resources/config.py` (global constants)
+
+2. **Extract constants** from existing files:
+   - Magic numbers from `main_tab.py` → `MainTabConfig`
+   - UI strings → `UIStrings` in global config
+   - Layout constants from each component
+
+### Phase 2: Refactor Large Sub-Sidebar Components (Week 2-3)
+
+1. **deconvolution_sub_bar.py (790 lines) → deconvolution/ module**:
+   ```
+   sub_sidebar/deconvolution/
+   ├── deconvolution_panel.py      # Main orchestrating class (~150 lines)
+   ├── config.py                   # Deconvolution constants
+   ├── reaction_table.py           # Reactions management table (~200 lines)
+   ├── calculation_controls.py     # Optimization controls (~150 lines)
+   ├── coefficients_view.py        # Coefficients display (~150 lines)
+   └── settings_dialog.py          # Calculation settings (~140 lines)
+   ```
+
+2. **model_based.py (913 lines) → model_based/ module**:
+   ```
+   sub_sidebar/model_based/
+   ├── model_based_panel.py        # Main orchestrating class (~150 lines)
+   ├── config.py                   # Model-based constants
+   ├── parameter_table.py          # Kinetic parameters table (~250 lines)
+   ├── adjustment_controls.py      # Parameter adjustment widgets (~200 lines)
+   ├── simulation_controls.py      # Calculation controls (~150 lines)
+   └── reaction_scheme/            # Scheme editor module (models_scheme.py 612 lines)
+       ├── scheme_editor.py        # Main scheme editor (~200 lines)
+       ├── config.py               # Scheme constants
+       ├── scheme_canvas.py        # Graphics canvas (~150 lines)
+       ├── component_node.py       # Reaction components (~130 lines)
+       └── connection_arrow.py     # Reaction connections (~130 lines)
+   ```
+
+### Phase 3: Refactor Plot Canvas Module (Week 3)
+
+**plot_canvas.py (505 lines) → plot_canvas/ module**:
+```
+main_tab/plot_canvas/
+├── plot_canvas.py              # Main plotting orchestrator (~200 lines)
+├── config.py                   # Plot configuration
+├── anchor/                     # Anchor management (if needed)
+│   ├── anchor_group.py         # Existing file (~150 lines)
+│   └── config.py               # Anchor constants
+├── plot_interaction.py         # Mouse/keyboard interactions (~150 lines)
+└── plot_styling.py            # Plot appearance management (~150 lines)
+```
+
+### Phase 4: Create Reusable Modules (Week 4)
+
+1. **Extract common widgets**:
+   ```
+   gui/widgets/
+   ├── config.py                  # Widget constants
+   ├── buttons.py                 # Custom buttons (from various files)
+   ├── inputs.py                  # Input controls
+   ├── tables.py                  # Table components
+   └── plots.py                   # Plot components
+   ```
+
+2. **Create dialog modules**:
+   ```
+   gui/dialogs/
+   ├── config.py                  # Dialog constants
+   ├── file_dialog.py             # File operations
+   ├── settings_dialog.py         # Application settings
+   └── calculation_dialog.py      # Calculation parameters
+   ```
+
+### Phase 5: Update Imports and Integration (Week 5)
+1. **Convert to absolute imports** in all modules
+2. **Update signal connections** maintaining existing interfaces
+3. **Integrate configuration dataclasses** in all components
+4. **Test all module interactions** and fix any broken connections
+5. **Update orchestrating files** to use new child modules
+
+## Signal Architecture Preservation
+
+### Maintaining Existing Signal Flow
+The refactoring preserves all existing signal connections while improving internal organization:
+
+```python
+# Before: All signals in monolithic file
+class DeconvolutionSubBar(QWidget):
+    calculation_started = pyqtSignal(dict)
+    calculation_stopped = pyqtSignal(dict)
+    update_value = pyqtSignal(dict)
+
+# After: Orchestrating panel routes signals from child components
+class DeconvolutionPanel(QWidget):
+    # Preserve same external interface
+    calculation_started = pyqtSignal(dict)
+    calculation_stopped = pyqtSignal(dict)  
+    update_value = pyqtSignal(dict)
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._setup_ui()
+        self._connect_internal_signals()
+    
+    def _connect_internal_signals(self):
+        # Route child signals to external interface
+        self.calculation_controls.started.connect(self.calculation_started.emit)
+        self.calculation_controls.stopped.connect(self.calculation_stopped.emit)
+        self.reaction_table.value_changed.connect(self.update_value.emit)
+```
+
+### Signal Connection Mapping
+Key external signal connections remain unchanged:
+
+1. **MainTab connections** (preserved):
+   ```python
+   # main_tab.py - No changes needed
+   self.sub_sidebar.deconvolution_sub_bar.update_value.connect(self.to_main_window)
+   ```
+
+2. **Internal routing** (new):
+   ```python
+   # deconvolution_panel.py - Internal signal management
+   self.reaction_table.reaction_selected.connect(self.coefficients_view.update_display)
+   self.calculation_controls.parameters_changed.connect(self.reaction_table.update_row)
+   ```
+
+## Implementation Strategy
+
+### Migration Approach
+1. **Incremental refactoring**: One module at a time to avoid breaking changes
+2. **Signal interface preservation**: Maintain all external signal signatures
+3. **Backward compatibility**: Existing imports continue to work during transition
+4. **Testing at each step**: Verify functionality after each module conversion
+
+### File Movement Strategy
+```powershell
+# Example migration for deconvolution module
+# Step 1: Create new module structure
+New-Item -Path "src/gui/main_tab/sub_sidebar/deconvolution" -ItemType Directory
+New-Item -Path "src/gui/main_tab/sub_sidebar/deconvolution/config.py" -ItemType File
+
+# Step 2: Extract components from original file
+# (Done through code refactoring tools)
+
+# Step 3: Update imports gradually
+# Old import continues to work via __init__.py re-export
+# from src.gui.main_tab.sub_sidebar.deconvolution_sub_bar import DeconvolutionSubBar
+# New import becomes available
+# from src.gui.main_tab.sub_sidebar.deconvolution import DeconvolutionPanel as DeconvolutionSubBar
+
+# Step 4: Remove original file after full migration
+```
+
+### Testing Strategy
+```python
+# Unit tests for each new module
+# tests/gui/main_tab/sub_sidebar/test_deconvolution_panel.py
+import pytest
+from src.gui.main_tab.sub_sidebar.deconvolution import DeconvolutionPanel
+
+class TestDeconvolutionPanel:
+    def test_signal_routing(self):
+        """Test that internal signals are properly routed to external interface"""
+        panel = DeconvolutionPanel()
+        
+        # Test signal connections exist
+        assert panel.calculation_started is not None
+        assert panel.update_value is not None
+        
+        # Test child components exist
+        assert hasattr(panel, 'reaction_table')
+        assert hasattr(panel, 'calculation_controls')
+
+    def test_config_integration(self):
+        """Test that configuration is properly loaded"""
+        panel = DeconvolutionPanel()
+        
+        assert panel.config.default_functions == ("ads", "gauss", "fraser")
+        assert panel.config.max_iterations_default == 200
 ```
 
 ## Benefits of Refactoring
 
 ### 1. Maintainability
-- Smaller, focused files are easier to understand and modify
-- Clear separation of concerns reduces coupling
-- Configuration centralization simplifies updates
+- **Focused files**: Each file has a single, clear responsibility under 350 lines
+- **Modular structure**: Following the proven `main_tab` pattern across all UI components
+- **Configuration centralization**: All constants in dedicated `config.py` files per module
+- **Clear hierarchies**: Orchestrating files coordinate child components with explicit interfaces
 
-### 2. Testability
-- Smaller components are easier to unit test
-- Configuration injection enables better mocking
-- Clear interfaces improve test coverage
+### 2. Extensibility
+- **Module-based growth**: New features can be added as new modules without affecting existing code
+- **Component reusability**: Extracted widgets can be reused across different panels
+- **Plugin architecture**: New analysis methods can be added by creating new sub-modules
+- **Configuration flexibility**: Easy to modify UI behavior through dataclass configurations
 
-### 3. Extensibility
-- Domain-based organization makes feature additions intuitive
-- Reusable components reduce code duplication
-- Configuration dataclasses enable easy customization
+### 3. Code Quality
+- **Consistent organization**: All modules follow the same structural pattern
+- **Reduced complexity**: Large files broken down into manageable, focused components
+- **Better encapsulation**: Clear boundaries between UI entities and their responsibilities
+- **Eliminated magic values**: All constants extracted to configuration dataclasses
 
-### 4. Internationalization
-- Centralized string management enables easy localization
-- Consistent UI text across the application
-- Dynamic language switching capability
+### 4. Developer Experience
+- **Predictable structure**: Developers can easily locate functionality using the established pattern
+- **Easier debugging**: Smaller files make it easier to trace issues and understand code flow
+- **Simplified testing**: Focused components are easier to unit test in isolation
+- **Better IDE support**: Smaller files provide better code navigation and autocomplete
 
-### 5. Code Quality
-- Consistent naming conventions improve readability
-- Absolute imports clarify dependencies
-- Explicit configuration reduces magic values
-
-## Migration Strategy
-
-### Backward Compatibility
-- Maintain existing signal/slot interfaces during transition
-- Preserve __main__.py entry point structure
-- Ensure gradual migration without breaking functionality
-
-### Testing Strategy
-- Create unit tests for each new module
-- Integration tests for signal/slot connections
-- UI tests for critical user workflows
-
-### Documentation Updates
-- Update architecture documentation
-- Create module-level documentation
-- Provide migration guide for future developers
+### 5. Signal Architecture Preservation
+- **Zero breaking changes**: All existing signal connections continue to work unchanged
+- **Internal optimization**: Better signal routing within modules without external interface changes
+- **Easier signal tracing**: Clear signal flow from child components through orchestrating files
+- **Maintainable connections**: Signal logic is centralized in orchestrating files
 
 ## Risk Mitigation
 
-### Technical Risks
-- **Signal/slot connection issues**: Comprehensive testing of all connections
-- **Import circular dependencies**: Careful dependency design
-- **Performance impact**: Profile critical paths during refactoring
+### Implementation Risks
+- **Signal connection breaks**: Mitigated by preserving external interfaces and comprehensive testing
+- **Import circular dependencies**: Prevented by clear module hierarchy and dependency analysis
+- **Performance degradation**: Monitored through profiling during each refactoring phase
+- **Regression introduction**: Addressed through incremental migration and extensive testing
 
 ### Project Risks
-- **Development time**: Phased approach allows incremental progress
-- **Team coordination**: Clear module ownership and interfaces
-- **Regression introduction**: Extensive testing at each phase
+- **Extended development time**: Managed through phased approach with clear milestones
+- **Team disruption**: Minimized by maintaining backward compatibility during transition
+- **Merge conflicts**: Reduced by coordinating refactoring with active development work
 
 ## Success Metrics
 
-### Quantitative
-- All files under 350 lines
-- Zero magic values in UI code
-- 100% absolute imports
-- Complete string externalization
+### Quantitative Targets
+- ✅ All files under 350 lines (currently: 5 files exceed limit)
+- ✅ Zero magic values in UI code (extract ~50 hardcoded constants)
+- ✅ 100% absolute imports (convert ~30 relative imports)
+- ✅ Complete configuration externalization (create ~15 config.py files)
+- ✅ Preserved signal architecture (maintain ~40 signal connections)
 
-### Qualitative
-- Improved code readability scores
-- Reduced complexity metrics
-- Enhanced developer experience
-- Better test coverage
+### Qualitative Improvements
+- **Code readability**: Smaller, focused files with clear responsibilities
+- **Development velocity**: Faster feature development through reusable components
+- **Bug resolution**: Easier debugging through modular architecture
+- **Knowledge transfer**: Self-documenting code structure for new team members
+
+## Timeline and Deliverables
+
+### Week 1: Configuration Extraction
+**Deliverables**:
+- Configuration dataclasses for all existing modules
+- Global UI configuration in `resources/config.py`
+- Constants extracted from 5 large files
+
+**Validation**: All magic values removed, UI behavior unchanged
+
+### Week 2-3: Large File Refactoring
+**Deliverables**:
+- `deconvolution/` module (790 lines → 5 files < 350 lines each)
+- `model_based/` module (913 lines → 6 files < 350 lines each)
+- `plot_canvas/` module (505 lines → 4 files < 350 lines each)
+
+**Validation**: All functionality preserved, signals working correctly
+
+### Week 4: Reusable Components
+**Deliverables**:
+- `widgets/` module with common UI components
+- `dialogs/` module with reusable dialogs
+- Extracted duplicate code into shared components
+
+**Validation**: No code duplication, consistent UI behavior
+
+### Week 5: Final Integration
+**Deliverables**:
+- All imports converted to absolute paths
+- Complete module documentation
+- Migration guide for future development
+- Performance validation and optimization
+
+**Validation**: Full application functionality, no performance regression
 
 ## Conclusion
 
-This refactoring plan transforms the current monolithic GUI structure into a modular, maintainable, and extensible architecture. The entity-based organization, configuration extraction, and localization support will significantly improve the codebase's quality and developer experience while maintaining full functionality and performance.
+This refactoring plan transforms the current PyQt6 GUI from a collection of large, monolithic files into a well-organized, modular architecture that follows the established `main_tab` pattern. The entity-based organization, configuration extraction, and careful preservation of the existing signal architecture ensure that the refactoring improves code maintainability without breaking functionality.
 
-The phased approach ensures minimal disruption to ongoing development while providing clear milestones and deliverables. Upon completion, the GUI will be well-positioned for future enhancements and maintenance.
+The phased approach minimizes development disruption while providing clear progress milestones. Upon completion, the GUI codebase will be significantly more maintainable, extensible, and developer-friendly, positioning the project for efficient future development and feature additions.
+
+**Key Success Factors**:
+1. Following the proven `main_tab` organizational pattern
+2. Preserving all existing signal connections and interfaces
+3. Incremental migration with comprehensive testing at each phase
+4. Configuration-driven approach enabling easy customization
+5. Clear module boundaries with focused responsibilities
+
+The refactored architecture will serve as a solid foundation for the solid-state kinetics analysis application, enabling rapid development of new features while maintaining high code quality and system reliability.
