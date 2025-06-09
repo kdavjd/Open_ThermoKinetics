@@ -1,0 +1,76 @@
+{
+    "application": {
+        "title": "Кинетика твердофазных реакций",
+        "tabs": {
+            "main": "Основное",
+            "table": "Таблица",
+            "analysis": "Анализ",
+            "modeling": "Моделирование"
+        },
+        "window_titles": {
+            "main_window": "Open ThermoKinetics"
+        }
+    },
+    "dialogs": {
+        "buttons": {
+            "ok": "ОК",
+            "cancel": "Отмена",
+            "calculate": "Вычислить",
+            "plot": "График",
+            "settings": "Настройки"
+        },
+        "titles": {
+            "annotation_settings": "Настройки аннотаций",
+            "calculation_settings": "Настройки расчетов",
+            "model_selection": "Выбор моделей"
+        }
+    },
+    "controls": {
+        "labels": {
+            "alpha_min": "α_мин:",
+            "alpha_max": "α_макс:",
+            "ea_min": "Ea мин, кДж:",
+            "ea_max": "Ea макс, кДж:",
+            "ea_mean": "Ea средн, кДж:",
+            "plot_type": "Тип графика:",
+            "parameter": "Параметр",
+            "value": "Значение",
+            "min_value": "Мин",
+            "max_value": "Макс",
+            "from_bound": "от",
+            "to_bound": "до",
+            "method": "метод",
+            "ea_result": "Ea",
+            "std_result": "σ",
+            "ea_kj": "Ea, кДж",
+            "log_a": "log(A)",
+            "contribution": "вклад"
+        },
+        "tooltips": {
+            "alpha_min": "alpha_min - минимальное значение конверсии для расчета",
+            "alpha_max": "alpha_max - максимальное значение конверсии для расчета",
+            "ea_min": "Ea мин, кДж",
+            "ea_max": "Ea макс, кДж",
+            "ea_mean": "Ea средн, кДж"
+        }
+    },
+    "validation": {
+        "errors": {
+            "alpha_min_range": "alpha_min должно быть между 0 и 0.999",
+            "alpha_max_range": "alpha_max должно быть между 0 и 1",
+            "alpha_min_greater": "alpha_min не может быть больше alpha_max",
+            "file_not_selected": "Выберите эксперимент",
+            "empty_functions": "{functions} должны быть описаны хотя бы одной функцией."
+        }
+    },
+    "messages": {
+        "success": {
+            "settings_updated": "обновлено для:\n{message}"
+        },
+        "warnings": {
+            "unselected_functions": "невыбранные функции",
+            "file_not_selected": "Файл не выбран.",
+            "invalid_parameters": "Неверные параметры DE"
+        }
+    }
+}

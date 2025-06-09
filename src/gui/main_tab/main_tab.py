@@ -3,20 +3,11 @@ from PyQt6.QtWidgets import QSplitter, QVBoxLayout, QWidget
 
 from src.core.app_settings import OperationType, SideBarNames
 from src.core.logger_config import logger
+from src.gui.config import get_app_config
 from src.gui.console_widget import ConsoleWidget
 from src.gui.main_tab.plot_canvas.plot_canvas import PlotCanvas
 from src.gui.main_tab.sidebar import SideBar
 from src.gui.main_tab.sub_sidebar.sub_side_hub import SubSideHub
-
-MIN_WIDTH_SIDEBAR = 220
-MIN_WIDTH_SUBSIDEBAR = 220
-MIN_WIDTH_CONSOLE = 150
-MIN_WIDTH_PLOTCANVAS = 500
-SPLITTER_WIDTH = 100
-MIN_HEIGHT_MAINTAB = 700
-COMPONENTS_MIN_WIDTH = (
-    MIN_WIDTH_SIDEBAR + MIN_WIDTH_SUBSIDEBAR + MIN_WIDTH_CONSOLE + MIN_WIDTH_PLOTCANVAS + SPLITTER_WIDTH
-)
 
 
 class MainTab(QWidget):
@@ -25,28 +16,37 @@ class MainTab(QWidget):
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
 
+        # Get configuration for layout dimensions
+        config = get_app_config()
+        splitter_config = config.splitter
+
         self.layout = QVBoxLayout(self)
-        self.setMinimumHeight(MIN_HEIGHT_MAINTAB)
-        self.setMinimumWidth(COMPONENTS_MIN_WIDTH + SPLITTER_WIDTH)
+        self.setMinimumHeight(splitter_config.min_height_maintab)
+        self.setMinimumWidth(
+            splitter_config.min_width_sidebar
+            + splitter_config.min_width_subsidebar
+            + splitter_config.min_width_console
+            + splitter_config.min_width_plotcanvas
+        )
 
         self.splitter = QSplitter(Qt.Orientation.Horizontal, self)
         self.layout.addWidget(self.splitter)
 
         self.sidebar = SideBar(self)
-        self.sidebar.setMinimumWidth(MIN_WIDTH_SIDEBAR)
+        self.sidebar.setMinimumWidth(splitter_config.min_width_sidebar)
         self.splitter.addWidget(self.sidebar)
 
         self.sub_sidebar = SubSideHub(self)
-        self.sub_sidebar.setMinimumWidth(MIN_WIDTH_SUBSIDEBAR)
+        self.sub_sidebar.setMinimumWidth(splitter_config.min_width_subsidebar)
         self.sub_sidebar.hide()
         self.splitter.addWidget(self.sub_sidebar)
 
         self.plot_canvas = PlotCanvas(self)
-        self.plot_canvas.setMinimumWidth(MIN_WIDTH_PLOTCANVAS)
+        self.plot_canvas.setMinimumWidth(splitter_config.min_width_plotcanvas)
         self.splitter.addWidget(self.plot_canvas)
 
         self.console_widget = ConsoleWidget(self)
-        self.console_widget.setMinimumWidth(MIN_WIDTH_CONSOLE)
+        self.console_widget.setMinimumWidth(splitter_config.min_width_console)
         self.splitter.addWidget(self.console_widget)
 
         self.sidebar.sub_side_bar_needed.connect(self.toggle_sub_sidebar)
@@ -86,13 +86,13 @@ class MainTab(QWidget):
     def initialize_sizes(self):
         total_width = self.width()
 
-        sidebar_ratio = MIN_WIDTH_SIDEBAR / COMPONENTS_MIN_WIDTH
-        subsidebar_ratio = MIN_WIDTH_SUBSIDEBAR / COMPONENTS_MIN_WIDTH
-        console_ratio = MIN_WIDTH_CONSOLE / COMPONENTS_MIN_WIDTH
+        # Get configuration for layout dimensions
+        config = get_app_config()
+        splitter_config = config.splitter
 
-        sidebar_width = int(total_width * sidebar_ratio)
-        console_width = int(total_width * console_ratio) if self.console_widget.isVisible() else 0
-        sub_sidebar_width = int(total_width * subsidebar_ratio) if self.sub_sidebar.isVisible() else 0
+        sidebar_width = int(total_width * splitter_config.sidebar_ratio)
+        console_width = int(total_width * splitter_config.console_ratio) if self.console_widget.isVisible() else 0
+        sub_sidebar_width = int(total_width * splitter_config.sub_sidebar_ratio) if self.sub_sidebar.isVisible() else 0
         canvas_width = total_width - (sidebar_width + sub_sidebar_width + console_width)
         self.splitter.setSizes([sidebar_width, sub_sidebar_width, canvas_width, console_width])
 

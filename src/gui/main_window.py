@@ -8,6 +8,7 @@ from src.core.app_settings import OperationType
 from src.core.base_signals import BaseSignals, BaseSlots
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
+from src.gui.config import get_app_config, get_localization
 from src.gui.main_tab.main_tab import MainTab
 from src.gui.table_tab.table_tab import TableTab
 
@@ -18,7 +19,14 @@ class MainWindow(QMainWindow):
 
     def __init__(self, signals: BaseSignals):
         super().__init__()
-        self.setWindowTitle("Open ThermoKinetics")
+        # Get configuration and localization
+        config = get_app_config()
+        loc = get_localization()
+
+        # Configure window using configuration system
+        self.setWindowTitle(loc.get_string("application.title"))
+        self.setMinimumSize(config.window.min_width, config.window.min_height)
+        self.resize(config.window.default_width, config.window.default_height)
 
         self.tabs = QTabWidget(self)
         self.setCentralWidget(self.tabs)
@@ -26,8 +34,8 @@ class MainWindow(QMainWindow):
         self.main_tab = MainTab(self)
         self.table_tab = TableTab(self)
 
-        self.tabs.addTab(self.main_tab, "Main")
-        self.tabs.addTab(self.table_tab, "Table")
+        self.tabs.addTab(self.main_tab, loc.get_string("application.tabs.main"))
+        self.tabs.addTab(self.table_tab, loc.get_string("application.tabs.analysis"))
 
         self.signals = signals
         self.actor_name = "main_window"

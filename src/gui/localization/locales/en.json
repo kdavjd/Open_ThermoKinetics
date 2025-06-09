@@ -1,0 +1,76 @@
+{
+    "application": {
+        "title": "Solid State Kinetics",
+        "tabs": {
+            "main": "Main",
+            "table": "Table",
+            "analysis": "Analysis",
+            "modeling": "Modeling"
+        },
+        "window_titles": {
+            "main_window": "Open ThermoKinetics"
+        }
+    },
+    "dialogs": {
+        "buttons": {
+            "ok": "OK",
+            "cancel": "Cancel",
+            "calculate": "Calculate",
+            "plot": "Plot",
+            "settings": "Settings"
+        },
+        "titles": {
+            "annotation_settings": "Annotation Settings",
+            "calculation_settings": "Calculation Settings",
+            "model_selection": "Select Models"
+        }
+    },
+    "controls": {
+        "labels": {
+            "alpha_min": "α_min:",
+            "alpha_max": "α_max:",
+            "ea_min": "Ea min, kJ:",
+            "ea_max": "Ea max, kJ:",
+            "ea_mean": "Ea mean, kJ:",
+            "plot_type": "Plot type:",
+            "parameter": "Parameter",
+            "value": "Value",
+            "min_value": "Min",
+            "max_value": "Max",
+            "from_bound": "from",
+            "to_bound": "to",
+            "method": "method",
+            "ea_result": "Ea",
+            "std_result": "std",
+            "ea_kj": "Ea, kJ",
+            "log_a": "log(A)",
+            "contribution": "contribution"
+        },
+        "tooltips": {
+            "alpha_min": "alpha_min - minimum conversion value for calculation",
+            "alpha_max": "alpha_max - maximum conversion value for calculation",
+            "ea_min": "Ea min, kJ",
+            "ea_max": "Ea max, kJ",
+            "ea_mean": "Ea mean, kJ"
+        }
+    },
+    "validation": {
+        "errors": {
+            "alpha_min_range": "alpha_min must be between 0 and 0.999",
+            "alpha_max_range": "alpha_max must be between 0 and 1",
+            "alpha_min_greater": "alpha_min cannot be greater than alpha_max",
+            "file_not_selected": "Choose an experiment",
+            "empty_functions": "{functions} must be described by at least one function."
+        }
+    },
+    "messages": {
+        "success": {
+            "settings_updated": "updated for:\n{message}"
+        },
+        "warnings": {
+            "unselected_functions": "unselected functions",
+            "file_not_selected": "File is not selected.",
+            "invalid_parameters": "Invalid DE parameters"
+        }
+    }
+}
