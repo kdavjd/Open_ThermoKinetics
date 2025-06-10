@@ -1,0 +1,75 @@
+{
+  "name": "default",
+  "version": "1.0",
+  "description": "Default light theme for Open ThermoKinetics User Guide",
+  "colors": {
+    "primary": "#2c3e50",
+    "secondary": "#34495e", 
+    "accent": "#3498db",
+    "background": "#ffffff",
+    "surface": "#f8f9fa",
+    "text_primary": "#2c3e50",
+    "text_secondary": "#6c757d",
+    "border": "#e9ecef",
+    "success": "#28a745",
+    "warning": "#ffc107",
+    "error": "#dc3545",
+    "info": "#17a2b8"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Arial",
+      "size": 16,
+      "weight": "bold"
+    },
+    "subheading": {
+      "family": "Arial", 
+      "size": 14,
+      "weight": "bold"
+    },
+    "body": {
+      "family": "Arial",
+      "size": 11,
+      "weight": "normal"
+    },
+    "code": {
+      "family": "Consolas",
+      "size": 10,
+      "weight": "normal"
+    }
+  },
+  "spacing": {
+    "section": 15,
+    "paragraph": 8,
+    "list_indent": 20,
+    "code_padding": 10
+  },
+  "components": {
+    "navigation": {
+      "min_width": 250,
+      "max_width": 375,
+      "item_height": 32,
+      "background": "#ffffff",
+      "selected_background": "#e3f2fd"
+    },
+    "content": {
+      "min_width": 600,
+      "padding": 20,
+      "background": "#ffffff"
+    },
+    "code_block": {
+      "background": "#f8f9fa",
+      "border": "#e9ecef",
+      "border_radius": 4,
+      "padding": 10
+    },
+    "note": {
+      "tip_background": "#d4edda",
+      "tip_border": "#c3e6cb",
+      "warning_background": "#fff3cd",
+      "warning_border": "#ffeaa7",
+      "error_background": "#f8d7da",
+      "error_border": "#f5c6cb"
+    }
+  }
+}

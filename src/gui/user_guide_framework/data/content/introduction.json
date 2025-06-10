@@ -1,0 +1,113 @@
+{
+  "version": "1.0",
+  "section_id": "introduction",
+  "metadata": {
+    "title": {
+      "ru": "Введение",
+      "en": "Introduction"
+    },
+    "description": {
+      "ru": "Добро пожаловать в Open ThermoKinetics",
+      "en": "Welcome to Open ThermoKinetics"
+    },
+    "tags": ["getting-started", "overview"],
+    "difficulty": "beginner",
+    "estimated_time": "5 minutes"
+  },
+  "content": {
+    "ru": [
+      {
+        "type": "heading",
+        "content": {
+          "text": "Добро пожаловать в Open ThermoKinetics",
+          "level": 1
+        }
+      },
+      {
+        "type": "paragraph",
+        "content": {
+          "text": "Open ThermoKinetics — это мощное приложение для анализа кинетики твердофазных реакций. Программа предоставляет полный набор инструментов для обработки экспериментальных данных и определения кинетических параметров.",
+          "style": "body"
+        }
+      },
+      {
+        "type": "heading",
+        "content": {
+          "text": "Основные возможности",
+          "level": 2
+        }
+      },
+      {
+        "type": "list",
+        "content": {
+          "items": [
+            "Загрузка и предобработка экспериментальных данных",
+            "Деконволюция сложных пиков на отдельные реакции", 
+            "Model-fit анализ для определения кинетических параметров",
+            "Model-free изоконверсионные методы",
+            "Model-based анализ многостадийных реакций",
+            "Интерактивная визуализация и настройка параметров"
+          ],
+          "list_type": "unordered"
+        }
+      },
+      {
+        "type": "note",
+        "content": {
+          "text": "<b>Совет:</b> Начните с раздела 'Управление данными' для изучения основ работы с экспериментальными файлами.",
+          "note_type": "tip"
+        }
+      }
+    ],
+    "en": [
+      {
+        "type": "heading",
+        "content": {
+          "text": "Welcome to Open ThermoKinetics",
+          "level": 1
+        }
+      },
+      {
+        "type": "paragraph",
+        "content": {
+          "text": "Open ThermoKinetics is a powerful application for analyzing solid-state reaction kinetics. The program provides a complete set of tools for processing experimental data and determining kinetic parameters.",
+          "style": "body"
+        }
+      },
+      {
+        "type": "heading",
+        "content": {
+          "text": "Key Features",
+          "level": 2
+        }
+      },
+      {
+        "type": "list",
+        "content": {
+          "items": [
+            "Loading and preprocessing experimental data",
+            "Deconvolution of complex peaks into individual reactions",
+            "Model-fit analysis for kinetic parameter determination",
+            "Model-free isoconversional methods", 
+            "Model-based analysis of multi-stage reactions",
+            "Interactive visualization and parameter adjustment"
+          ],
+          "list_type": "unordered"
+        }
+      },
+      {
+        "type": "note",
+        "content": {
+          "text": "<b>Tip:</b> Start with the 'Data Management' section to learn the basics of working with experimental files.",
+          "note_type": "tip"
+        }
+      }
+    ]
+  },
+  "related_sections": [
+    "data_management",
+    "overview",
+    "features"
+  ],
+  "attachments": []
+}

@@ -1,0 +1,199 @@
+{
+  "version": "1.0",
+  "section_id": "deconvolution",
+  "metadata": {
+    "title": {
+      "ru": "Деконволюция пиков",
+      "en": "Peak Deconvolution"
+    },
+    "description": {
+      "ru": "Разделение сложных пиков на отдельные реакции",
+      "en": "Separation of complex peaks into individual reactions"
+    },
+    "tags": ["analysis", "peaks", "reactions"],
+    "difficulty": "intermediate",
+    "estimated_time": "10-15 minutes"
+  },
+  "content": {
+    "ru": [
+      {
+        "type": "heading",
+        "content": {
+          "text": "Деконволюция пиков",
+          "level": 1
+        }
+      },
+      {
+        "type": "paragraph",
+        "content": {
+          "text": "Деконволюция позволяет разделить сложные пики на отдельные реакции для анализа многостадийных процессов. Программа поддерживает три типа функций: Гауссиан, ADS и Fraser-Suzuki.",
+          "style": "body"
+        }
+      },
+      {
+        "type": "heading",
+        "content": {
+          "text": "Пошаговый процесс деконволюции",
+          "level": 2
+        }
+      },
+      {
+        "type": "workflow",
+        "content": {
+          "title": "Выполнение деконволюции",
+          "steps": [
+            {
+              "step": 1,
+              "title": "Подготовка данных",
+              "description": "Убедитесь, что данные преобразованы в формат dα/dT",
+              "actions": [
+                "Выберите файл в навигации",
+                "Нажмите 'to dα/dT' в панели Experiments"
+              ],
+              "expected_result": "График показывает пики в координатах dα/dT"
+            },
+            {
+              "step": 2,
+              "title": "Переход к деконволюции",
+              "description": "Активируйте режим деконволюции",
+              "actions": [
+                "Нажмите кнопку 'deconvolution'",
+                "Панель Deconvolution откроется справа"
+              ],
+              "expected_result": "Интерактивные якоря появляются на графике"
+            },
+            {
+              "step": 3,
+              "title": "Добавление реакций",
+              "description": "Создайте реакции для каждого пика",
+              "actions": [
+                "Нажмите 'Add Reaction' в таблице реакций",
+                "Выберите тип функции (gauss, ads, fraser)",
+                "Повторите для каждого видимого пика"
+              ],
+              "expected_result": "Таблица содержит все необходимые реакции"
+            },
+            {
+              "step": 4,
+              "title": "Настройка параметров",
+              "description": "Установите начальные приближения",
+              "actions": [
+                "Перетащите якоря на графике для грубой настройки",
+                "Отредактируйте значения в таблице коэффициентов",
+                "Установите границы оптимизации"
+              ],
+              "expected_result": "Суммарная кривая приближается к экспериментальным данным"
+            },
+            {
+              "step": 5,
+              "title": "Оптимизация",
+              "description": "Запустите автоматическую оптимизацию",
+              "actions": [
+                "Нажмите кнопку 'Start Calculation'",
+                "Дождитесь завершения оптимизации",
+                "Проверьте качество подгонки по R²"
+              ],
+              "expected_result": "R² > 0.99 для хорошей подгонки"
+            }
+          ]
+        }
+      },
+      {
+        "type": "heading",
+        "content": {
+          "text": "Типы функций",
+          "level": 2
+        }
+      },
+      {
+        "type": "list",
+        "content": {
+          "items": [
+            "<b>Gauss:</b> Классическая гауссова функция для симметричных пиков",
+            "<b>ADS (Asymmetric Double Sigmoidal):</b> Асимметричная функция для сложных пиков",
+            "<b>Fraser-Suzuki:</b> Модифицированная асимметричная функция"
+          ],
+          "list_type": "unordered"
+        }
+      },
+      {
+        "type": "code_block",
+        "content": {
+          "code": "# Пример параметров деконволюции\nreaction_0:\n  function: 'ads'\n  coeffs:\n    h: 0.005392786487485471    # Высота пика\n    z: 296.1846660127549       # Позиция пика (°C)\n    w: 47.058071904740814      # Ширина пика\n    ads1: 26.12901788390612    # ADS параметр 1\n    ads2: 1.916749283812285    # ADS параметр 2\n  upper_bound_coeffs:\n    h: 1.0\n    z: 400.0\n    w: 100.0\n    ads1: 50.0\n    ads2: 10.0",
+          "language": "yaml",
+          "title": "Конфигурация реакции"
+        }
+      },
+      {
+        "type": "note",
+        "content": {
+          "text": "<b>Важно:</b> Качество деконволюции зависит от правильного выбора начальных параметров. Используйте интерактивные якоря для грубой настройки перед автоматической оптимизацией.",
+          "note_type": "warning"
+        }
+      }
+    ],
+    "en": [
+      {
+        "type": "heading",
+        "content": {
+          "text": "Peak Deconvolution",
+          "level": 1
+        }
+      },
+      {
+        "type": "paragraph",
+        "content": {
+          "text": "Deconvolution allows separation of complex peaks into individual reactions for multi-stage process analysis. The program supports three function types: Gaussian, ADS, and Fraser-Suzuki.",
+          "style": "body"
+        }
+      },
+      {
+        "type": "heading",
+        "content": {
+          "text": "Step-by-step Deconvolution Process",
+          "level": 2
+        }
+      },
+      {
+        "type": "workflow",
+        "content": {
+          "title": "Performing Deconvolution",
+          "steps": [
+            {
+              "step": 1,
+              "title": "Data Preparation",
+              "description": "Ensure data is converted to dα/dT format",
+              "actions": [
+                "Select file in navigation",
+                "Click 'to dα/dT' in Experiments panel"
+              ],
+              "expected_result": "Graph shows peaks in dα/dT coordinates"
+            },
+            {
+              "step": 2,
+              "title": "Switch to Deconvolution",
+              "description": "Activate deconvolution mode",
+              "actions": [
+                "Click 'deconvolution' button",
+                "Deconvolution panel opens on the right"
+              ],
+              "expected_result": "Interactive anchors appear on the graph"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "related_sections": [
+    "preprocessing",
+    "model_fit",
+    "optimization_settings"
+  ],
+  "attachments": [
+    {
+      "type": "video",
+      "title": "Deconvolution Tutorial",
+      "path": "videos/deconvolution_tutorial.mp4"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "title": "Open ThermoKinetics Guide",
+    "description": "Comprehensive user guide for kinetic analysis",
+    "languages": ["ru", "en"],
+    "default_language": "ru"
+  },
+  "structure": {
+    "introduction": {
+      "title": {
+        "ru": "Введение",
+        "en": "Introduction"
+      },
+      "icon": "info",
+      "content_file": "introduction.json",
+      "children": {
+        "overview": {
+          "title": {
+            "ru": "Обзор приложения",
+            "en": "Application Overview"
+          },
+          "content_file": "introduction/overview.json"
+        },
+        "features": {
+          "title": {
+            "ru": "Основные возможности",
+            "en": "Key Features"
+          },
+          "content_file": "introduction/features.json"
+        }
+      }
+    },
+    "data_management": {
+      "title": {
+        "ru": "Управление данными",
+        "en": "Data Management"
+      },
+      "icon": "folder",
+      "content_file": "data_management.json",
+      "children": {
+        "file_loading": {
+          "title": {
+            "ru": "Загрузка файлов",
+            "en": "File Loading"
+          },
+          "content_file": "data_management/file_loading.json"
+        },
+        "preprocessing": {
+          "title": {
+            "ru": "Предобработка",
+            "en": "Preprocessing"
+          },
+          "content_file": "data_management/preprocessing.json"
+        }
+      }
+    },
+    "analysis_methods": {
+      "title": {
+        "ru": "Методы анализа",
+        "en": "Analysis Methods"
+      },
+      "icon": "chart",
+      "content_file": "analysis_methods.json",
+      "children": {
+        "deconvolution": {
+          "title": {
+            "ru": "Деконволюция пиков",
+            "en": "Peak Deconvolution"
+          },
+          "content_file": "analysis/deconvolution.json"
+        },
+        "model_fit": {
+          "title": {
+            "ru": "Model-Fit анализ",
+            "en": "Model-Fit Analysis"
+          },
+          "content_file": "analysis/model_fit.json"
+        },
+        "model_free": {
+          "title": {
+            "ru": "Model-Free анализ",
+            "en": "Model-Free Analysis"
+          },
+          "content_file": "analysis/model_free.json"
+        },
+        "model_based": {
+          "title": {
+            "ru": "Model-Based анализ",
+            "en": "Model-Based Analysis"
+          },
+          "content_file": "analysis/model_based.json"
+        }
+      }
+    }
+  },
+  "settings": {
+    "navigation": {
+      "expandable": true,
+      "icons_enabled": true,
+      "search_enabled": true
+    },
+    "content": {
+      "auto_scroll": true,
+      "code_highlighting": true,
+      "image_zoom": true
+    }
+  }
+}
