@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 from src.core.app_settings import SideBarNames
-from src.gui.main_tab.sub_sidebar.deconvolution_sub_bar import DeconvolutionSubBar
+from src.gui.main_tab.sub_sidebar.deconvolution import DeconvolutionSubBar
 from src.gui.main_tab.sub_sidebar.experiment_sub_bar import ExperimentSubBar
 from src.gui.main_tab.sub_sidebar.model_based.model_based import ModelBasedTab
 from src.gui.main_tab.sub_sidebar.model_fit_sub_bar import ModelFitSubBar
