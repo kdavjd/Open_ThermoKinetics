@@ -12,11 +12,9 @@ class UIStrings:
     """Global UI text strings and labels."""
 
     # Window titles
-    MAIN_WINDOW_TITLE: str = "Solid State Kinetics Analysis"
-
-    # Tab names
+    MAIN_WINDOW_TITLE: str = "Solid State Kinetics Analysis"  # Tab names
     MAIN_TAB_NAME: str = "Analysis"
-    TABLE_TAB_NAME: str = "Data Table"
+    USER_GUIDE_TAB_NAME: str = "User Guide"
 
     # Sidebar sections
     EXPERIMENTS_SECTION: str = "experiments"

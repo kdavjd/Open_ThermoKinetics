@@ -9,7 +9,7 @@ from src.core.base_signals import BaseSignals, BaseSlots
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
 from src.gui.main_tab.main_tab import MainTab
-from src.gui.table_tab.table_tab import TableTab
+from src.gui.user_guide_tab.user_guide_tab import UserGuideTab
 
 
 class MainWindow(QMainWindow):
@@ -24,10 +24,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
 
         self.main_tab = MainTab(self)
-        self.table_tab = TableTab(self)
+        self.user_guide_tab = UserGuideTab(self)
 
         self.tabs.addTab(self.main_tab, "Main")
-        self.tabs.addTab(self.table_tab, "Table")
+        self.tabs.addTab(self.user_guide_tab, "User Guide")
 
         self.signals = signals
         self.actor_name = "main_window"
