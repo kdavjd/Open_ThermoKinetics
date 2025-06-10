@@ -71,6 +71,19 @@ class ThemeManager(QObject):
             self.theme_changed.emit(theme_name)
             return
 
+        # Check for built-in themes
+        if theme_name == "high_contrast":
+            self.current_theme = self._get_high_contrast_theme()
+            self.current_theme_name = theme_name
+            self.theme_changed.emit(theme_name)
+            return
+
+        if theme_name == "dark":
+            self.current_theme = self._get_dark_theme()
+            self.current_theme_name = theme_name
+            self.theme_changed.emit(theme_name)
+            return
+
         if theme_name not in self.available_themes:
             raise ThemeNotFoundError(f"Theme '{theme_name}' not found")
 
@@ -372,3 +385,51 @@ class ThemeManager(QObject):
                 custom_theme[key] = value
 
         return custom_theme
+
+    def _get_high_contrast_theme(self) -> Dict[str, Any]:
+        """Get high contrast theme configuration"""
+        theme = self._get_default_theme()
+        theme.update(
+            {
+                "name": "high_contrast",
+                "colors": {
+                    "primary": "#000000",
+                    "secondary": "#333333",
+                    "accent": "#0066cc",
+                    "background": "#ffffff",
+                    "surface": "#f0f0f0",
+                    "text_primary": "#000000",
+                    "text_secondary": "#333333",
+                    "border": "#000000",
+                    "success": "#006600",
+                    "warning": "#cc6600",
+                    "error": "#cc0000",
+                    "info": "#0066cc",
+                },
+            }
+        )
+        return theme
+
+    def _get_dark_theme(self) -> Dict[str, Any]:
+        """Get dark theme configuration"""
+        theme = self._get_default_theme()
+        theme.update(
+            {
+                "name": "dark",
+                "colors": {
+                    "primary": "#ffffff",
+                    "secondary": "#cccccc",
+                    "accent": "#4dabf7",
+                    "background": "#2d3748",
+                    "surface": "#4a5568",
+                    "text_primary": "#ffffff",
+                    "text_secondary": "#a0aec0",
+                    "border": "#718096",
+                    "success": "#68d391",
+                    "warning": "#f6e05e",
+                    "error": "#fc8181",
+                    "info": "#63b3ed",
+                },
+            }
+        )
+        return theme

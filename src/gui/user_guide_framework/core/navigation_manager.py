@@ -349,6 +349,18 @@ class NavigationManager:
             "languages": self._languages,
         }
 
+    def get_navigation_structure(self, language: str = "ru") -> List[NavigationNode]:
+        """
+        Get navigation structure as a list of root nodes.
+
+        Args:
+            language: Language code (used for compatibility, but not filtering here)
+
+        Returns:
+            List of root NavigationNode objects
+        """
+        return self.root_nodes
+
     def rebuild_tree(self) -> None:
         """Rebuild the navigation tree from current content manager data"""
         self.build_navigation_tree()
