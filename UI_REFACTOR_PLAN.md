@@ -326,7 +326,7 @@ src/gui/main_tab/sub_sidebar/model_based/
 ├── models_scheme.py               # Models scheme visual editor (~250 lines)
 ├── reaction_table.py              # Reaction parameters table (~250 lines)
 ├── calculation_controls.py        # Controls for model-based calculations (~200 lines)
-├── series_management.py           # Series creation and management (~150 lines)
+├── calculation_settings_dialogs.py   # Series creation and management (~150 lines)
 └── config.py                      # Configuration constants (~64 lines)
 ```
 
@@ -376,18 +376,27 @@ src/gui/main_tab/sub_sidebar/deconvolution/
 
 **Validation**: ✅ All functionality preserved, signals working correctly, critical path_keys bug fixed
 
-### 🔄 2.2 Model-Based Module - IN PROGRESS
+### ✅ 2.2 Model-Based Module - COMPLETED
 
-**Next**: `model_based.py` (1114 lines) → model_based/ module
+**Original**: `model_based.py` (1114 lines) → **Modular Structure**:
+```
+src/gui/main_tab/sub_sidebar/model_based/
+├── __init__.py                      # Backward compatibility (15 lines)
+├── model_based_panel.py             # Main orchestrator (543 lines)
+├── config.py                        # Configuration dataclass (64 lines)
+├── models_scheme.py                 # Models scheme visual editor (251 lines)
+├── reaction_table.py                # Reaction parameters table (249 lines)
+├── calculation_controls.py          # Controls for calculations (200 lines)
+└── calculation_settings_dialogs.py  # Series management dialogs (425 lines)
+```
 
-**Remaining Tasks**:
-- [ ] Create model_based/ module directory structure
-- [ ] Extract main orchestrator (`model_based_panel.py`)
-- [ ] Separate models scheme editor (`models_scheme.py`)
-- [ ] Create reaction parameters table (`reaction_table.py`)
-- [ ] Extract calculation controls (`calculation_controls.py`)
-- [ ] Create series management component (`series_management.py`)
-- [ ] Maintain backward compatibility through `__init__.py`
+**Critical Fixes Applied**:
+- ✅ **Division by zero protection** in simulation function (line 472)
+- ✅ **Function access fix** for NUC_MODELS_TABLE (`differential_form` key)
+- ✅ **Real-time simulation updates** when parameters change
+- ✅ **Live testing verified** - all functionality working correctly
+
+**Validation**: ✅ All functionality preserved, simulation working, critical bugs fixed
 
 ### ⏳ 2.3 Plot Canvas Module - PLANNED
 

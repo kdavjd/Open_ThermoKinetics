@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 from src.core.app_settings import SideBarNames
 from src.gui.main_tab.sub_sidebar.deconvolution import DeconvolutionSubBar
 from src.gui.main_tab.sub_sidebar.experiment_sub_bar import ExperimentSubBar
-from src.gui.main_tab.sub_sidebar.model_based.model_based import ModelBasedTab
+from src.gui.main_tab.sub_sidebar.model_based import ModelBasedTab
 from src.gui.main_tab.sub_sidebar.model_fit_sub_bar import ModelFitSubBar
 from src.gui.main_tab.sub_sidebar.model_free_sub_bar import ModelFreeSubBar
 from src.gui.main_tab.sub_sidebar.series_sub_bar import SeriesSubBar

@@ -586,19 +586,42 @@ class MainWindow(QMainWindow):
             return {"success": False, "error": str(e)}
 
     def update_model_simulation(self, series_name: str):
+        """Update model simulation and plot simulation curves."""
+        logger.debug(f"update_model_simulation called for series: {series_name}")
+
         series_entry = self.handle_request_cycle(
             "series_data", OperationType.GET_SERIES, series_name=series_name, info_type="all"
         )
         reaction_scheme = series_entry.get("reaction_scheme")
         experimental_data = series_entry.get("experimental_data")
+
+        if experimental_data is None or experimental_data.empty:
+            logger.warning(f"No experimental data found for series {series_name}")
+            return
+
+        if reaction_scheme is None:
+            logger.warning(f"No reaction scheme found for series {series_name}")
+            return
+
+        logger.debug(f"Experimental data columns: {list(experimental_data.columns)}")
+        logger.debug(f"Reaction scheme components: {len(reaction_scheme.get('components', []))}")
+        logger.debug(f"Reaction scheme reactions: {len(reaction_scheme.get('reactions', []))}")
+
         simulation_df = self.main_tab.sub_sidebar.model_based._simulate_reaction_model(
             experimental_data, reaction_scheme
         )
+
+        if simulation_df is None or simulation_df.empty:
+            logger.warning("Simulation returned empty dataframe")
+            return
+
+        logger.debug(f"Simulation columns: {list(simulation_df.columns)}")
 
         for col in simulation_df.columns:
             if col == "temperature":
                 continue
 
+            logger.debug(f"Adding simulation curve for heating rate: {col}")
             self.main_tab.plot_canvas.add_or_update_line(
                 f"simulation_{col}",
                 simulation_df["temperature"],
