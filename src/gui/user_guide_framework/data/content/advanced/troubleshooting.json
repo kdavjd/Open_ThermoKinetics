@@ -1,0 +1,687 @@
+{
+    "section_id": "troubleshooting",
+    "version": "1.0.0",
+    "metadata": {
+        "title": "Troubleshooting",
+        "description": "Common issues, error resolution, and performance optimization guide",
+        "difficulty": "intermediate",
+        "estimated_time": "15-20 minutes",
+        "tags": [
+            "troubleshooting",
+            "errors",
+            "performance",
+            "debugging",
+            "solutions",
+            "optimization"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Устранение неполадок"
+            },
+            {
+                "type": "paragraph",
+                "text": "Руководство по решению распространенных проблем, диагностике ошибок и оптимизации производительности программы."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Проблемы с загрузкой файлов"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Ошибка: 'Файл не может быть загружен'"
+            },
+            {
+                "type": "paragraph",
+                "text": "Возможные причины и решения:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте формат файла - поддерживаются только CSV",
+                    "Убедитесь, что файл содержит минимум 2 колонки (температура, сигнал)",
+                    "Проверьте разделители - должны быть запятая, точка с запятой или табуляция",
+                    "Убедитесь, что файл не поврежден и доступен для чтения"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "# Правильный формат:\nTemperature,Signal\n25.0,100.0\n30.0,99.5\n35.0,98.8"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Ошибка: 'Неверный формат данных'"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте, что числовые значения используют правильный десятичный разделитель",
+                    "Удалите лишние пробелы и специальные символы",
+                    "Убедитесь, что заголовки колонок написаны корректно",
+                    "Проверьте кодировку файла (рекомендуется UTF-8)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Проблемы с деконволюцией"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Оптимизация не сходится"
+            },
+            {
+                "type": "paragraph",
+                "text": "Если алгоритм оптимизации не находит решение:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте начальные значения параметров - они должны быть близки к реальным",
+                    "Расширьте границы поиска для параметров",
+                    "Увеличьте количество итераций в настройках оптимизации",
+                    "Попробуйте другой тип функции (gauss → ads → fraser)",
+                    "Проведите предварительное сглаживание данных"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Интерактивное перетаскивание якорей помогает установить хорошие начальные приближения для оптимизации."
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Плохое качество подгонки"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте количество реакций - возможно, нужно добавить или удалить",
+                    "Убедитесь, что выбраны подходящие типы функций",
+                    "Проведите предобработку: сглаживание и вычитание фона",
+                    "Проверьте границы параметров - они не должны быть слишком узкими"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Проблемы с анализом серий"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Ошибка: 'Несовместимые данные серии'"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Убедитесь, что все файлы имеют одинаковую структуру данных",
+                    "Проверьте, что деконволюция выполнена для всех файлов",
+                    "Убедитесь, что количество реакций одинаково во всех файлах",
+                    "Проверьте соответствие скоростей нагрева и файлов"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Model-Based оптимизация зависает"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Уменьшите размер популяции (popsize) в настройках",
+                    "Проверьте схему реакций на корректность связей",
+                    "Убедитесь, что начальные параметры находятся в допустимых границах",
+                    "Попробуйте упростить схему реакций (меньше компонентов/связей)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Проблемы производительности"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Медленная работа программы"
+            },
+            {
+                "type": "paragraph",
+                "text": "Способы оптимизации производительности:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Уменьшите размер файлов данных (прореживание точек)",
+                    "Закройте неиспользуемые файлы и серии",
+                    "Уменьшите количество итераций оптимизации",
+                    "Используйте меньше реакций при деконволюции",
+                    "Отключите параллельные вычисления на слабых системах"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Большое потребление памяти"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Работайте с одним файлом/серией за раз",
+                    "Очищайте историю операций (reset changes)",
+                    "Перезапустите программу при долгой работе",
+                    "Уменьшите размер обрабатываемых файлов"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Ошибки интерфейса"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "График не обновляется"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте, что выбран активный файл в sidebar",
+                    "Убедитесь, что данные загружены корректно",
+                    "Попробуйте переключиться между вкладками",
+                    "Перезапустите расчет деконволюции"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Интерактивные якоря не работают"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Убедитесь, что находитесь в режиме деконволюции",
+                    "Проверьте, что реакции созданы",
+                    "Попробуйте кликнуть по графику для активации",
+                    "Проверьте настройки отображения графика"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Ошибки сохранения/загрузки"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Конфигурация не сохраняется"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте права доступа к папке программы",
+                    "Убедитесь, что диск не переполнен",
+                    "Проверьте, что файлы не заблокированы антивирусом",
+                    "Попробуйте экспорт в другую папку"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Ошибка импорта конфигурации"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте формат JSON файла",
+                    "Убедитесь, что конфигурация совместима с текущей версией",
+                    "Проверьте целостность файла конфигурации",
+                    "Попробуйте импортировать конфигурацию по частям"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Диагностика проблем"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Получение информации для отладки"
+            },
+            {
+                "type": "paragraph",
+                "text": "При обращении за помощью предоставьте:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Описание проблемы и шагов для воспроизведения",
+                    "Сообщения об ошибках из консоли",
+                    "Размер и формат обрабатываемых файлов",
+                    "Конфигурацию системы (ОС, объем памяти)",
+                    "Версию программы"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Использование консоли отладки"
+            },
+            {
+                "type": "paragraph",
+                "text": "Консоль программы показывает полезную информацию:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Сообщения о ходе выполнения операций",
+                    "Предупреждения о проблемах с данными",
+                    "Результаты оптимизации и статистики",
+                    "Ошибки и исключения"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Включите отображение консоли через settings → console → show для мониторинга работы программы."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Оптимизация рабочего процесса"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Рекомендуемая последовательность работы"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Загрузите и проверьте качество исходных данных",
+                    "Проведите предобработку (сглаживание, вычитание фона)",
+                    "Выполните деконволюцию с интерактивной настройкой",
+                    "Проверьте качество подгонки перед анализом серий",
+                    "Создайте серии только с качественно обработанными файлами"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Настройки для стабильной работы"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Используйте умеренные настройки оптимизации (100-200 итераций)",
+                    "Сохраняйте конфигурации после успешной обработки",
+                    "Работайте с копиями важных данных",
+                    "Регулярно очищайте временные данные"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Получение помощи"
+            },
+            {
+                "type": "paragraph",
+                "text": "Если проблема не решается:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Проверьте документацию в User Guide",
+                    "Попробуйте воспроизвести проблему на тестовых данных",
+                    "Обратитесь к разработчикам с детальным описанием",
+                    "Предоставьте файлы данных для воспроизведения проблемы"
+                ]
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Troubleshooting"
+            },
+            {
+                "type": "paragraph",
+                "text": "Guide to solving common problems, error diagnosis, and program performance optimization."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "File Loading Issues"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Error: 'File cannot be loaded'"
+            },
+            {
+                "type": "paragraph",
+                "text": "Possible causes and solutions:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check file format - only CSV files are supported",
+                    "Ensure file contains at least 2 columns (temperature, signal)",
+                    "Check delimiters - should be comma, semicolon, or tab",
+                    "Ensure file is not corrupted and accessible for reading"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "# Correct format:\nTemperature,Signal\n25.0,100.0\n30.0,99.5\n35.0,98.8"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Error: 'Invalid data format'"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check that numeric values use correct decimal separator",
+                    "Remove extra spaces and special characters",
+                    "Ensure column headers are written correctly",
+                    "Check file encoding (UTF-8 recommended)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Deconvolution Issues"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Optimization doesn't converge"
+            },
+            {
+                "type": "paragraph",
+                "text": "If optimization algorithm fails to find solution:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check initial parameter values - they should be close to real ones",
+                    "Expand search boundaries for parameters",
+                    "Increase number of iterations in optimization settings",
+                    "Try different function type (gauss → ads → fraser)",
+                    "Perform preliminary data smoothing"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Interactive anchor dragging helps set good initial approximations for optimization."
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Poor fit quality"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check number of reactions - might need to add or remove",
+                    "Ensure appropriate function types are selected",
+                    "Perform preprocessing: smoothing and background subtraction",
+                    "Check parameter bounds - they shouldn't be too narrow"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Series Analysis Issues"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Error: 'Incompatible series data'"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Ensure all files have identical data structure",
+                    "Check that deconvolution is performed for all files",
+                    "Ensure equal number of reactions in all files",
+                    "Check correspondence between heating rates and files"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Model-Based optimization hangs"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Reduce population size (popsize) in settings",
+                    "Check reaction scheme for correct connections",
+                    "Ensure initial parameters are within allowed bounds",
+                    "Try simplifying reaction scheme (fewer components/connections)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Performance Issues"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Slow program operation"
+            },
+            {
+                "type": "paragraph",
+                "text": "Performance optimization methods:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Reduce data file sizes (point decimation)",
+                    "Close unused files and series",
+                    "Reduce optimization iterations",
+                    "Use fewer reactions in deconvolution",
+                    "Disable parallel computing on weak systems"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "High memory consumption"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Work with one file/series at a time",
+                    "Clear operation history (reset changes)",
+                    "Restart program after long sessions",
+                    "Reduce size of processed files"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Interface Errors"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Plot doesn't update"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check that active file is selected in sidebar",
+                    "Ensure data is loaded correctly",
+                    "Try switching between tabs",
+                    "Restart deconvolution calculation"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Interactive anchors don't work"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Ensure you're in deconvolution mode",
+                    "Check that reactions are created",
+                    "Try clicking on plot to activate",
+                    "Check plot display settings"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Save/Load Errors"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Configuration doesn't save"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check access rights to program folder",
+                    "Ensure disk is not full",
+                    "Check that files are not blocked by antivirus",
+                    "Try exporting to different folder"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Configuration import error"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check JSON file format",
+                    "Ensure configuration is compatible with current version",
+                    "Check configuration file integrity",
+                    "Try importing configuration in parts"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Problem Diagnostics"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Getting debugging information"
+            },
+            {
+                "type": "paragraph",
+                "text": "When seeking help, provide:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Problem description and reproduction steps",
+                    "Error messages from console",
+                    "Size and format of processed files",
+                    "System configuration (OS, memory amount)",
+                    "Program version"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Using debug console"
+            },
+            {
+                "type": "paragraph",
+                "text": "Program console shows useful information:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Operation progress messages",
+                    "Data problem warnings",
+                    "Optimization results and statistics",
+                    "Errors and exceptions"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Enable console display via settings → console → show to monitor program operation."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Workflow Optimization"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Recommended work sequence"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Load and check source data quality",
+                    "Perform preprocessing (smoothing, background subtraction)",
+                    "Execute deconvolution with interactive tuning",
+                    "Check fit quality before series analysis",
+                    "Create series only with well-processed files"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Settings for stable operation"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Use moderate optimization settings (100-200 iterations)",
+                    "Save configurations after successful processing",
+                    "Work with copies of important data",
+                    "Regularly clear temporary data"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Getting Help"
+            },
+            {
+                "type": "paragraph",
+                "text": "If problem persists:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Check documentation in User Guide",
+                    "Try reproducing problem with test data",
+                    "Contact developers with detailed description",
+                    "Provide data files for problem reproduction"
+                ]
+            }
+        ]
+    },
+    "related_sections": [
+        "introduction/installation",
+        "data_management/file_loading",
+        "analysis/deconvolution",
+        "advanced/series_analysis",
+        "advanced/export_import"
+    ]
+}

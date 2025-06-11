@@ -1,0 +1,370 @@
+{
+    "section_id": "file_loading",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Загрузка файлов",
+            "en": "File Loading"
+        },
+        "description": {
+            "ru": "Подробное руководство по загрузке и настройке экспериментальных данных",
+            "en": "Detailed guide for loading and configuring experimental data"
+        },
+        "difficulty": "beginner",
+        "estimated_time": "10 минут",
+        "tags": [
+            "file_loading",
+            "data_import",
+            "csv",
+            "configuration"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Загрузка файлов данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "Open ThermoKinetics поддерживает загрузку экспериментальных данных из CSV файлов с гибкими настройками форматирования."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Поддерживаемые форматы"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "CSV файлы с разделителями: запятая, точка с запятой, табуляция",
+                    "Термогравиметрические (ТГА) данные: температура, масса, производная",
+                    "Дифференциальная сканирующая калориметрия (ДСК): температура, тепловой поток",
+                    "Данные с несколькими скоростями нагрева в одном файле",
+                    "Файлы с заголовками или без них"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Процесс загрузки файла"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для загрузки нового файла выполните следующие шаги:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "В боковой панели навигации разверните раздел 'experiments'",
+                    "Кликните на пункт 'add file data'",
+                    "В диалоге выбора файла найдите и выберите ваш CSV файл",
+                    "Откроется диалог предварительной настройки загрузки"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Настройка параметров загрузки"
+            },
+            {
+                "type": "paragraph",
+                "text": "В диалоге предварительной настройки вы можете указать:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Путь к файлу (автоматически заполняется)",
+                    "Названия колонок через запятую (например: temperature, 3, 5, 10)",
+                    "Разделитель данных (по умолчанию запятая)",
+                    "Количество строк для пропуска в начале файла"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Если поле 'column names' оставить пустым, программа попытается автоматически определить названия колонок из первой строки файла."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Примеры названий колонок"
+            },
+            {
+                "type": "paragraph",
+                "text": "Стандартные форматы названий колонок:"
+            },
+            {
+                "type": "code",
+                "language": "text",
+                "code": "# Для ТГА данных:\ntemperature, mass, dmdt\n\n# Для ДСК данных:\ntemperature, heat_flow\n\n# Для данных с несколькими скоростями нагрева:\ntemperature, 3, 5, 10\n# где числа - скорости нагрева в K/min\n\n# Альтернативные названия:\nT, weight, derivative\nTemp, DSC, dDSC"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Автоматическое определение формата"
+            },
+            {
+                "type": "paragraph",
+                "text": "Программа автоматически определяет:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Разделитель данных (запятая, точка с запятой, табуляция)",
+                    "Наличие заголовков в первой строке",
+                    "Тип данных (числовые значения, текст)",
+                    "Кодировку файла (UTF-8, Windows-1251)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Работа с загруженными файлами"
+            },
+            {
+                "type": "paragraph",
+                "text": "После успешной загрузки файл появится в дереве навигации под разделом 'experiments'. Вы сможете:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Кликнуть на имя файла для его выбора",
+                    "Просмотреть данные на интерактивном графике",
+                    "Переключиться в панель предобработки данных",
+                    "Удалить файл через пункт 'delete selected'"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Решение проблем загрузки"
+            },
+            {
+                "type": "paragraph",
+                "text": "Если файл не загружается корректно:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Проверьте формат данных - должны быть только числовые значения",
+                    "Убедитесь, что разделитель указан правильно",
+                    "Проверьте наличие пустых строк или специальных символов",
+                    "Для файлов с заголовками увеличьте 'rows to skip' на 1",
+                    "Попробуйте указать названия колонок вручную"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Файлы с текстовыми данными в числовых колонках могут вызвать ошибки загрузки. Убедитесь, что все данные имеют правильный числовой формат."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Примеры тестовых файлов"
+            },
+            {
+                "type": "paragraph",
+                "text": "В папке resources/ программы находятся тестовые файлы:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "DSC_NH4Cl.csv - данные ДСК хлорида аммония",
+                    "NH4_rate_3.csv, NH4_rate_5.csv, NH4_rate_10.csv - данные с разными скоростями",
+                    "Данные ТГА.csv - пример термогравиметрических данных",
+                    "Данные ДСК.csv - пример калориметрических данных"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "success",
+                "text": "Используйте тестовые файлы для знакомства с функциями программы перед работой с собственными данными."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "File Loading"
+            },
+            {
+                "type": "paragraph",
+                "text": "Open ThermoKinetics supports loading experimental data from CSV files with flexible formatting options."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Supported Formats"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "CSV files with delimiters: comma, semicolon, tab",
+                    "Thermogravimetric (TGA) data: temperature, mass, derivative",
+                    "Differential scanning calorimetry (DSC): temperature, heat flow",
+                    "Data with multiple heating rates in one file",
+                    "Files with or without headers"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "File Loading Process"
+            },
+            {
+                "type": "paragraph",
+                "text": "To load a new file, follow these steps:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "In the navigation sidebar, expand the 'experiments' section",
+                    "Click on 'add file data'",
+                    "In the file selection dialog, locate and select your CSV file",
+                    "The pre-load configuration dialog will open"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Load Parameter Configuration"
+            },
+            {
+                "type": "paragraph",
+                "text": "In the pre-configuration dialog, you can specify:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "File path (automatically filled)",
+                    "Column names separated by comma (e.g.: temperature, 3, 5, 10)",
+                    "Data delimiter (comma by default)",
+                    "Number of rows to skip at the beginning of file"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "If 'column names' field is left empty, the program will attempt to automatically determine column names from the first row of the file."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Column Name Examples"
+            },
+            {
+                "type": "paragraph",
+                "text": "Standard column name formats:"
+            },
+            {
+                "type": "code",
+                "language": "text",
+                "code": "# For TGA data:\ntemperature, mass, dmdt\n\n# For DSC data:\ntemperature, heat_flow\n\n# For data with multiple heating rates:\ntemperature, 3, 5, 10\n# where numbers are heating rates in K/min\n\n# Alternative names:\nT, weight, derivative\nTemp, DSC, dDSC"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Automatic Format Detection"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program automatically detects:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Data delimiter (comma, semicolon, tab)",
+                    "Presence of headers in first row",
+                    "Data type (numeric values, text)",
+                    "File encoding (UTF-8, Windows-1251)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Working with Loaded Files"
+            },
+            {
+                "type": "paragraph",
+                "text": "After successful loading, the file will appear in the navigation tree under 'experiments' section. You can:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Click on file name to select it",
+                    "View data on the interactive plot",
+                    "Switch to data preprocessing panel",
+                    "Remove file via 'delete selected'"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Loading Issues Troubleshooting"
+            },
+            {
+                "type": "paragraph",
+                "text": "If file doesn't load correctly:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Check data format - should contain only numeric values",
+                    "Ensure delimiter is specified correctly",
+                    "Check for empty rows or special characters",
+                    "For files with headers, increase 'rows to skip' by 1",
+                    "Try specifying column names manually"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Files with text data in numeric columns may cause loading errors. Ensure all data has proper numeric format."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Test File Examples"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program's resources/ folder contains test files:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "DSC_NH4Cl.csv - DSC data of ammonium chloride",
+                    "NH4_rate_3.csv, NH4_rate_5.csv, NH4_rate_10.csv - data with different rates",
+                    "Данные ТГА.csv - thermogravimetric data example",
+                    "Данные ДСК.csv - calorimetric data example"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "success",
+                "text": "Use test files to familiarize yourself with program functions before working with your own data."
+            }
+        ]
+    },
+    "related_sections": [
+        "data_preprocessing",
+        "quick_start"
+    ]
+}

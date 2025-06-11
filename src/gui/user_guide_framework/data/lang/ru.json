@@ -14,7 +14,13 @@
     "nav_model_based": "Model-Based анализ",
     "nav_overview": "Обзор приложения",
     "nav_features": "Основные возможности",
-    
+    "nav_advanced_features": "Расширенные возможности",
+    "nav_series_analysis": "Анализ серий",
+    "nav_export_import": "Экспорт и импорт",
+    "nav_troubleshooting": "Устранение неполадок",
+    "nav_installation": "Установка",
+    "nav_quick_start": "Быстрый старт",
+    "nav_file_operations": "Операции с файлами",
     "ui_search": "Поиск",
     "ui_search_placeholder": "Поиск по руководству...",
     "ui_language": "Язык",
@@ -27,7 +33,6 @@
     "ui_collapse_all": "Свернуть все",
     "ui_print": "Печать",
     "ui_export": "Экспорт",
-    
     "content_note": "Примечание",
     "content_warning": "Предупреждение",
     "content_tip": "Совет",
@@ -38,22 +43,18 @@
     "content_attachments": "Вложения",
     "content_estimated_time": "Примерное время: {time}",
     "content_difficulty": "Сложность: {level}",
-    
     "search_results": "Результаты поиска",
     "search_no_results": "Ничего не найдено",
     "search_found": "Найдено {count} результатов",
-    
     "error_content_not_found": "Контент не найден",
     "error_loading": "Ошибка загрузки",
     "error_invalid_section": "Недопустимый раздел",
     "error_network": "Ошибка сети",
     "error_file_not_found": "Файл не найден",
-    
     "difficulty_beginner": "начинающий",
-    "difficulty_intermediate": "средний", 
+    "difficulty_intermediate": "средний",
     "difficulty_advanced": "продвинутый",
     "difficulty_expert": "эксперт",
-    
     "theme_light": "Светлая",
     "theme_dark": "Тёмная",
     "theme_auto": "Автоматически"

@@ -1,0 +1,316 @@
+{
+    "section_id": "model_based",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Model-Based анализ",
+            "en": "Model-Based Analysis"
+        },
+        "description": {
+            "ru": "Оптимизация схем многостадийных реакций с дифференциальной эволюцией",
+            "en": "Optimization of multi-stage reaction schemes with differential evolution"
+        },
+        "difficulty": "advanced",
+        "estimated_time": "30-45 minutes",
+        "tags": [
+            "model-based",
+            "optimization",
+            "reaction-schemes",
+            "kinetics",
+            "differential-evolution"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Model-Based анализ многостадийных реакций"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Based анализ позволяет моделировать сложные многостадийные реакции с последовательными и параллельными схемами. Этот метод использует дифференциальную эволюцию для оптимизации кинетических параметров."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Создание схемы реакций"
+            },
+            {
+                "type": "paragraph",
+                "text": "Схема реакций определяет топологию превращений между компонентами:"
+            },
+            {
+                "type": "list",
+                "style": "ordered",
+                "items": [
+                    "Создайте серию экспериментов с несколькими скоростями нагрева",
+                    "Перейдите в раздел 'calculation' → 'model based'",
+                    "Используйте визуальный редактор схем для построения топологии",
+                    "Добавьте компоненты (A, B, C, D, E) и связи между ними"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "text",
+                "text": "Пример схемы последовательных реакций:\nA → B → C → D\n\nПример схемы с ветвлением:\nA → B → C → D\n      ↘   ↗\n        E"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Настройка кинетических параметров"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для каждой реакции настройте следующие параметры:"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "**Энергия активации (Ea)**: 1-2000 кДж/моль",
+                    "**Предэкспоненциальный множитель (log_A)**: -100 до 100",
+                    "**Вклад реакции (contribution)**: 0.01-1.0",
+                    "**Тип кинетической модели**: F1/3, F3/4, F3/2, F2, F3"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"reaction_0\": {\n    \"from\": \"A\", \"to\": \"B\",\n    \"reaction_type\": \"F2\",\n    \"Ea\": 120, \"log_A\": 8, \"contribution\": 0.5,\n    \"Ea_min\": 1.0, \"Ea_max\": 2000.0,\n    \"log_A_min\": -100.0, \"log_A_max\": 100.0,\n    \"contribution_min\": 0.01, \"contribution_max\": 1.0\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Настройка алгоритма оптимизации"
+            },
+            {
+                "type": "paragraph",
+                "text": "Дифференциальная эволюция используется для глобальной оптимизации:"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "**Стратегия**: best1bin (рекомендуется)",
+                    "**Максимум итераций**: 200-1000",
+                    "**Размер популяции**: 2-15 (кратно количеству параметров)",
+                    "**Параллельные процессы**: 4-8 (зависит от CPU)",
+                    "**Полировка**: False для экономии времени"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "python",
+                "text": "# Настройки оптимизации\n{\n  \"method\": \"differential_evolution\",\n  \"method_parameters\": {\n    \"strategy\": \"best1bin\",\n    \"maxiter\": 200,\n    \"popsize\": 2,\n    \"workers\": 4,\n    \"polish\": False\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Запуск расчета"
+            },
+            {
+                "type": "list",
+                "style": "ordered",
+                "items": [
+                    "Проверьте все параметры схемы реакций",
+                    "Настройте границы оптимизации для каждого параметра",
+                    "Нажмите кнопку 'Start Calculation'",
+                    "Дождитесь завершения оптимизации (может занять несколько минут)",
+                    "Проанализируйте результаты в консоли и на графике"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Интерпретация результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "После завершения расчета анализируйте:"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "**Оптимизированные параметры**: Ea, log_A, contribution для каждой реакции",
+                    "**Статистические метрики**: MSE, R² для оценки качества подгонки",
+                    "**Симуляционные кривые**: Сравнение с экспериментальными данными",
+                    "**Профили концентраций**: Изменение компонентов во времени"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "**Важно**: Model-Based анализ требует качественных результатов деконволюции для всех скоростей нагрева в серии. Убедитесь, что деконволюция выполнена корректно перед запуском."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Практические рекомендации"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "Начинайте с простых последовательных схем (A→B→C)",
+                    "Используйте разумные начальные приближения параметров",
+                    "Увеличивайте размер популяции для сложных схем",
+                    "Проверяйте сходимость алгоритма по нескольким запускам",
+                    "Сохраняйте результаты для последующего анализа"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "**Совет**: Для ускорения расчетов используйте параллельные процессы (workers), но не превышайте количество ядер процессора."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Model-Based Analysis of Multi-Stage Reactions"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Based analysis enables modeling of complex multi-stage reactions with sequential and parallel schemes. This method uses differential evolution for optimization of kinetic parameters."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Creating Reaction Schemes"
+            },
+            {
+                "type": "paragraph",
+                "text": "Reaction scheme defines the topology of transformations between components:"
+            },
+            {
+                "type": "list",
+                "style": "ordered",
+                "items": [
+                    "Create an experiment series with multiple heating rates",
+                    "Navigate to 'calculation' → 'model based'",
+                    "Use the visual scheme editor to build topology",
+                    "Add components (A, B, C, D, E) and connections between them"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "text",
+                "text": "Example of sequential reaction scheme:\nA → B → C → D\n\nExample of branching scheme:\nA → B → C → D\n      ↘   ↗\n        E"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Kinetic Parameters Configuration"
+            },
+            {
+                "type": "paragraph",
+                "text": "Configure the following parameters for each reaction:"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "**Activation Energy (Ea)**: 1-2000 kJ/mol",
+                    "**Pre-exponential Factor (log_A)**: -100 to 100",
+                    "**Reaction Contribution**: 0.01-1.0",
+                    "**Kinetic Model Type**: F1/3, F3/4, F3/2, F2, F3"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"reaction_0\": {\n    \"from\": \"A\", \"to\": \"B\",\n    \"reaction_type\": \"F2\",\n    \"Ea\": 120, \"log_A\": 8, \"contribution\": 0.5,\n    \"Ea_min\": 1.0, \"Ea_max\": 2000.0,\n    \"log_A_min\": -100.0, \"log_A_max\": 100.0,\n    \"contribution_min\": 0.01, \"contribution_max\": 1.0\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Optimization Algorithm Settings"
+            },
+            {
+                "type": "paragraph",
+                "text": "Differential evolution is used for global optimization:"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "**Strategy**: best1bin (recommended)",
+                    "**Maximum iterations**: 200-1000",
+                    "**Population size**: 2-15 (multiple of parameter count)",
+                    "**Parallel workers**: 4-8 (depends on CPU)",
+                    "**Polish**: False to save time"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "python",
+                "text": "# Optimization settings\n{\n  \"method\": \"differential_evolution\",\n  \"method_parameters\": {\n    \"strategy\": \"best1bin\",\n    \"maxiter\": 200,\n    \"popsize\": 2,\n    \"workers\": 4,\n    \"polish\": False\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Running Calculation"
+            },
+            {
+                "type": "list",
+                "style": "ordered",
+                "items": [
+                    "Verify all reaction scheme parameters",
+                    "Set optimization bounds for each parameter",
+                    "Click 'Start Calculation' button",
+                    "Wait for optimization completion (may take several minutes)",
+                    "Analyze results in console and plot"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Interpretation"
+            },
+            {
+                "type": "paragraph",
+                "text": "After calculation completion, analyze:"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "**Optimized parameters**: Ea, log_A, contribution for each reaction",
+                    "**Statistical metrics**: MSE, R² for fit quality assessment",
+                    "**Simulation curves**: Comparison with experimental data",
+                    "**Concentration profiles**: Component changes over time"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "**Important**: Model-Based analysis requires quality deconvolution results for all heating rates in the series. Ensure deconvolution is performed correctly before starting."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Practical Recommendations"
+            },
+            {
+                "type": "list",
+                "style": "unordered",
+                "items": [
+                    "Start with simple sequential schemes (A→B→C)",
+                    "Use reasonable initial parameter approximations",
+                    "Increase population size for complex schemes",
+                    "Check algorithm convergence with multiple runs",
+                    "Save results for subsequent analysis"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "**Tip**: For faster calculations, use parallel workers, but don't exceed the number of CPU cores."
+            }
+        ]
+    },
+    "related_sections": [
+        "series_analysis",
+        "deconvolution",
+        "export_import"
+    ]
+}

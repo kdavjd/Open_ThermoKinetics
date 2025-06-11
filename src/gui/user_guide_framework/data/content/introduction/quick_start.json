@@ -1,0 +1,408 @@
+{
+    "section_id": "quick_start",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Быстрый старт",
+            "en": "Quick Start"
+        },
+        "description": {
+            "ru": "Быстрое введение в основные функции программы с практическими примерами",
+            "en": "Quick introduction to main program functions with practical examples"
+        },
+        "difficulty": "beginner",
+        "estimated_time": "15 минут",
+        "tags": [
+            "quick_start",
+            "tutorial",
+            "basics",
+            "example"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Быстрый старт с Open ThermoKinetics"
+            },
+            {
+                "type": "paragraph",
+                "text": "Это руководство поможет вам быстро начать работу с основными функциями программы на практическом примере анализа термогравиметрических данных."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Шаг 1: Запуск программы"
+            },
+            {
+                "type": "paragraph",
+                "text": "Откройте терминал или командную строку и выполните:"
+            },
+            {
+                "type": "code",
+                "language": "powershell",
+                "code": "poetry run ssk-gui"
+            },
+            {
+                "type": "paragraph",
+                "text": "Программа откроется с главным интерфейсом, содержащим:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Боковая панель навигации (слева)",
+                    "Панель анализа (центр-слева)",
+                    "Интерактивный график (центр)",
+                    "Консоль вывода (справа)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Шаг 2: Загрузка тестовых данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "Программа включает несколько тестовых файлов в папке resources/:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "В боковой панели кликните на 'experiments' → 'add file data'",
+                    "Выберите файл resources/DSC_NH4Cl.csv",
+                    "В диалоге настройки укажите названия колонок: temperature, heat_flow",
+                    "Нажмите 'OK' для загрузки"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Если колонки имеют стандартные названия, программа определит их автоматически."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Шаг 3: Предобработка данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "После загрузки файла автоматически откроется панель предобработки:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Выберите метод сглаживания 'Savitzky-Golay'",
+                    "Установите размер окна: 11, порядок полинома: 3",
+                    "Нажмите 'Apply' для применения фильтра",
+                    "При необходимости примените вычитание фона методом 'Linear'"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Шаг 4: Деконволюция пиков"
+            },
+            {
+                "type": "paragraph",
+                "text": "Переключитесь в режим деконволюции для анализа пиков:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Нажмите кнопку 'deconvolution' внизу панели предобработки",
+                    "В таблице реакций нажмите 'Add Reaction'",
+                    "Выберите тип функции (gaussian, ads, fraser)",
+                    "Настройте начальные параметры пика в таблице коэффициентов",
+                    "Используйте интерактивные якоря на графике для точной настройки"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "Якоря позволяют перетаскивать позицию и высоту пиков мышью для быстрой настройки параметров."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Шаг 5: Оптимизация параметров"
+            },
+            {
+                "type": "paragraph",
+                "text": "Запустите автоматическую оптимизацию для улучшения подгонки:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Установите границы оптимизации для каждого параметра",
+                    "Нажмите кнопку 'Start' для начала расчета",
+                    "Наблюдайте за прогрессом в консоли вывода",
+                    "Результаты автоматически обновятся на графике"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Шаг 6: Анализ кинетических параметров"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для определения кинетических параметров перейдите к Model-Fit анализу:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "В боковой панели выберите 'calculation' → 'model fit'",
+                    "Выберите метод анализа (direct-diff или Coats-Redfern)",
+                    "Установите диапазон степени конверсии (α_min: 0.005, α_max: 0.995)",
+                    "Нажмите 'calculate' для выполнения анализа",
+                    "Просмотрите результаты в таблице (модель, R², Ea, A)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Шаг 7: Экспорт результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Сохраните результаты анализа:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Используйте кнопку 'Export' в панели деконволюции",
+                    "Выберите формат экспорта (JSON для конфигураций реакций)",
+                    "Кнопка 'plot' позволяет визуализировать результаты Model-Fit",
+                    "Используйте консоль для копирования численных результатов"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Дальнейшие шаги"
+            },
+            {
+                "type": "paragraph",
+                "text": "После освоения базового функционала изучите:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Model-Free анализ для изоконверсионных методов",
+                    "Model-Based анализ для многостадийных реакций",
+                    "Анализ серий экспериментов с разными скоростями нагрева",
+                    "Продвинутые настройки оптимизации"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "success",
+                "text": "Поздравляем! Вы освоили базовый рабочий процесс Open ThermoKinetics. Для углубленного изучения переходите к соответствующим разделам руководства."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Quick Start with Open ThermoKinetics"
+            },
+            {
+                "type": "paragraph",
+                "text": "This guide will help you quickly start working with the main program functions using a practical example of thermogravimetric data analysis."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Step 1: Launch the Program"
+            },
+            {
+                "type": "paragraph",
+                "text": "Open terminal or command prompt and execute:"
+            },
+            {
+                "type": "code",
+                "language": "powershell",
+                "code": "poetry run ssk-gui"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program will open with the main interface containing:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Navigation sidebar (left)",
+                    "Analysis panel (center-left)",
+                    "Interactive plot (center)",
+                    "Output console (right)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Step 2: Load Test Data"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program includes several test files in the resources/ folder:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "In the sidebar, click 'experiments' → 'add file data'",
+                    "Select file resources/DSC_NH4Cl.csv",
+                    "In the setup dialog, specify column names: temperature, heat_flow",
+                    "Click 'OK' to load"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "If columns have standard names, the program will detect them automatically."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Step 3: Data Preprocessing"
+            },
+            {
+                "type": "paragraph",
+                "text": "After loading the file, the preprocessing panel will open automatically:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Select smoothing method 'Savitzky-Golay'",
+                    "Set window size: 11, polynomial order: 3",
+                    "Click 'Apply' to apply the filter",
+                    "If necessary, apply baseline subtraction using 'Linear' method"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Step 4: Peak Deconvolution"
+            },
+            {
+                "type": "paragraph",
+                "text": "Switch to deconvolution mode for peak analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Click 'deconvolution' button at the bottom of preprocessing panel",
+                    "In the reactions table, click 'Add Reaction'",
+                    "Select function type (gaussian, ads, fraser)",
+                    "Configure initial peak parameters in the coefficients table",
+                    "Use interactive anchors on the plot for precise adjustment"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "Anchors allow dragging peak position and height with the mouse for quick parameter adjustment."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Step 5: Parameter Optimization"
+            },
+            {
+                "type": "paragraph",
+                "text": "Run automatic optimization to improve the fit:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Set optimization bounds for each parameter",
+                    "Click 'Start' button to begin calculation",
+                    "Monitor progress in the output console",
+                    "Results will automatically update on the plot"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Step 6: Kinetic Parameter Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "To determine kinetic parameters, proceed to Model-Fit analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "In the sidebar, select 'calculation' → 'model fit'",
+                    "Choose analysis method (direct-diff or Coats-Redfern)",
+                    "Set conversion range (α_min: 0.005, α_max: 0.995)",
+                    "Click 'calculate' to perform analysis",
+                    "Review results in the table (model, R², Ea, A)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Step 7: Export Results"
+            },
+            {
+                "type": "paragraph",
+                "text": "Save analysis results:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Use 'Export' button in the deconvolution panel",
+                    "Select export format (JSON for reaction configurations)",
+                    "'plot' button allows visualizing Model-Fit results",
+                    "Use console to copy numerical results"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Next Steps"
+            },
+            {
+                "type": "paragraph",
+                "text": "After mastering basic functionality, explore:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Model-Free analysis for isoconversional methods",
+                    "Model-Based analysis for multi-step reactions",
+                    "Series analysis of experiments with different heating rates",
+                    "Advanced optimization settings"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "success",
+                "text": "Congratulations! You have mastered the basic Open ThermoKinetics workflow. For in-depth study, proceed to the corresponding sections of the guide."
+            }
+        ]
+    },
+    "related_sections": [
+        "overview",
+        "installation",
+        "file_loading",
+        "deconvolution"
+    ]
+}

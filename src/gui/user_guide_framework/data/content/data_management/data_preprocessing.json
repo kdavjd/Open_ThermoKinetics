@@ -1,0 +1,456 @@
+{
+    "section_id": "data_preprocessing",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Предобработка данных",
+            "en": "Data Preprocessing"
+        },
+        "description": {
+            "ru": "Методы сглаживания, вычитания фона и подготовки данных для анализа",
+            "en": "Methods for smoothing, baseline subtraction and data preparation for analysis"
+        },
+        "difficulty": "beginner",
+        "estimated_time": "10 минут",
+        "tags": [
+            "preprocessing",
+            "smoothing",
+            "baseline",
+            "filtering"
+        ],
+        "related_sections": [
+            "file_loading",
+            "deconvolution"
+        ],
+        "authors": [
+            "Open ThermoKinetics Team"
+        ],
+        "last_updated": "2024-01-15"
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Предобработка экспериментальных данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "Предобработка данных является критически важным этапом подготовки экспериментальных данных для точного кинетического анализа. Open ThermoKinetics предоставляет комплексные инструменты для сглаживания шума и коррекции базовой линии."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Доступ к панели предобработки"
+            },
+            {
+                "type": "paragraph",
+                "text": "Панель предобработки автоматически активируется при выборе загруженного файла в дереве навигации:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Загрузите файл данных через кнопку 'add file data'",
+                    "Выберите файл в разделе 'experiments' левой панели",
+                    "Панель предобработки появится в центральной части интерфейса",
+                    "График данных отобразится в правой панели визуализации"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Сглаживание данных (Фильтр Савицкого-Голая)"
+            },
+            {
+                "type": "paragraph",
+                "text": "Экспериментальные данные часто содержат шум, который необходимо устранить перед анализом."
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Фильтр Савицкого-Голая"
+            },
+            {
+                "type": "paragraph",
+                "text": "Основной метод сглаживания в программе:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Выберите метод 'Savitzky-Golay' в выпадающем списке",
+                    "Размер окна (window size): нечетное число, обычно 5-21",
+                    "Порядок полинома (polynomial order): обычно 2-4",
+                    "Нажмите 'Apply' для применения фильтра"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Рекомендуемые параметры: размер окна 11, порядок полинома 3. Увеличивайте размер окна для более сильного сглаживания."
+            },
+            {
+                "type": "paragraph",
+                "text": "Параметры сглаживания:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Малый размер окна (5-7): минимальное сглаживание, сохранение деталей",
+                    "Средний размер окна (9-15): баланс между шумом и деталями",
+                    "Большой размер окна (17-21): сильное сглаживание, потеря деталей",
+                    "Низкий порядок (2): более сильное сглаживание",
+                    "Высокий порядок (4-5): сохранение формы пиков"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Вычитание базовой линии"
+            },
+            {
+                "type": "paragraph",
+                "text": "Многие экспериментальные данные имеют наклонную или искривленную базовую линию, которую необходимо скорректировать."
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Доступные методы"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Linear - линейная коррекция между двумя точками",
+                    "Sigmoidal - сигмоидальная коррекция",
+                    "Tangential - касательная коррекция",
+                    "Horizontal - горизонтальная линия",
+                    "Polynomial - полиномиальная коррекция",
+                    "Exponential - экспоненциальная коррекция",
+                    "Logarithmic - логарифмическая коррекция",
+                    "Power - степенная коррекция"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Настройка диапазона базовой линии"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для определения базовой линии укажите:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Left range - левая граница диапазона (начальная температура)",
+                    "Right range - правая граница диапазона (конечная температура)",
+                    "Диапазоны должны соответствовать областям без пиков",
+                    "Нажмите 'Apply' для применения коррекции"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "Linear метод является наиболее универсальным и подходит для большинства случаев. Используйте более сложные методы только при необходимости."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Дополнительные операции"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Вычисление производной"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для некоторых типов анализа требуется производная сигнала:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Кнопка 'to da/dT' вычисляет первую производную",
+                    "Полезно для ТГА данных (переход от массы к скорости потери массы)",
+                    "Автоматически применяется к активному набору данных"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Сброс изменений"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для возврата к исходным данным:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Кнопка 'reset changes' отменяет все примененные операции",
+                    "Восстанавливает исходные данные из файла",
+                    "Позволяет начать предобработку заново"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Переход к анализу"
+            },
+            {
+                "type": "paragraph",
+                "text": "После завершения предобработки:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Убедитесь, что данные имеют приемлемое качество на графике",
+                    "Нажмите кнопку 'deconvolution' для перехода к анализу пиков",
+                    "Или выберите другой метод анализа в боковой панели"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Рекомендации по предобработке"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Всегда начинайте с минимальной обработки",
+                    "Сначала примените сглаживание, затем коррекцию базовой линии",
+                    "Проверяйте результат на графике после каждого шага",
+                    "Сохраняйте баланс между удалением шума и сохранением информации",
+                    "При сомнениях используйте кнопку 'reset changes' и начните заново"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Избыточная предобработка может исказить данные и привести к неточным результатам анализа. Применяйте фильтры осознанно."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Experimental Data Preprocessing"
+            },
+            {
+                "type": "paragraph",
+                "text": "Data preprocessing is an important step in preparing experimental data for kinetic analysis. Open ThermoKinetics provides powerful tools for smoothing and baseline correction."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Accessing Preprocessing Panel"
+            },
+            {
+                "type": "paragraph",
+                "text": "The preprocessing panel is automatically activated when selecting a loaded file in the navigation tree. If the panel is not displayed:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Ensure that data file is loaded",
+                    "Click on file name in 'experiments' section",
+                    "Preprocessing panel will appear in the central part of interface"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Data Smoothing"
+            },
+            {
+                "type": "paragraph",
+                "text": "Experimental data often contains noise that needs to be eliminated before analysis."
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Savitzky-Golay Filter"
+            },
+            {
+                "type": "paragraph",
+                "text": "Main smoothing method in the program:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Select 'Savitzky-Golay' method in dropdown list",
+                    "Window size: odd number, usually 5-21",
+                    "Polynomial order: usually 2-4",
+                    "Click 'Apply' to apply filter"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Recommended parameters: window size 11, polynomial order 3. Increase window size for stronger smoothing."
+            },
+            {
+                "type": "paragraph",
+                "text": "Smoothing parameters:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Small window size (5-7): minimal smoothing, detail preservation",
+                    "Medium window size (9-15): balance between noise and details",
+                    "Large window size (17-21): strong smoothing, detail loss",
+                    "Low order (2): stronger smoothing",
+                    "High order (4-5): peak shape preservation"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Baseline Subtraction"
+            },
+            {
+                "type": "paragraph",
+                "text": "Many experimental data have sloped or curved baseline that needs to be corrected."
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Available Methods"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Linear - linear correction between two points",
+                    "Sigmoidal - sigmoidal correction",
+                    "Tangential - tangential correction",
+                    "Horizontal - horizontal line",
+                    "Polynomial - polynomial correction",
+                    "Exponential - exponential correction",
+                    "Logarithmic - logarithmic correction",
+                    "Power - power correction"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Baseline Range Configuration"
+            },
+            {
+                "type": "paragraph",
+                "text": "To define baseline, specify:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Left range - left boundary of range (initial temperature)",
+                    "Right range - right boundary of range (final temperature)",
+                    "Ranges should correspond to areas without peaks",
+                    "Click 'Apply' to apply correction"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "Linear method is most universal and suitable for most cases. Use more complex methods only when necessary."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Additional Operations"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Derivative Calculation"
+            },
+            {
+                "type": "paragraph",
+                "text": "Some types of analysis require signal derivative:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "'to da/dT' button calculates first derivative",
+                    "Useful for TGA data (transition from mass to mass loss rate)",
+                    "Automatically applied to active dataset"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Reset Changes"
+            },
+            {
+                "type": "paragraph",
+                "text": "To return to original data:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "'reset changes' button cancels all applied operations",
+                    "Restores original data from file",
+                    "Allows to start preprocessing anew"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Proceeding to Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "After completing preprocessing:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Ensure data has acceptable quality on the plot",
+                    "Click 'deconvolution' button to proceed to peak analysis",
+                    "Or select another analysis method in sidebar"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Preprocessing Recommendations"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Always start with minimal processing",
+                    "Apply smoothing first, then baseline correction",
+                    "Check result on plot after each step",
+                    "Maintain balance between noise removal and information preservation",
+                    "When in doubt, use 'reset changes' button and start over"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Excessive preprocessing can distort data and lead to inaccurate analysis results. Apply filters consciously."
+            }
+        ]
+    }
+}
+  "related_sections": [
+    "file_loading",
+    "deconvolution"
+]
+}

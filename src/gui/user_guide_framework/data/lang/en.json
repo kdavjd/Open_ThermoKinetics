@@ -14,7 +14,13 @@
     "nav_model_based": "Model-Based Analysis",
     "nav_overview": "Application Overview",
     "nav_features": "Key Features",
-    
+    "nav_advanced_features": "Advanced Features",
+    "nav_series_analysis": "Series Analysis",
+    "nav_export_import": "Export and Import",
+    "nav_troubleshooting": "Troubleshooting",
+    "nav_installation": "Installation",
+    "nav_quick_start": "Quick Start",
+    "nav_file_operations": "File Operations",
     "ui_search": "Search",
     "ui_search_placeholder": "Search the guide...",
     "ui_language": "Language",
@@ -27,7 +33,6 @@
     "ui_collapse_all": "Collapse All",
     "ui_print": "Print",
     "ui_export": "Export",
-    
     "content_note": "Note",
     "content_warning": "Warning",
     "content_tip": "Tip",
@@ -38,22 +43,18 @@
     "content_attachments": "Attachments",
     "content_estimated_time": "Estimated time: {time}",
     "content_difficulty": "Difficulty: {level}",
-    
     "search_results": "Search Results",
     "search_no_results": "No results found",
     "search_found": "Found {count} results",
-    
     "error_content_not_found": "Content not found",
     "error_loading": "Loading error",
     "error_invalid_section": "Invalid section",
     "error_network": "Network error",
     "error_file_not_found": "File not found",
-    
     "difficulty_beginner": "beginner",
     "difficulty_intermediate": "intermediate",
-    "difficulty_advanced": "advanced", 
+    "difficulty_advanced": "advanced",
     "difficulty_expert": "expert",
-    
     "theme_light": "Light",
     "theme_dark": "Dark",
     "theme_auto": "Auto"

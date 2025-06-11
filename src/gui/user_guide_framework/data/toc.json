@@ -1,109 +1,154 @@
 {
   "version": "1.0",
-  "metadata": {
-    "title": "Open ThermoKinetics Guide",
-    "description": "Comprehensive user guide for kinetic analysis",
-    "languages": ["ru", "en"],
-    "default_language": "ru"
-  },
-  "structure": {
-    "introduction": {
+  "default_language": "ru",
+  "supported_languages": [
+    "ru",
+    "en"
+  ],
+  "root_sections": [
+    {
+      "id": "introduction",
       "title": {
         "ru": "Введение",
         "en": "Introduction"
       },
-      "icon": "info",
-      "content_file": "introduction.json",
-      "children": {
-        "overview": {
+      "icon": "info-circle",
+      "children": [
+        {
+          "id": "overview",
           "title": {
-            "ru": "Обзор приложения",
-            "en": "Application Overview"
+            "ru": "Обзор программы",
+            "en": "Program Overview"
           },
           "content_file": "introduction/overview.json"
         },
-        "features": {
+        {
+          "id": "installation",
           "title": {
-            "ru": "Основные возможности",
-            "en": "Key Features"
+            "ru": "Установка и настройка",
+            "en": "Installation & Setup"
           },
-          "content_file": "introduction/features.json"
+          "content_file": "introduction/installation.json"
+        },
+        {
+          "id": "quick_start",
+          "title": {
+            "ru": "Быстрый старт",
+            "en": "Quick Start"
+          },
+          "content_file": "introduction/quick_start.json"
         }
-      }
+      ]
     },
-    "data_management": {
+    {
+      "id": "data_management",
       "title": {
         "ru": "Управление данными",
         "en": "Data Management"
       },
       "icon": "folder",
-      "content_file": "data_management.json",
-      "children": {
-        "file_loading": {
+      "children": [
+        {
+          "id": "file_loading",
           "title": {
             "ru": "Загрузка файлов",
             "en": "File Loading"
           },
           "content_file": "data_management/file_loading.json"
         },
-        "preprocessing": {
+        {
+          "id": "data_preprocessing",
           "title": {
-            "ru": "Предобработка",
-            "en": "Preprocessing"
+            "ru": "Предобработка данных",
+            "en": "Data Preprocessing"
           },
-          "content_file": "data_management/preprocessing.json"
+          "content_file": "data_management/data_preprocessing.json"
+        },
+        {
+          "id": "file_operations",
+          "title": {
+            "ru": "Операции с файлами",
+            "en": "File Operations"
+          },
+          "content_file": "data_management/file_operations.json"
         }
-      }
+      ]
     },
-    "analysis_methods": {
+    {
+      "id": "analysis",
       "title": {
-        "ru": "Методы анализа",
-        "en": "Analysis Methods"
+        "ru": "Анализ данных",
+        "en": "Data Analysis"
       },
-      "icon": "chart",
-      "content_file": "analysis_methods.json",
-      "children": {
-        "deconvolution": {
+      "icon": "chart-line",
+      "children": [
+        {
+          "id": "deconvolution",
           "title": {
             "ru": "Деконволюция пиков",
             "en": "Peak Deconvolution"
           },
           "content_file": "analysis/deconvolution.json"
         },
-        "model_fit": {
+        {
+          "id": "model_fit",
           "title": {
             "ru": "Model-Fit анализ",
             "en": "Model-Fit Analysis"
           },
           "content_file": "analysis/model_fit.json"
         },
-        "model_free": {
+        {
+          "id": "model_free",
           "title": {
             "ru": "Model-Free анализ",
             "en": "Model-Free Analysis"
           },
           "content_file": "analysis/model_free.json"
         },
-        "model_based": {
+        {
+          "id": "model_based",
           "title": {
             "ru": "Model-Based анализ",
             "en": "Model-Based Analysis"
           },
           "content_file": "analysis/model_based.json"
         }
-      }
-    }
-  },
-  "settings": {
-    "navigation": {
-      "expandable": true,
-      "icons_enabled": true,
-      "search_enabled": true
+      ]
     },
-    "content": {
-      "auto_scroll": true,
-      "code_highlighting": true,
-      "image_zoom": true
+    {
+      "id": "advanced",
+      "title": {
+        "ru": "Продвинутые функции",
+        "en": "Advanced Features"
+      },
+      "icon": "cogs",
+      "children": [
+        {
+          "id": "series_analysis",
+          "title": {
+            "ru": "Анализ серий",
+            "en": "Series Analysis"
+          },
+          "content_file": "advanced/series_analysis.json"
+        },
+        {
+          "id": "export_import",
+          "title": {
+            "ru": "Экспорт и импорт",
+            "en": "Export & Import"
+          },
+          "content_file": "advanced/export_import.json"
+        },
+        {
+          "id": "troubleshooting",
+          "title": {
+            "ru": "Решение проблем",
+            "en": "Troubleshooting"
+          },
+          "content_file": "advanced/troubleshooting.json"
+        }
+      ]
     }
-  }
+  ]
 }
