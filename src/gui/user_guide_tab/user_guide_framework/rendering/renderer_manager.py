@@ -1,5 +1,5 @@
 """
-Renderer Manager - Менеджер системы рендеринга контента
+Enhanced Renderer Manager with Detailed Error Logging
 """
 
 from typing import Any, Dict, List, Optional
@@ -38,7 +38,8 @@ class RendererManager:
         logger.info("Initializing RendererManager")
         self.theme_manager = theme_manager
         self.renderers: List[BaseRenderer] = []
-        self.renderer_map: Dict[str, BaseRenderer] = {}  # Initialize state logger for comprehensive tracking
+        self.renderer_map: Dict[str, BaseRenderer] = {}
+        # Initialize state logger for comprehensive tracking
         self.state_logger = StateLogger("RendererManager")
         self.state_logger.log_operation_start("initialization")
 
@@ -83,25 +84,42 @@ class RendererManager:
 
         Args:
             content: Словарь с данными контента
-            Returns:
+
+        Returns:
             QWidget: Созданный виджет или None если рендерер не найден
         """
         if not content or not isinstance(content, dict):
             logger.warning("Invalid content format provided to render_block")
+            error_details = "Content structure is not a valid dictionary"
+            context = {"content_type": type(content).__name__, "content_value": str(content)[:100]}
+            self.state_logger.log_rendering_operation(
+                "unknown", success=False, error_details=error_details, context=context
+            )
             return self._create_error_widget("Invalid content format")
 
         content_type = content.get("type", "")
         if not content_type:
             logger.warning("Content type not specified in render_block")
+            error_details = "Content structure missing required 'type' field"
+            context = {"content_keys": list(content.keys()) if content else []}
+            self.state_logger.log_rendering_operation(
+                "unknown", success=False, error_details=error_details, context=context
+            )
             return self._create_error_widget("Content type not specified")
-            # Use aggregated logging for rendering operations
-        # Will be updated to success if successful
-        self.state_logger.log_rendering_operation(content_type, success=False)
 
         # Ищем подходящий рендерер
         renderer = self.renderer_map.get(content_type)
         if not renderer:
             logger.error(f"No renderer found for content type: {content_type}")
+            error_details = f"Content type '{content_type}' not supported by any registered renderer"
+            context = {
+                "content_type": content_type,
+                "available_types": list(self.renderer_map.keys()),
+                "renderer_count": len(self.renderers),
+            }
+            self.state_logger.log_rendering_operation(
+                content_type, success=False, error_details=error_details, context=context
+            )
             return self._create_error_widget(f"No renderer found for type: {content_type}")
 
         try:
@@ -113,10 +131,29 @@ class RendererManager:
                 return widget
             else:
                 logger.error(f"Renderer failed to create widget for type: {content_type}")
+                error_details = f"Renderer {renderer.__class__.__name__} returned None instead of QWidget"
+                context = {
+                    "renderer_class": renderer.__class__.__name__,
+                    "content_keys": list(content.keys()),
+                    "content_size": len(str(content)),
+                }
+                self.state_logger.log_rendering_operation(
+                    content_type, success=False, error_details=error_details, context=context
+                )
                 return self._create_error_widget(f"Renderer failed to create widget for: {content_type}")
 
         except Exception as e:
             logger.error(f"Error rendering {content_type}: {e}")
+            error_details = f"Exception in {renderer.__class__.__name__}.render(): {str(e)}"
+            context = {
+                "renderer_class": renderer.__class__.__name__,
+                "exception_type": type(e).__name__,
+                "content_keys": list(content.keys()),
+                "content_preview": str(content)[:200] + "..." if len(str(content)) > 200 else str(content),
+            }
+            self.state_logger.log_rendering_operation(
+                content_type, success=False, error_details=error_details, context=context
+            )
             error_message = f"Error rendering {content_type}: {str(e)}"
             return self._create_error_widget(error_message)
 
@@ -276,7 +313,11 @@ class RendererManager:
         Returns:
             Dict: Информация о рендерерах
         """
-        info = {"total_renderers": len(self.renderers), "supported_types": self.get_supported_types(), "renderers": []}
+        info = {
+            "total_renderers": len(self.renderers),
+            "supported_types": self.get_supported_types(),
+            "renderers": [],
+        }
 
         for renderer in self.renderers:
             renderer_info = {
