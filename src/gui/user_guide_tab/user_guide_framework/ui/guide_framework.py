@@ -92,8 +92,8 @@ class GuideFramework(QWidget):
             # Загрузка языков
             self.localization_manager.load_available_languages()
             self.localization_manager.set_language("ru")
-            logger.debug("Managers initialized successfully")
 
+            logger.debug("Managers initialized successfully")
         except Exception as e:
             logger.error(f"Error initializing managers: {e}")
             raise
@@ -160,7 +160,6 @@ class GuideFramework(QWidget):
         self.toolbar.theme_changed.connect(self.on_theme_changed)
 
         # TODO: Add content-related signal connections when needed
-
         logger.debug("Signal connections established")
 
     def on_section_selected(self, section_id: str) -> None:
@@ -181,7 +180,7 @@ class GuideFramework(QWidget):
             self.localization_manager.set_language(language_code)
             self.navigation_sidebar.update_language(language_code)
             self.toolbar.update_language(language_code)
-            self.status_widget.update_language()
+            self.status_widget.update_language(language_code)
 
             # Обновление контента для текущего раздела
             current_section = self.navigation_sidebar.get_current_section()

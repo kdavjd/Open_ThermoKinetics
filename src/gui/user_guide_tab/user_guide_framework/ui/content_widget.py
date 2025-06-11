@@ -183,10 +183,22 @@ class ContentWidget(QWidget):
 
     def _get_content_blocks(self, section_content) -> list:
         """Get content blocks for current language with fallback."""
+        # Усиленная валидация типа content
+        if not hasattr(section_content, "content") or not isinstance(section_content.content, dict):
+            self.state_logger.log_error(
+                "Section content is not a dict or missing 'content' attribute",
+                section_id=self.current_section,
+                content_type=str(type(section_content.content) if hasattr(section_content, "content") else None),
+            )
+            return []
         content_blocks = section_content.content.get(self.current_language, [])
+        if not isinstance(content_blocks, list):
+            content_blocks = []
         if not content_blocks:
             # Try English as fallback
             content_blocks = section_content.content.get("en", [])
+            if not isinstance(content_blocks, list):
+                content_blocks = []
         return content_blocks
 
     def _render_content_blocks(self, content_blocks: list) -> None:
@@ -290,18 +302,20 @@ class ContentWidget(QWidget):
                 margin-top: 20px;
             }
         """)
-        related_layout.addWidget(header_label)
-
-        # Список связанных разделов
+        related_layout.addWidget(header_label)  # Список связанных разделов
         for section_id in related_sections:
             # Получаем информацию о разделе
             try:
                 section_content = self.content_manager.get_section_content(section_id)
-                if section_content and hasattr(section_content, "metadata"):
-                    title = section_content.metadata.get("title", {}).get(self.current_language, section_id)
-                else:
-                    title = section_id
-
+                title = section_id
+                if (
+                    section_content
+                    and hasattr(section_content, "metadata")
+                    and isinstance(section_content.metadata, dict)
+                ):
+                    title_dict = section_content.metadata.get("title", {})
+                    if isinstance(title_dict, dict):
+                        title = title_dict.get(self.current_language, section_id)
                 link_label = QLabel(f"• {title}")
                 link_label.setStyleSheet("""
                     QLabel {

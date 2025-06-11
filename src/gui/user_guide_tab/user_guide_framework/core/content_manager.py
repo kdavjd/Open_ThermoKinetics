@@ -51,6 +51,15 @@ class ContentManager:
         self.load_toc()
         logger.debug("ContentManager initialization completed")
 
+    def _count_sections_in_structure(self, structure: Dict[str, Any]) -> int:
+        """Count total number of sections in structure"""
+        count = 0
+        for key, value in structure.items():
+            count += 1  # Count the current section
+            if isinstance(value, dict) and "children" in value:
+                count += self._count_sections_in_structure(value["children"])
+        return count
+
     def load_toc(self) -> None:
         """Load table of contents from toc.json"""
         toc_path = self.data_dir / "toc.json"
@@ -63,15 +72,14 @@ class ContentManager:
         try:
             with open(toc_path, "r", encoding="utf-8") as f:
                 self.toc_data = json.load(f)
-                logger.info(
-                    f"Successfully loaded table of contents with {len(self.toc_data.get('sections', []))} sections"
-                )
-        except Exception as e:
-            logger.error(f"Failed to load table of contents from {toc_path}: {e}")
-            raise
+                # Count sections in structure properly
+                structure = self.toc_data.get("structure", {})
+                section_count = self._count_sections_in_structure(structure)
+                logger.info(f"Successfully loaded table of contents with {section_count} sections")
         except json.JSONDecodeError as e:
             raise GuideFrameworkError(f"Invalid JSON in table of contents: {e}")
         except Exception as e:
+            logger.error(f"Failed to load table of contents from {toc_path}: {e}")
             raise GuideFrameworkError(f"Error loading table of contents: {e}")
 
     def get_section_content(self, section_id: str) -> Optional[ContentSection]:
@@ -97,13 +105,28 @@ class ContentManager:
         content_path = self.data_dir / "content" / content_file
 
         if not content_path.exists():
-            raise ContentNotFoundError(f"Content file not found: {content_path}")
+            logger.warning(f"Content file not found for section: {section_id}")
+            return None
 
         try:
             with open(content_path, "r", encoding="utf-8") as f:
                 content_data = json.load(f)
 
-            # Create ContentSection object
+            # Усиленная валидация структуры
+            if not isinstance(content_data, dict):
+                logger.error(f"Content data for section {section_id} is not a dict: {type(content_data)}")
+                return None
+            if not isinstance(content_data.get("content", {}), dict):
+                logger.error(
+                    f"'content' field for section {section_id} is not a dict: {type(content_data.get('content', {}))}"
+                )
+                return None
+            if not isinstance(content_data.get("metadata", {}), dict):
+                logger.error(
+                    f"'metadata' field for section {section_id} is not a dict: {type(content_data.get('metadata', {}))}"
+                )
+                return None
+
             section = ContentSection(
                 section_id=content_data.get("section_id", section_id),
                 title=content_data.get("metadata", {}).get("title", {}),
@@ -118,9 +141,11 @@ class ContentManager:
             return section
 
         except json.JSONDecodeError as e:
-            raise GuideFrameworkError(f"Invalid JSON in content file {content_file}: {e}")
+            logger.error(f"Invalid JSON in content file {content_file}: {e}")
+            return None
         except Exception as e:
-            raise GuideFrameworkError(f"Error loading content file {content_file}: {e}")
+            logger.error(f"Error loading content file {content_file}: {e}")
+            return None
 
     def get_navigation_structure(self) -> Dict[str, Any]:
         """
@@ -208,7 +233,11 @@ class ContentManager:
         def search_structure(structure: Dict[str, Any]) -> Optional[str]:
             for key, value in structure.items():
                 if key == section_id:
-                    return value.get("content_file")
+                    if isinstance(value, dict):
+                        return value.get("content_file")
+                    else:
+                        logger.warning(f"Section {section_id} value is not a dict: {type(value)}")
+                        return None
 
                 if isinstance(value, dict) and "children" in value:
                     result = search_structure(value["children"])
@@ -238,30 +267,26 @@ class ContentManager:
 
     def _search_in_block(self, block: Dict[str, Any], query: str) -> bool:
         """Search for query in content block"""
-        content = block.get("content", {})
-
         # Search in text content
-        if "text" in content:
-            return query in content["text"].lower()
+        if "text" in block:
+            return query in block["text"].lower()
 
         # Search in list items
-        if "items" in content:
-            for item in content["items"]:
+        if "items" in block:
+            for item in block["items"]:
                 if query in str(item).lower():
                     return True
 
         # Search in code content
-        if "code" in content:
-            return query in content["code"].lower()
+        if "code" in block:
+            return query in block["code"].lower()
 
         return False
 
     def _extract_match_text(self, block: Dict[str, Any], query: str) -> str:
         """Extract relevant text snippet containing the match"""
-        content = block.get("content", {})
-
-        if "text" in content:
-            text = content["text"]
+        if "text" in block:
+            text = block["text"]
             # Find the query position and extract surrounding context
             query_pos = text.lower().find(query)
             if query_pos != -1:
@@ -269,7 +294,7 @@ class ContentManager:
                 end = min(len(text), query_pos + len(query) + 50)
                 return "..." + text[start:end] + "..."
 
-        return str(content)[:100] + "..." if content else ""
+        return str(block)[:100] + "..." if block else ""
 
     def clear_cache(self) -> None:
         """Clear the content cache"""

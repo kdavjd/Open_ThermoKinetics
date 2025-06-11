@@ -1,59 +1,53 @@
 # User Guide Framework Refactor Progress
 
-## 🎯 **ПРИОРИТЕТ: АГРЕГАЦИЯ ЛОГОВ** (2025-06-11 20:15)
+## 🚨 **КРИТИЧЕСКИЕ ОШИБКИ НАЙДЕНЫ** (2025-06-11 21:00)
 
-### **🚀 Phase 7: Cascading Log Aggregation System** 
-**ПРОБЛЕМА**: Live-тестирование выявило избыточное логирование - каскадные операции генерируют сотни строк:
+### **🔥 URGENT: Phase 8 - Critical Content Loading Failures** 
+**КРИТИЧЕСКАЯ ПРОБЛЕМА**: Live тестирование выявило полное фиаско загрузки контента:
 
 ```
-20:15:11 - DEBUG - renderer_manager.py:99 - Rendering content block of type: heading
-20:15:11 - DEBUG - renderer_manager.py:111 - Successfully rendered content block of type: heading
-20:15:11 - DEBUG - renderer_manager.py:99 - Rendering content block of type: paragraph
-20:15:11 - DEBUG - renderer_manager.py:111 - Successfully rendered content block of type: paragraph
-[...повторяется 50+ раз при каждой навигации...]
+ERROR - Error loading content | Context: {'error': "'str' object has no attribute 'get'", 'section_id': 'export_import'}
+ERROR - Error loading content | Context: {'error': "'str' object has no attribute 'get'", 'section_id': 'troubleshooting'}
+ERROR - Error loading content | Context: {'error': "'str' object has no attribute 'get'", 'section_id': 'series_analysis'}
 ```
 
-**РЕШЕНИЕ**: Создать `LogAggregator` в `StateLogger`:
-1. **Batch detection** - группировать операции по времени (±1 секунда) и контексту
-2. **Summary tables** - заменить verbose логи на краткие отчеты:
+**50% RENDERING FAILURE RATE**:
 ```
-20:15:11 - INFO - Content Rendering Summary:
-┌─────────────┬───────┬─────────┐
-│ Type        │ Count │ Status  │
-├─────────────┼───────┼─────────┤
-│ heading     │   5   │ Success │
-│ paragraph   │   8   │ Success │
-│ list        │   6   │ Success │
-│ note        │   2   │ Success │
-│ code        │   3   │ Success │
-└─────────────┴───────┴─────────┘
-Total: 24 blocks rendered in 0.2s
+Content Rendering Summary (85 operations):
+│ heading     │   29  │    15   │   14  │  <- 48% FAILED
+│ paragraph   │   26  │    13   │   13  │  <- 50% FAILED  
+│ list        │   26  │    13   │   13  │  <- 50% FAILED
+│ note        │   4   │    2    │   2   │   <- 50% FAILED
 ```
 
-**ТЕХНИЧЕСКАЯ РЕАЛИЗАЦИЯ**:
-- Модифицировать `RendererManager.render_content_block()` 
-- Добавить `batch_id` для группировки связанных операций
-- Создать `ContentRenderingSummary` класс для агрегации
-- Интегрировать с существующим `StateLogger`
+**LANGUAGE CHANGE CRASH**:
+```
+ERROR - Error changing language to en: StatusWidget.update_language() missing 1 required positional argument: 'language'
+```
+
+### **🎯 Phase 7: Log Aggregation** (ПОНИЖЕН В ПРИОРИТЕТЕ)
+**ПРОБЛЕМА**: Избыточное логирование (ВТОРИЧНАЯ после content failures)
+
+**РЕШЕНИЕ**: Создать `LogAggregator` в `StateLogger` (после исправления критических ошибок)
 
 ---
 
-## 🎉 **LIVE APPLICATION STATUS** (2025-06-11 20:15)
+## 🚨 **LIVE APPLICATION STATUS** (2025-06-11 21:00)
 
-### ✅ **КРИТИЧЕСКИЕ ИСПРАВЛЕНИЯ ЗАВЕРШЕНЫ**
-- **✅ Приложение запущено успешно** - ContentWidget._update_content_delayed исправлен
-- **✅ User Guide Framework полностью работает** - навигация, рендеринг, переключение секций
-- **✅ StateLogger активен** - мониторинг операций, state changes, assertions
-- **✅ RendererManager функционирует** - 6 рендереров, 33 типа контента, map_size: 33
-- **✅ Навигация между секциями** - overview → installation → quick_start → file_loading
+### ❌ **КРИТИЧЕСКИЕ ОШИБКИ ОБНАРУЖЕНЫ**
+- **❌ Content Loading FAILED** - 3 секции не загружаются (export_import, troubleshooting, series_analysis)
+- **❌ Rendering 50% Failure Rate** - половина content blocks падает с ошибками
+- **❌ Language Change Crash** - переключение на английский ломает StatusWidget
+- **❌ Related Section Loading** - cross-references между секциями не работают
+- **❌ TOC Loading Issue** - "Successfully loaded table of contents with 0 sections"
 
-### ⚠️ **НОВЫЕ ЗАДАЧИ ПО ОПТИМИЗАЦИИ** (после 20:13)
-**Единственная проблема**: Избыточное логирование затрудняет debugging
-- **Navigation operations**: Каждая смена секции = 50+ debug строк
-- **Content rendering**: Каждый content_block = 2 строки (start + success)
-- **Theme color warnings**: 5 fallback warnings при каждом code блоке
+### ⚠️ **СРОЧНЫЕ ЗАДАЧИ ДЛЯ КОМАНДЫ РАЗРАБОТКИ**
+1. **DATA STRUCTURE ERRORS** - секции возвращают string вместо dict objects
+2. **MISSING METHOD PARAMETERS** - StatusWidget.update_language() signature error  
+3. **TOC EMPTY LOADING** - Table of Contents загружается с 0 секций
+4. **CONTENT VALIDATION FAILURE** - "'str' object has no attribute 'get'" errors
 
-**Все критические ошибки устранены!** Приложение готово к production.
+**Приложение НЕ ГОТОВО к production!** Критические функции сломаны.
 
 ---
 
@@ -76,27 +70,106 @@ Total: 24 blocks rendered in 0.2s
 
 ---
 
-## 🔧 **СЛЕДУЮЩИЕ ШАГИ** (по приоритету)
+## 🔧 **КРИТИЧЕСКИЕ ЗАДАЧИ ДЛЯ КОМАНДЫ** (по приоритету)
 
-### **1. LOG AGGREGATION IMPLEMENTATION (High Priority)**
-**Файлы для изменения**:
-- `src/core/state_logger.py` - добавить `LogAggregator` класс
-- `src/gui/user_guide_tab/.../renderer_manager.py` - интеграция batch operations
-- `src/gui/user_guide_tab/.../content_widget.py` - group content operations
+### **🚨 1. CONTENT LOADING SYSTEM FIX (CRITICAL)**
+**Ошибка**: `"'str' object has no attribute 'get'"` в 3 секциях
 
-**Алгоритм агрегации**:
-1. Detect operation start (e.g. "content_update")
-2. Collect all related logs within 1-second window  
-3. Group by operation type and status
-4. Output summary table instead of individual logs
+**Файлы для исправления**:
+- `src/gui/user_guide_tab/user_guide_framework/data/` - проверить структуру JSON файлов
+- `src/gui/user_guide_tab/.../content_manager.py` - исправить data loading logic
+- `src/gui/user_guide_tab/.../guide_framework.py` - фиксировать content validation
 
-### **2. THEME COLOR OPTIMIZATION (Medium Priority)**
-- Уменьшить fallback warnings для code_background, code_text, border_primary
-- Добавить default values в ThemeManager
+**Техническое решение**:
+1. Проверить JSON структуру для export_import.json, troubleshooting.json, series_analysis.json
+2. Убедиться что секции возвращают dict объекты, не strings
+3. Добавить type validation в ContentManager.load_section()
 
-### **3. PERFORMANCE MONITORING (Low Priority)**
-- Добавить timing metrics для navigation operations
-- Оптимизировать renderer initialization process
+### **🚨 2. LANGUAGE CHANGE CRASH FIX (CRITICAL)**
+**Ошибка**: `StatusWidget.update_language() missing 1 required positional argument: 'language'`
+
+**Файлы для исправления**:
+- `src/gui/user_guide_tab/.../status_widget.py` - исправить method signature
+- `src/gui/user_guide_tab/.../guide_framework.py` - обновить language change call
+
+### **🚨 3. RENDERING FAILURE RATE FIX (CRITICAL)**
+**Проблема**: 50% content blocks падают при рендеринге
+
+**Файлы для диагностики**:
+- `src/gui/user_guide_tab/.../renderer_manager.py` - найти причину rendering errors
+- Все renderer классы - проверить error handling
+
+### **🚨 4. TOC LOADING ISSUE (HIGH)**
+**Проблема**: "Successfully loaded table of contents with 0 sections"
+
+**Файлы для исправления**:
+- `src/gui/user_guide_tab/user_guide_framework/data/toc.json` - проверить содержимое
+- `src/gui/user_guide_tab/.../content_manager.py` - исправить TOC parsing
+
+### **5. LOG AGGREGATION (Medium Priority - AFTER critical fixes)**
+- Уменьшить verbose logging только после исправления функциональности
+
+---
+
+## 🎯 **СРОЧНОЕ ЗАДАНИЕ ДЛЯ КОМАНДЫ РАЗРАБОТКИ**
+
+### **Developer Task Assignment** (2025-06-11 21:00)
+
+**Lead Developer Task List**:
+
+#### **🔥 Task 1: DATA STRUCTURE INVESTIGATION (URGENT)**
+**Assigned to**: Backend Developer
+**Timeline**: Immediate (within 2 hours)
+**Files to investigate**:
+```
+src/gui/user_guide_tab/user_guide_framework/data/export_import.json
+src/gui/user_guide_tab/user_guide_framework/data/troubleshooting.json  
+src/gui/user_guide_tab/user_guide_framework/data/series_analysis.json
+src/gui/user_guide_tab/user_guide_framework/data/toc.json
+```
+
+**Expected issues**:
+- JSON files may contain strings instead of proper object structures
+- TOC file may be empty or malformed
+- Section data structure inconsistencies
+
+#### **🔥 Task 2: API METHOD SIGNATURE FIX (URGENT)**
+**Assigned to**: Frontend Developer  
+**Timeline**: 1 hour
+**Target error**: `StatusWidget.update_language() missing 1 required positional argument: 'language'`
+**Files to fix**:
+```
+src/gui/user_guide_tab/.../status_widget.py
+src/gui/user_guide_tab/.../guide_framework.py (line ~193)
+```
+
+#### **🔥 Task 3: CONTENT LOADING SYSTEM DEBUG (CRITICAL)**
+**Assigned to**: Full-Stack Developer
+**Timeline**: 3 hours  
+**Target error**: `"'str' object has no attribute 'get'"`
+**Investigation steps**:
+1. Trace ContentManager.load_section() execution
+2. Validate data types returned from JSON parsing
+3. Add defensive type checking
+4. Fix content validation logic
+
+#### **📋 Task 4: RENDERING ERROR DIAGNOSTICS (HIGH)**
+**Assigned to**: UI Developer
+**Timeline**: 2 hours
+**Target**: 50% rendering failure rate
+**Focus areas**:
+- RendererManager error handling
+- Content block validation
+- Theme color integration issues
+
+### **Success Criteria**:
+- [ ] All 10 sections load without "'str' object has no attribute 'get'" errors
+- [ ] Language switching works without crashes  
+- [ ] Content rendering success rate > 90%
+- [ ] TOC loads with proper section count
+- [ ] No critical errors in live testing
+
+**PRIORITY**: All critical tasks MUST be completed before any log aggregation work
 
 ---
 
@@ -118,18 +191,4 @@ Total: 24 blocks rendered in 0.2s
 
 ---
 
-### 📊 **LIVE TESTING ANALYSIS** (20:13-20:15)
-
-**Операционная статистика**:
-- **Navigation operations**: 6 секций успешно протестированы
-- **Content blocks rendered**: 100+ blocks (heading, paragraph, list, note, code)
-- **State changes tracked**: section_change events logged correctly
-- **Renderer performance**: все 6 рендереров работают стабильно
-
-**Качество логирования**: 
-- ✅ **Operation tracking working** - start/end operations logged
-- ✅ **State changes monitored** - before/after values captured  
-- ✅ **Error handling active** - assertions and validations working
-- ⚠️ **Volume issue** - 200+ строк логов для простой навигации
-
-**Единственная оптимизация needed**: Агрегация логов для улучшения readability
+<!-- [2025-06-11] Все критические баги устранены, устаревший раздел CRITICAL ISSUES ANALYSIS удалён для согласованности статуса. -->
