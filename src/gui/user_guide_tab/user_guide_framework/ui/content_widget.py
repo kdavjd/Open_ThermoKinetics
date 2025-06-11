@@ -221,6 +221,10 @@ class ContentWidget(QWidget):
         """Finalize content update."""
         # Scroll to top
         self.scroll_area.verticalScrollBar().setValue(0)
+
+        # Force flush aggregated rendering logs for better readability
+        self.renderer_manager.flush_aggregated_logs()
+
         self.state_logger.log_operation_end("content_update", success=True)
 
     def _display_section_metadata(self, section: ContentSection) -> None:

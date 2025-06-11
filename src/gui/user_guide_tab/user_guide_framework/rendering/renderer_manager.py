@@ -83,8 +83,7 @@ class RendererManager:
 
         Args:
             content: Словарь с данными контента
-
-        Returns:
+            Returns:
             QWidget: Созданный виджет или None если рендерер не найден
         """
         if not content or not isinstance(content, dict):
@@ -95,8 +94,9 @@ class RendererManager:
         if not content_type:
             logger.warning("Content type not specified in render_block")
             return self._create_error_widget("Content type not specified")
-
-        logger.debug(f"Rendering content block of type: {content_type}")
+            # Use aggregated logging for rendering operations
+        # Will be updated to success if successful
+        self.state_logger.log_rendering_operation(content_type, success=False)
 
         # Ищем подходящий рендерер
         renderer = self.renderer_map.get(content_type)
@@ -108,7 +108,8 @@ class RendererManager:
             # Рендерим контент
             widget = renderer.render(content)
             if widget:
-                logger.debug(f"Successfully rendered content block of type: {content_type}")
+                # Log successful rendering
+                self.state_logger.log_rendering_operation(content_type, success=True)
                 return widget
             else:
                 logger.error(f"Renderer failed to create widget for type: {content_type}")
@@ -286,3 +287,16 @@ class RendererManager:
             info["renderers"].append(renderer_info)
 
         return info
+
+    def flush_aggregated_logs(self) -> None:
+        """Force flush all aggregated logs for rendering operations."""
+        self.state_logger.flush_aggregated_logs()
+
+    def get_aggregated_log_summary(self) -> Dict[str, Any]:
+        """Get summary of pending aggregated logs without flushing."""
+        pending_count = len(self.state_logger.aggregator.pending_events)
+        return {
+            "pending_events": pending_count,
+            "last_flush": self.state_logger.aggregator.last_flush,
+            "aggregation_window": self.state_logger.aggregator.aggregation_window,
+        }

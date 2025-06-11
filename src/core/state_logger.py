@@ -139,10 +139,14 @@ class LogAggregator:
         message = f"{event.operation}"
         if event.content_type:
             message += f" of type: {event.content_type}"
-        if event.status:
-            message += f" - {event.status}"
+            if event.status:
+                message += f" - {event.status}"
 
         getattr(logger, event.level.lower())(message)
+
+    def force_flush(self) -> None:
+        """Force flush all pending events immediately."""
+        self._flush_aggregated_logs()
 
 
 class LogDebouncer:
@@ -198,6 +202,8 @@ class StateLogger:
         self.logger = LoggerManager.get_logger(f"state.{component_name}")
         self.state_cache = {}
         self.debouncer = LogDebouncer()
+        # Initialize log aggregator for batch operations
+        self.aggregator = LogAggregator(aggregation_window=1.0)
 
     def log_state_change(self, operation: str, before_state: Dict[str, Any], after_state: Dict[str, Any]) -> None:
         """
@@ -244,9 +250,19 @@ class StateLogger:
             operation: Operation name
             **params: Operation parameters
         """
-        message = f"OPERATION START: {operation} | Params: {params}"
-        if self.debouncer.should_log(message, "debug"):
-            self.logger.debug(message)
+        # Use aggregator for rendering operations to reduce verbosity
+        if operation in ["rendering", "content_update"]:
+            self.aggregator.add_event(
+                module=self.component_name,
+                operation=operation,
+                level="DEBUG",
+                status="start",
+                content_type=params.get("content_type"),
+            )
+        else:
+            message = f"OPERATION START: {operation} | Params: {params}"
+            if self.debouncer.should_log(message, "debug"):
+                self.logger.debug(message)
 
     def log_operation_end(self, operation: str, success: bool = True, **result) -> None:
         """
@@ -287,6 +303,23 @@ class StateLogger:
         full_message = f"WARNING: {message} | Context: {context}"
         if self.debouncer.should_log(full_message, "warning"):
             self.logger.warning(full_message)
+
+    def log_rendering_operation(self, content_type: str, success: bool = True) -> None:
+        """
+        Log rendering operation for aggregation.
+
+        Args:
+            content_type: Type of content being rendered
+            success: Whether rendering was successful
+        """
+        status = "success" if success else "error"
+        self.aggregator.add_event(
+            module=self.component_name, operation="rendering", level="DEBUG", status=status, content_type=content_type
+        )
+
+    def flush_aggregated_logs(self) -> None:
+        """Force flush all aggregated logs."""
+        self.aggregator.force_flush()
 
     def _calculate_changes(self, before: Dict[str, Any], after: Dict[str, Any]) -> Dict[str, Any]:
         """
