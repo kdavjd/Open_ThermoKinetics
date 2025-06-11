@@ -55,9 +55,15 @@ class ContentManager:
         """Count total number of sections in structure"""
         count = 0
         for key, value in structure.items():
-            count += 1  # Count the current section
-            if isinstance(value, dict) and "children" in value:
-                count += self._count_sections_in_structure(value["children"])
+            # Only count sections that have content_file (leaf nodes)
+            if isinstance(value, dict):
+                if "content_file" in value:
+                    count += 1  # This is a content section
+                if "children" in value:
+                    count += self._count_sections_in_structure(value["children"])
+            else:
+                # If value is not a dict, it might be a direct content reference
+                count += 1
         return count
 
     def load_toc(self) -> None:
@@ -112,26 +118,19 @@ class ContentManager:
             with open(content_path, "r", encoding="utf-8") as f:
                 content_data = json.load(f)
 
-            # Усиленная валидация структуры
-            if not isinstance(content_data, dict):
-                logger.error(f"Content data for section {section_id} is not a dict: {type(content_data)}")
+            # Validate content data structure
+            if not self._validate_content_data(content_data, section_id):
                 return None
-            if not isinstance(content_data.get("content", {}), dict):
-                logger.error(
-                    f"'content' field for section {section_id} is not a dict: {type(content_data.get('content', {}))}"
-                )
-                return None
-            if not isinstance(content_data.get("metadata", {}), dict):
-                logger.error(
-                    f"'metadata' field for section {section_id} is not a dict: {type(content_data.get('metadata', {}))}"
-                )
-                return None
+
+            # Extract title with proper handling of string vs dict
+            metadata = content_data.get("metadata", {})
+            title = self._extract_title_from_metadata(metadata)
 
             section = ContentSection(
                 section_id=content_data.get("section_id", section_id),
-                title=content_data.get("metadata", {}).get("title", {}),
+                title=title,
                 content=content_data.get("content", {}),
-                metadata=content_data.get("metadata", {}),
+                metadata=metadata,
                 related_sections=content_data.get("related_sections", []),
                 attachments=content_data.get("attachments", []),
             )
@@ -146,6 +145,38 @@ class ContentManager:
         except Exception as e:
             logger.error(f"Error loading content file {content_file}: {e}")
             return None
+
+    def _validate_content_data(self, content_data: Any, section_id: str) -> bool:
+        """Validate content data structure."""
+        if not isinstance(content_data, dict):
+            logger.error(f"Content data for section {section_id} is not a dict: {type(content_data)}")
+            return False
+        if not isinstance(content_data.get("content", {}), dict):
+            logger.error(
+                f"'content' field for section {section_id} is not a dict: {type(content_data.get('content', {}))}"
+            )
+            return False
+        if not isinstance(content_data.get("metadata", {}), dict):
+            logger.error(
+                f"'metadata' field for section {section_id} is not a dict: {type(content_data.get('metadata', {}))}"
+            )
+            return False
+        return True
+
+    def _extract_title_from_metadata(self, metadata: dict) -> dict:
+        """Extract and normalize title from metadata."""
+        title_raw = metadata.get("title", {})
+
+        # Handle both string and dict title formats
+        if isinstance(title_raw, str):
+            # Convert single string title to dict format
+            return {"ru": title_raw, "en": title_raw}
+        elif isinstance(title_raw, dict):
+            # Already in correct format
+            return title_raw
+        else:
+            # Fallback for unexpected format
+            return {"ru": str(title_raw), "en": str(title_raw)}
 
     def get_navigation_structure(self) -> Dict[str, Any]:
         """
@@ -203,9 +234,7 @@ class ContentManager:
         for section_id in all_sections:
             section = self.get_section_content(section_id)
             if not section:
-                continue
-
-            # Search in title
+                continue  # Search in title
             title = section.title.get(language, "")
             if query_lower in title.lower():
                 results.append({"section_id": section_id, "title": title, "match_type": "title", "match_text": title})

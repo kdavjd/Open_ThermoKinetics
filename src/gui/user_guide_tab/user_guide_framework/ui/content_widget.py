@@ -250,8 +250,15 @@ class ContentWidget(QWidget):
         metadata_widget = QWidget()
         metadata_layout = QVBoxLayout(metadata_widget)
 
-        # Заголовок раздела
-        title = metadata.get("title", {}).get(self.current_language, section.section_id)
+        # Заголовок раздела - исправляем ошибку "'str' object has no attribute 'get'"
+        title_raw = metadata.get("title", {})
+        if isinstance(title_raw, dict):
+            title = title_raw.get(self.current_language, section.section_id)
+        elif isinstance(title_raw, str):
+            title = title_raw  # Если title является строкой, используем её напрямую
+        else:
+            title = section.section_id  # Fallback to section ID
+
         if title:
             title_label = QLabel(title)
             title_label.setStyleSheet("""
@@ -266,8 +273,14 @@ class ContentWidget(QWidget):
             """)
             metadata_layout.addWidget(title_label)
 
-        # Описание
-        description = metadata.get("description", {}).get(self.current_language, "")
+        # Описание - исправляем аналогичную ошибку
+        description_raw = metadata.get("description", {})
+        if isinstance(description_raw, dict):
+            description = description_raw.get(self.current_language, "")
+        elif isinstance(description_raw, str):
+            description = description_raw
+        else:
+            description = ""
         if description:
             desc_label = QLabel(description)
             desc_label.setWordWrap(True)
