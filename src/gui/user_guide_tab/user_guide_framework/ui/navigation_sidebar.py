@@ -178,6 +178,8 @@ class NavigationSidebar(QWidget):
 
     def update_theme(self) -> None:
         """Update theme for navigation sidebar."""
+        logger.debug("NavigationSidebar: Updating theme")
+
         if not self.theme_manager:
             logger.warning("ThemeManager not available for NavigationSidebar theme update")
             return
@@ -187,6 +189,8 @@ class NavigationSidebar(QWidget):
             bg_color = self.theme_manager.get_color("background")
             text_color = self.theme_manager.get_color("text_primary")
             border_color = self.theme_manager.get_color("border")
+
+            logger.debug(f"NavigationSidebar: Theme colors - bg: {bg_color.name()}, text: {text_color.name()}")
 
             if all([bg_color, text_color, border_color]):
                 self.setStyleSheet(f"""

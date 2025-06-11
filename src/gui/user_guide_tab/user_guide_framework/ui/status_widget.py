@@ -288,6 +288,15 @@ class StatusWidget(QWidget):
             self.set_current_section("")
             self.set_info("")
 
+    def update_theme_with_logging(self) -> None:
+        """Обновление темы виджета с логированием."""
+        logger.debug("StatusWidget: Updating theme")
+        try:
+            self.apply_theme()
+            logger.debug("StatusWidget: Theme updated successfully")
+        except Exception as e:
+            logger.error(f"StatusWidget: Error updating theme: {e}")
+
     def update_theme(self) -> None:
         """Обновление темы виджета."""
-        self.apply_theme()
+        self.update_theme_with_logging()

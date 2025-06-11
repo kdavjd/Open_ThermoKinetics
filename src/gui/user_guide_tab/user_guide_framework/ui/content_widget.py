@@ -394,13 +394,86 @@ class ContentWidget(QWidget):
     def update_language(self, language: str) -> None:
         """Обновление языка интерфейса."""
         if language != self.current_language:
-            self.current_language = language
-
-            # Перерендеринг текущего раздела
+            self.current_language = language  # Перерендеринг текущего раздела
             if self.current_section:
                 self.display_section(self.current_section)
 
     def update_theme(self) -> None:
         """Update theme for content widget."""
-        # Theme update implementation can be added here
-        pass
+        logger.info("ContentWidget: Updating theme")
+
+        try:
+            # Get theme manager from renderer manager
+            theme_manager = self.renderer_manager.theme_manager
+
+            # Import and use debug logger
+            from src.gui.user_guide_tab.theme_debug_logger import (
+                log_component_theme_application,
+                log_theme_colors_table,
+            )
+
+            # Log detailed theme debugging information
+            log_theme_colors_table(theme_manager, theme_manager.current_theme_name)
+            log_component_theme_application("ContentWidget", ["background", "text_primary", "surface"], theme_manager)
+
+            # Get theme colors - try different combinations
+            try:
+                bg_color = theme_manager.get_color("background")
+                logger.info(f"ContentWidget: Using 'background' color: {bg_color.name()}")
+            except Exception:
+                try:
+                    bg_color = theme_manager.get_color("surface")
+                    logger.info(f"ContentWidget: Using 'surface' color: {bg_color.name()}")
+                except Exception:
+                    bg_color = theme_manager.get_color("primary")
+                    logger.info(f"ContentWidget: Fallback to 'primary' color: {bg_color.name()}")
+
+            try:
+                text_color = theme_manager.get_color("text_primary")
+                logger.info(f"ContentWidget: Using 'text_primary' color: {text_color.name()}")
+            except Exception:
+                try:
+                    text_color = theme_manager.get_color("primary")
+                    logger.info(f"ContentWidget: Using 'primary' color: {text_color.name()}")
+                except Exception:
+                    text_color = theme_manager.get_color("text_primary")
+                    logger.info(f"ContentWidget: Fallback text color: {text_color.name()}")
+
+            logger.info(f"ContentWidget: Final colors - bg: {bg_color.name()}, text: {text_color.name()}")
+
+            # Apply theme to main widget
+            self.setStyleSheet(f"""
+                ContentWidget {{
+                    background-color: {bg_color.name()};
+                    color: {text_color.name()};
+                }}
+            """)
+
+            # Apply theme to scroll area
+            self.scroll_area.setStyleSheet(f"""
+                QScrollArea {{
+                    background-color: {bg_color.name()};
+                    border: none;
+                }}
+                QScrollArea QWidget {{
+                    background-color: {bg_color.name()};
+                }}
+            """)
+
+            # Apply theme to content container
+            self.content_container.setStyleSheet(f"""
+                QWidget {{
+                    background-color: {bg_color.name()};
+                    color: {text_color.name()};
+                }}
+            """)
+
+            logger.info("ContentWidget: Theme updated successfully")
+
+            # Re-render current section with new theme
+            if self.current_section:
+                logger.debug(f"ContentWidget: Re-rendering section {self.current_section} with new theme")
+                self.display_section(self.current_section)
+
+        except Exception as e:
+            logger.error(f"ContentWidget: Error updating theme: {e}")
