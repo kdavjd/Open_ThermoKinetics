@@ -167,25 +167,6 @@
       {
         "type": "heading",
         "level": 2,
-        "text": "Границы оптимизации"
-      },
-      {
-        "type": "paragraph",
-        "text": "Для каждого параметра можно установить границы оптимизации:"
-      },
-      {
-        "type": "list",
-        "list_type": "ordered",
-        "items": [
-          "Включите отображение границ в таблице коэффициентов",
-          "Установите минимальные и максимальные значения для каждого параметра",
-          "Границы ограничивают область поиска при оптимизации",
-          "Используйте разумные диапазоны для стабильности расчета"
-        ]
-      },
-      {
-        "type": "heading",
-        "level": 2,
         "text": "Запуск оптимизации"
       },
       {
@@ -199,34 +180,13 @@
           "Установите начальные приближения и границы параметров",
           "Нажмите кнопку 'Start' для начала оптимизации",
           "Наблюдайте за прогрессом в консоли вывода",
-          "Оптимизация автоматически остановится при достижении сходимости",
-          "Используйте 'Stop' для принудительной остановки"
+          "Оптимизация автоматически остановится при достижении сходимости"
         ]
       },
       {
         "type": "note",
         "note_type": "info",
         "text": "Программа использует алгоритм differential evolution для глобальной оптимизации параметров."
-      },
-      {
-        "type": "heading",
-        "level": 2,
-        "text": "Настройки оптимизации"
-      },
-      {
-        "type": "paragraph",
-        "text": "Доступ к настройкам через кнопку 'Settings':"
-      },
-      {
-        "type": "list",
-        "list_type": "unordered",
-        "items": [
-          "Максимальное количество итераций",
-          "Размер популяции алгоритма",
-          "Стратегия мутации",
-          "Критерии сходимости",
-          "Количество процессоров для параллельных вычислений"
-        ]
       },
       {
         "type": "heading",
@@ -243,48 +203,19 @@
         "items": [
           "Кнопка 'Export' сохраняет текущие конфигурации в JSON файл",
           "Кнопка 'Import' загружает ранее сохраненные конфигурации",
-          "Можно переносить настройки между разными файлами",
-          "Полезно для анализа серий экспериментов"
-        ]
-      },
-      {
-        "type": "heading",
-        "level": 2,
-        "text": "Оценка качества подгонки"
-      },
-      {
-        "type": "paragraph",
-        "text": "Критерии оценки качества деконволюции:"
-      },
-      {
-        "type": "list",
-        "list_type": "unordered",
-        "items": [
-          "Визуальное соответствие на графике",
-          "Минимальные остатки (residuals)",
-          "Физически разумные параметры",
-          "Стабильность результатов оптимизации"
-        ]
-      },
-      {
-        "type": "heading",
-        "level": 2,
-        "text": "Типичные проблемы"
-      },
-      {
-        "type": "list",
-        "list_type": "unordered",
-        "items": [
-          "Слишком узкие границы оптимизации - расширьте диапазоны",
-          "Плохие начальные приближения - используйте интерактивные якоря",
-          "Переоптимизация - уменьшите количество параметров или итераций",
-          "Нестабильные результаты - проверьте качество данных"
+          "Можно переносить настройки между разными файлами"
         ]
       },
       {
         "type": "note",
         "note_type": "success",
         "text": "Успешная деконволюция создает основу для последующего кинетического анализа методами Model-Fit, Model-Free и Model-Based."
+      },
+      {
+        "type": "code_block",
+        "language": "yaml",
+        "title": "Пример конфигурации реакции",
+        "text": "# Пример параметров деконволюции\nreaction_0:\n  function: 'ads'\n  coeffs:\n    h: 0.005392786487485471    # Высота пика\n    z: 296.1846660127549       # Позиция пика (°C)\n    w: 47.058071904740814      # Ширина пика\n    ads1: 26.12901788390612    # ADS параметр 1\n    ads2: 1.916749283812285    # ADS параметр 2"
       }
     ],
     "en": [
@@ -434,25 +365,6 @@
       {
         "type": "heading",
         "level": 2,
-        "text": "Optimization Bounds"
-      },
-      {
-        "type": "paragraph",
-        "text": "Optimization bounds can be set for each parameter:"
-      },
-      {
-        "type": "list",
-        "list_type": "ordered",
-        "items": [
-          "Enable bounds display in coefficients table",
-          "Set minimum and maximum values for each parameter",
-          "Bounds limit search area during optimization",
-          "Use reasonable ranges for calculation stability"
-        ]
-      },
-      {
-        "type": "heading",
-        "level": 2,
         "text": "Running Optimization"
       },
       {
@@ -466,34 +378,13 @@
           "Set initial approximations and parameter bounds",
           "Click 'Start' button to begin optimization",
           "Monitor progress in output console",
-          "Optimization will automatically stop upon convergence",
-          "Use 'Stop' for forced termination"
+          "Optimization will automatically stop upon convergence"
         ]
       },
       {
         "type": "note",
         "note_type": "info",
         "text": "The program uses differential evolution algorithm for global parameter optimization."
-      },
-      {
-        "type": "heading",
-        "level": 2,
-        "text": "Optimization Settings"
-      },
-      {
-        "type": "paragraph",
-        "text": "Access settings via 'Settings' button:"
-      },
-      {
-        "type": "list",
-        "list_type": "unordered",
-        "items": [
-          "Maximum number of iterations",
-          "Algorithm population size",
-          "Mutation strategy",
-          "Convergence criteria",
-          "Number of processors for parallel computing"
-        ]
       },
       {
         "type": "heading",
@@ -510,48 +401,19 @@
         "items": [
           "'Export' button saves current configurations to JSON file",
           "'Import' button loads previously saved configurations",
-          "Settings can be transferred between different files",
-          "Useful for analyzing experimental series"
-        ]
-      },
-      {
-        "type": "heading",
-        "level": 2,
-        "text": "Fit Quality Assessment"
-      },
-      {
-        "type": "paragraph",
-        "text": "Criteria for evaluating deconvolution quality:"
-      },
-      {
-        "type": "list",
-        "list_type": "unordered",
-        "items": [
-          "Visual correspondence on plot",
-          "Minimal residuals",
-          "Physically reasonable parameters",
-          "Optimization result stability"
-        ]
-      },
-      {
-        "type": "heading",
-        "level": 2,
-        "text": "Common Issues"
-      },
-      {
-        "type": "list",
-        "list_type": "unordered",
-        "items": [
-          "Too narrow optimization bounds - expand ranges",
-          "Poor initial approximations - use interactive anchors",
-          "Over-optimization - reduce parameters or iterations",
-          "Unstable results - check data quality"
+          "Settings can be transferred between different files"
         ]
       },
       {
         "type": "note",
         "note_type": "success",
         "text": "Successful deconvolution creates the foundation for subsequent kinetic analysis using Model-Fit, Model-Free, and Model-Based methods."
+      },
+      {
+        "type": "code_block",
+        "language": "yaml",
+        "title": "Example reaction configuration",
+        "text": "# Example deconvolution parameters\nreaction_0:\n  function: 'ads'\n  coeffs:\n    h: 0.005392786487485471    # Peak height\n    z: 296.1846660127549       # Peak position (°C)\n    w: 47.058071904740814      # Peak width\n    ads1: 26.12901788390612    # ADS parameter 1\n    ads2: 1.916749283812285    # ADS parameter 2"
       }
     ]
   },
@@ -560,152 +422,4 @@
     "model_fit",
     "model_free"
   ]
-}
-],
-"expected_result": "График показывает пики в координатах dα/dT"
-},
-{
-"step": 2,
-"title": "Переход к деконволюции",
-"description": "Активируйте режим деконволюции",
-"actions": [
-"Нажмите кнопку 'deconvolution'",
-"Панель Deconvolution откроется справа"
-],
-"expected_result": "Интерактивные якоря появляются на графике"
-},
-{
-"step": 3,
-"title": "Добавление реакций",
-"description": "Создайте реакции для каждого пика",
-"actions": [
-"Нажмите 'Add Reaction' в таблице реакций",
-"Выберите тип функции (gauss, ads, fraser)",
-"Повторите для каждого видимого пика"
-],
-"expected_result": "Таблица содержит все необходимые реакции"
-},
-{
-"step": 4,
-"title": "Настройка параметров",
-"description": "Установите начальные приближения",
-"actions": [
-"Перетащите якоря на графике для грубой настройки",
-"Отредактируйте значения в таблице коэффициентов",
-"Установите границы оптимизации"
-],
-"expected_result": "Суммарная кривая приближается к экспериментальным данным"
-},
-{
-"step": 5,
-"title": "Оптимизация",
-"description": "Запустите автоматическую оптимизацию",
-"actions": [
-"Нажмите кнопку 'Start Calculation'",
-"Дождитесь завершения оптимизации",
-"Проверьте качество подгонки по R²"
-],
-"expected_result": "R² > 0.99 для хорошей подгонки"
-}
-]
-}
-},
-{
-"type": "heading",
-"content": {
-"text": "Типы функций",
-"level": 2
-}
-},
-{
-"type": "list",
-"content": {
-"items": [
-"<b>Gauss:</b> Классическая гауссова функция для симметричных пиков",
-"<b>ADS (Asymmetric Double Sigmoidal):</b> Асимметричная функция для сложных пиков",
-"<b>Fraser-Suzuki:</b> Модифицированная асимметричная функция"
-],
-"list_type": "unordered"
-}
-},
-{
-"type": "code_block",
-"content": {
-"code": "# Пример параметров деконволюции\nreaction_0:\n  function: 'ads'\n  coeffs:\n    h: 0.005392786487485471    # Высота пика\n    z: 296.1846660127549       # Позиция пика (°C)\n    w: 47.058071904740814      # Ширина пика\n    ads1: 26.12901788390612    # ADS параметр 1\n    ads2: 1.916749283812285    # ADS параметр 2\n  upper_bound_coeffs:\n    h: 1.0\n    z: 400.0\n    w: 100.0\n    ads1: 50.0\n    ads2: 10.0",
-"language": "yaml",
-"title": "Конфигурация реакции"
-}
-},
-{
-"type": "note",
-"content": {
-"text": "<b>Важно:</b> Качество деконволюции зависит от правильного выбора начальных параметров. Используйте интерактивные якоря для грубой настройки перед автоматической оптимизацией.",
-"note_type": "warning"
-}
-}
-],
-"en": [
-{
-"type": "heading",
-"content": {
-"text": "Peak Deconvolution",
-"level": 1
-}
-},
-{
-"type": "paragraph",
-"content": {
-"text": "Deconvolution allows separation of complex peaks into individual reactions for multi-stage process analysis. The program supports three function types: Gaussian, ADS, and Fraser-Suzuki.",
-"style": "body"
-}
-},
-{
-"type": "heading",
-"content": {
-"text": "Step-by-step Deconvolution Process",
-"level": 2
-}
-},
-{
-"type": "workflow",
-"content": {
-"title": "Performing Deconvolution",
-"steps": [
-{
-"step": 1,
-"title": "Data Preparation",
-"description": "Ensure data is converted to dα/dT format",
-"actions": [
-"Select file in navigation",
-"Click 'to dα/dT' in Experiments panel"
-],
-"expected_result": "Graph shows peaks in dα/dT coordinates"
-},
-{
-"step": 2,
-"title": "Switch to Deconvolution",
-"description": "Activate deconvolution mode",
-"actions": [
-"Click 'deconvolution' button",
-"Deconvolution panel opens on the right"
-],
-"expected_result": "Interactive anchors appear on the graph"
-}
-]
-}
-}
-]
-},
-"related_sections": [
-"preprocessing",
-"model_fit",
-"optimization_settings"
-],
-"attachments": [
-{
-"type": "video",
-"title": "Deconvolution Tutorial",
-"path": "videos/deconvolution_tutorial.mp4"
-}
-]
 }
