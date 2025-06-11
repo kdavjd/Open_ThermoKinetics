@@ -30,18 +30,25 @@ class CodeRenderer(BaseRenderer):
             QWidget: Созданный виджет кода
         """
         content_type = content.get("type")
-        content_data = content.get("content", {})
 
         if content_type in ["code", "python", "json"]:
-            return self._render_code_block(content_data, content_type)
+            code_text = content.get("code", content.get("content", {}).get("code", ""))
+            title = content.get("title", content.get("content", {}).get("title", ""))
+            language = content.get("language", content_type)
+            return self._render_code_block_simple(code_text, title, language)
         elif content_type in ["shell", "command", "terminal"]:
-            return self._render_terminal_block(content_data)
+            code_text = content.get("code", content.get("content", {}).get("code", ""))
+            title = content.get("title", content.get("content", {}).get("title", ""))
+            return self._render_terminal_block_simple(code_text, title)
         else:
-            return self._render_code_block(content_data, "text")
+            code_text = content.get("code", content.get("text", ""))
+            return self._render_code_block_simple(code_text, "", "text")
 
     def _render_code_block(self, code_data: Dict[str, Any], language: str = "text") -> QWidget:
         """
-        Создает виджет блока кода.        Args:
+        Создает виджет блока кода.
+
+        Args:
             code_data: Данные кода (code, title, highlight)
             language: Язык программирования для подсветки
 
@@ -251,4 +258,114 @@ class CodeRenderer(BaseRenderer):
         clipboard.setText(text)
 
         # Можно добавить уведомление о копировании
-        # Пока просто копируем без обратной связи
+
+    def _render_code_block_simple(self, code_text: str, title: str = "", language: str = "text") -> QWidget:
+        """
+        Создает простой виджет блока кода.
+
+        Args:
+            code_text: Текст кода
+            title: Заголовок блока
+            language: Язык программирования
+
+        Returns:
+            QWidget: Виджет с блоком кода
+        """
+        container = QWidget()
+        layout = QVBoxLayout(container)
+
+        # Проверяем валидность кода
+        if code_text is None:
+            code_text = ""
+
+        # Заголовок блока
+        if title:
+            title_label = QLabel(title)
+            font = self.get_theme_font("subheading")
+            if font:
+                title_label.setFont(font)
+            title_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {self.get_theme_color("text_primary")};
+                    font-weight: bold;
+                    padding: 4px 0px;
+                }}
+            """)
+            layout.addWidget(title_label)
+
+        # Блок кода
+        code_widget = QTextEdit()
+        code_widget.setPlainText(code_text)
+        code_widget.setReadOnly(True)
+
+        # Применяем моноширинный шрифт
+        font = self.get_theme_font("code")
+        if font:
+            code_widget.setFont(font)
+
+        code_widget.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {self.get_theme_color("code_background")};
+                color: {self.get_theme_color("code_text")};
+                border: 1px solid {self.get_theme_color("border_primary")};
+                border-radius: 4px;
+                padding: 8px;
+                selection-background-color: {self.get_theme_color("selection_background")};
+            }}
+        """)
+
+        layout.addWidget(code_widget)
+        return container
+
+    def _render_terminal_block_simple(self, code_text: str, title: str = "") -> QWidget:
+        """
+        Создает простой виджет блока терминала.
+
+        Args:
+            code_text: Текст команды
+            title: Заголовок блока
+
+        Returns:
+            QWidget: Виджет с блоком терминала
+        """
+        container = QWidget()
+        layout = QVBoxLayout(container)
+
+        # Заголовок блока
+        if title:
+            title_label = QLabel(title)
+            font = self.get_theme_font("subheading")
+            if font:
+                title_label.setFont(font)
+            title_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {self.get_theme_color("text_primary")};
+                    font-weight: bold;
+                    padding: 4px 0px;
+                }}
+            """)
+            layout.addWidget(title_label)
+
+        # Блок терминала
+        terminal_widget = QTextEdit()
+        terminal_widget.setPlainText(code_text)
+        terminal_widget.setReadOnly(True)
+
+        # Применяем моноширинный шрифт
+        font = self.get_theme_font("code")
+        if font:
+            terminal_widget.setFont(font)
+
+        terminal_widget.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {self.get_theme_color("terminal_background")};
+                color: {self.get_theme_color("terminal_text")};
+                border: 1px solid {self.get_theme_color("border_primary")};
+                border-radius: 4px;
+                padding: 8px;
+                selection-background-color: {self.get_theme_color("selection_background")};
+            }}
+        """)
+
+        layout.addWidget(terminal_widget)
+        return container

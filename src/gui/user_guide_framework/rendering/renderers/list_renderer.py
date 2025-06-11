@@ -5,15 +5,7 @@ List Renderer - Рендерер для списков и структуриро
 from typing import Any, Dict, List
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QHBoxLayout,
-    QLabel,
-    QTreeWidget,
-    QTreeWidgetItem,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
 from .base_renderer import BaseRenderer
 
@@ -38,20 +30,38 @@ class ListRenderer(BaseRenderer):
             QWidget: Созданный виджет списка
         """
         content_type = content.get("type")
-        content_data = content.get("content", {})
 
         if content_type == "list":
-            return self._render_bullet_list(content_data)
+            # Проверяем формат данных
+            if "items" in content:
+                # Новый формат: items напрямую в content
+                items = content.get("items", [])
+                list_type = content.get("list_type", "unordered")
+            else:
+                # Старый формат: items в content.content
+                content_data = content.get("content", {})
+                items = content_data.get("items", [])
+                list_type = content_data.get("list_type", "unordered")
+
+            if list_type == "ordered":
+                return self._render_ordered_list_simple(items)
+            else:
+                return self._render_bullet_list_simple(items)
         elif content_type == "ordered_list":
-            return self._render_ordered_list(content_data)
+            items = content.get("items", content.get("content", {}).get("items", []))
+            return self._render_ordered_list_simple(items)
         elif content_type == "checklist":
+            content_data = content.get("content", {})
             return self._render_checklist(content_data)
         elif content_type == "tree_list":
+            content_data = content.get("content", {})
             return self._render_tree_list(content_data)
         elif content_type == "definition_list":
+            content_data = content.get("content", {})
             return self._render_definition_list(content_data)
         else:
-            return self._render_bullet_list(content_data)
+            items = content.get("items", [])
+            return self._render_bullet_list_simple(items)
 
     def _render_bullet_list(self, list_data: Dict[str, Any]) -> QWidget:
         """
@@ -130,6 +140,57 @@ class ListRenderer(BaseRenderer):
             item_layout.setStretchFactor(item_label, 1)
 
             layout.addLayout(item_layout)
+            layout.addStretch()
+        return container
+
+    def _render_bullet_list_simple(self, items: List[str]) -> QWidget:
+        """
+        Создает виджет простого маркированного списка из массива строк.
+
+        Args:
+            items: Список строк для отображения
+
+        Returns:
+            QWidget: Виджет списка
+        """
+        container = QWidget()
+        layout = QVBoxLayout(container)
+
+        # Проверяем валидность items
+        if not items:
+            items = []
+
+        # Элементы списка
+        for item in items:
+            item_layout = QHBoxLayout()
+
+            # Маркер
+            bullet_label = QLabel("•")
+            bullet_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+            bullet_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {self.get_theme_color("accent_primary")};
+                    font-weight: bold;
+                    padding: 0px 8px 0px 0px;
+                    min-width: 16px;
+                }}
+            """)
+
+            # Текст элемента
+            text_label = QLabel(str(item))
+            text_label.setWordWrap(True)
+            text_label.setTextFormat(Qt.TextFormat.RichText)
+            text_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {self.get_theme_color("text_primary")};
+                    padding: 0px;
+                    line-height: 1.4;
+                }}
+            """)
+
+            item_layout.addWidget(bullet_label)
+            item_layout.addWidget(text_label, 1)
+            layout.addLayout(item_layout)
 
         layout.addStretch()
         return container
@@ -189,6 +250,58 @@ class ListRenderer(BaseRenderer):
             item_layout.addWidget(item_label)
             item_layout.setStretchFactor(item_label, 1)
 
+            layout.addLayout(item_layout)
+
+        layout.addStretch()
+        return container
+
+    def _render_ordered_list_simple(self, items: List[str]) -> QWidget:
+        """
+        Создает виджет простого нумерованного списка из массива строк.
+
+        Args:
+            items: Список строк для отображения
+
+        Returns:
+            QWidget: Виджет списка
+        """
+        container = QWidget()
+        layout = QVBoxLayout(container)
+
+        # Проверяем валидность items
+        if not items:
+            items = []
+
+        # Элементы списка
+        for i, item in enumerate(items, 1):
+            item_layout = QHBoxLayout()
+
+            # Номер
+            number_label = QLabel(f"{i}.")
+            number_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+            number_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {self.get_theme_color("accent_primary")};
+                    font-weight: bold;
+                    padding: 0px 8px 0px 0px;
+                    min-width: 24px;
+                }}
+            """)
+
+            # Текст элемента
+            text_label = QLabel(str(item))
+            text_label.setWordWrap(True)
+            text_label.setTextFormat(Qt.TextFormat.RichText)
+            text_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {self.get_theme_color("text_primary")};
+                    padding: 0px;
+                    line-height: 1.4;
+                }}
+            """)
+
+            item_layout.addWidget(number_label)
+            item_layout.addWidget(text_label, 1)
             layout.addLayout(item_layout)
 
         layout.addStretch()

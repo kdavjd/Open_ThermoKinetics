@@ -447,10 +447,9 @@
                 "text": "Excessive preprocessing can distort data and lead to inaccurate analysis results. Apply filters consciously."
             }
         ]
-    }
-}
-  "related_sections": [
-    "file_loading",
-    "deconvolution"
-]
+    },
+    "related_sections": [
+        "file_loading",
+        "deconvolution"
+    ]
 }

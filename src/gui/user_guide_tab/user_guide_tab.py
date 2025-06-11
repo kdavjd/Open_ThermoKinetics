@@ -1,85 +1,53 @@
 """
 User Guide Tab
-Complete implementation of the user guide interface for Open ThermoKinetics.
-Replaces the table_tab with comprehensive documentation and navigation.
+Complete implementation of the user guide interface using the new framework.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QSplitter, QWidget
+from pathlib import Path
 
-from .config import GuideConfig, Language
-from .guide_content_widget import GuideContentWidget
-from .guide_sidebar import GuideSidebar
+from PyQt6.QtWidgets import QHBoxLayout, QWidget
+
+from ..user_guide_framework import GuideFramework
 
 
 class UserGuideTab(QWidget):
     """
     Main user guide tab widget that provides comprehensive documentation
-    for Open ThermoKinetics application with navigation and rich content display.
+    for Open ThermoKinetics application using the new framework.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.config = GuideConfig()
-        self.current_language = Language.RUSSIAN  # Default to Russian as per user preference
         self.setup_ui()
-        self.setup_connections()
 
     def setup_ui(self):
         """Initialize the UI components"""
-        self.setMinimumSize(self.config.MIN_WIDTH_SIDEBAR + self.config.MIN_WIDTH_CONTENT, self.config.MIN_HEIGHT_GUIDE)
-
         # Main layout
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        # Splitter for resizable layout
-        self.splitter = QSplitter(Qt.Orientation.Horizontal)
-        layout.addWidget(self.splitter)
+        # Get data directory path
+        data_dir = Path(__file__).parent.parent / "user_guide_framework" / "data"
 
-        # Sidebar for navigation
-        self.sidebar = GuideSidebar()
-        self.sidebar.set_language(self.current_language)
-        self.splitter.addWidget(self.sidebar)
+        # Create and add the guide framework
+        self.guide_framework = GuideFramework(data_dir, self)
+        layout.addWidget(self.guide_framework)
 
-        # Content widget for displaying guide content
-        self.content_widget = GuideContentWidget()
-        self.content_widget.set_language(self.current_language)
-        self.splitter.addWidget(self.content_widget)
+        # Set minimum size
+        self.setMinimumSize(1200, 700)
 
-        # Set initial splitter sizes
-        self.initialize_sizes()
-
-    def setup_connections(self):
-        """Connect signals between components"""
-        # Navigation signals
-        self.sidebar.section_selected.connect(self.content_widget.set_section)
-        self.sidebar.language_changed.connect(self.change_language)
-
-        # Internal content links
-        self.content_widget.section_link_clicked.connect(self.sidebar.select_section)
-
-    def initialize_sizes(self):
-        """Set initial splitter sizes with proper proportions"""
-        total_width = self.width() or 1000  # Fallback width
-        sidebar_width = self.config.MIN_WIDTH_SIDEBAR
-        content_width = total_width - sidebar_width
-
-        if content_width < self.config.MIN_WIDTH_CONTENT:
-            content_width = self.config.MIN_WIDTH_CONTENT
-            total_width = sidebar_width + content_width
-
-        self.splitter.setSizes([sidebar_width, content_width])
-
-    def change_language(self, language: Language):
+    def change_language(self, language_code: str):
         """Change the interface language"""
-        if language != self.current_language:
-            self.current_language = language
-            self.sidebar.set_language(language)
-            self.content_widget.set_language(language)
+        self.guide_framework.set_language(language_code)
 
-    def resizeEvent(self, event):
-        """Handle resize events to maintain proper proportions"""
-        super().resizeEvent(event)  # Only reinitialize if the widget is visible and has a reasonable size
-        if self.isVisible() and event.size().width() > 100:
-            self.initialize_sizes()
+    def set_section(self, section_id: str):
+        """Set current section programmatically"""
+        self.guide_framework.set_section(section_id)
+
+    def get_current_section(self):
+        """Get current section"""
+        return self.guide_framework.get_current_section()
+
+    def get_current_language(self):
+        """Get current language"""
+        return self.guide_framework.get_current_language()

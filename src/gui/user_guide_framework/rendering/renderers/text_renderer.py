@@ -30,20 +30,27 @@ class TextRenderer(BaseRenderer):
             QWidget: Созданный текстовый виджет
         """
         content_type = content.get("type")
-        content_data = content.get("content", "")
 
         if content_type == "paragraph":
-            return self._render_paragraph(content_data)
+            text = content.get("text", "")
+            return self._render_paragraph(text)
         elif content_type == "heading":
-            return self._render_heading(content_data, level=1)
+            text = content.get("text", "")
+            level = content.get("level", 1)
+            return self._render_heading(text, level=level)
         elif content_type == "subheading":
-            return self._render_heading(content_data, level=2)
+            text = content.get("text", "")
+            return self._render_heading(text, level=2)
         elif content_type == "note":
-            return self._render_note(content_data, note_type="note")
+            text = content.get("text", "")
+            note_type = content.get("note_type", "note")
+            return self._render_note(text, note_type=note_type)
         elif content_type == "warning":
-            return self._render_note(content_data, note_type="warning")
+            text = content.get("text", "")
+            return self._render_note(text, note_type="warning")
         elif content_type == "info":
-            return self._render_note(content_data, note_type="info")
+            text = content.get("text", "")
+            return self._render_note(text, note_type="info")
         else:
             return self._render_paragraph(f"Unknown content type: {content_type}")
 

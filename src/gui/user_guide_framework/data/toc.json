@@ -1,154 +1,148 @@
 {
-  "version": "1.0",
-  "default_language": "ru",
-  "supported_languages": [
-    "ru",
-    "en"
-  ],
-  "root_sections": [
-    {
-      "id": "introduction",
+  "metadata": {
+    "version": "1.0",
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "default_language": "ru",
+    "title": {
+      "ru": "Руководство пользователя Open ThermoKinetics",
+      "en": "Open ThermoKinetics User Guide"
+    }
+  },
+  "settings": {
+    "theme": "default",
+    "auto_save": true,
+    "search_enabled": true
+  },
+  "structure": {
+    "introduction": {
       "title": {
         "ru": "Введение",
         "en": "Introduction"
       },
       "icon": "info-circle",
-      "children": [
-        {
-          "id": "overview",
+      "children": {
+        "overview": {
           "title": {
             "ru": "Обзор программы",
             "en": "Program Overview"
           },
           "content_file": "introduction/overview.json"
         },
-        {
-          "id": "installation",
+        "installation": {
           "title": {
             "ru": "Установка и настройка",
             "en": "Installation & Setup"
           },
           "content_file": "introduction/installation.json"
         },
-        {
-          "id": "quick_start",
+        "quick_start": {
           "title": {
             "ru": "Быстрый старт",
             "en": "Quick Start"
           },
           "content_file": "introduction/quick_start.json"
         }
-      ]
+      }
     },
-    {
-      "id": "data_management",
+    "data_management": {
       "title": {
         "ru": "Управление данными",
         "en": "Data Management"
       },
       "icon": "folder",
-      "children": [
-        {
-          "id": "file_loading",
+      "children": {
+        "file_loading": {
           "title": {
             "ru": "Загрузка файлов",
             "en": "File Loading"
           },
           "content_file": "data_management/file_loading.json"
         },
-        {
-          "id": "data_preprocessing",
+        "data_preprocessing": {
           "title": {
             "ru": "Предобработка данных",
             "en": "Data Preprocessing"
           },
           "content_file": "data_management/data_preprocessing.json"
         },
-        {
-          "id": "file_operations",
+        "file_operations": {
           "title": {
             "ru": "Операции с файлами",
             "en": "File Operations"
           },
           "content_file": "data_management/file_operations.json"
         }
-      ]
+      }
     },
-    {
-      "id": "analysis",
+    "analysis": {
       "title": {
         "ru": "Анализ данных",
         "en": "Data Analysis"
       },
       "icon": "chart-line",
-      "children": [
-        {
-          "id": "deconvolution",
+      "children": {
+        "deconvolution": {
           "title": {
             "ru": "Деконволюция пиков",
             "en": "Peak Deconvolution"
           },
           "content_file": "analysis/deconvolution.json"
         },
-        {
-          "id": "model_fit",
+        "model_fit": {
           "title": {
             "ru": "Model-Fit анализ",
             "en": "Model-Fit Analysis"
           },
           "content_file": "analysis/model_fit.json"
         },
-        {
-          "id": "model_free",
+        "model_free": {
           "title": {
             "ru": "Model-Free анализ",
             "en": "Model-Free Analysis"
           },
           "content_file": "analysis/model_free.json"
         },
-        {
-          "id": "model_based",
+        "model_based": {
           "title": {
             "ru": "Model-Based анализ",
             "en": "Model-Based Analysis"
           },
           "content_file": "analysis/model_based.json"
         }
-      ]
+      }
     },
-    {
-      "id": "advanced",
+    "advanced": {
       "title": {
         "ru": "Продвинутые функции",
         "en": "Advanced Features"
       },
       "icon": "cogs",
-      "children": [
-        {
-          "id": "series_analysis",
+      "children": {
+        "series_analysis": {
           "title": {
             "ru": "Анализ серий",
             "en": "Series Analysis"
           },
           "content_file": "advanced/series_analysis.json"
         },
-        {
-          "id": "export_import",
+        "export_import": {
           "title": {
             "ru": "Экспорт и импорт",
             "en": "Export & Import"
           },
           "content_file": "advanced/export_import.json"
         },
-        {
-          "id": "troubleshooting",
+        "troubleshooting": {
           "title": {
             "ru": "Решение проблем",
             "en": "Troubleshooting"
           },
           "content_file": "advanced/troubleshooting.json"
         }
-      ]
+      }
     }
-  ]
+  }
 }
