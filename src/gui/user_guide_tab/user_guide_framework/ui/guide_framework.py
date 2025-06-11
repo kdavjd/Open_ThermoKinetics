@@ -85,7 +85,7 @@ class GuideFramework(QWidget):
         """Инициализация менеджеров с загрузкой данных."""
         logger.debug("Initializing theme and localization managers")
         try:
-            # Загружаение доступных тем
+            # Загружение доступных тем
             self.theme_manager.load_available_themes()
             self.theme_manager.set_theme("default")
 
@@ -180,7 +180,7 @@ class GuideFramework(QWidget):
         try:
             self.localization_manager.set_language(language_code)
             self.navigation_sidebar.update_language(language_code)
-            self.toolbar.update_language()
+            self.toolbar.update_language(language_code)
             self.status_widget.update_language()
 
             # Обновление контента для текущего раздела

@@ -5,7 +5,7 @@ Code Renderer - Рендерер для блоков кода и синтакс�
 from typing import Any, Dict, List
 
 from PyQt6.QtGui import QFont, QFontMetrics
-from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QTextEdit, QVBoxLayout, QWidget
 
 from src.core.logger_config import LoggerManager
 from src.core.state_logger import StateLogger
@@ -39,7 +39,7 @@ class CodeRenderer(BaseRenderer):
 
     def get_supported_types(self) -> List[str]:
         """Возвращает список поддерживаемых типов кода."""
-        return ["code", "python", "shell", "json", "command", "terminal"]
+        return ["code", "code_block", "python", "shell", "json", "command", "terminal"]
 
     def render(self, content: Dict[str, Any]) -> QWidget:
         """
@@ -53,233 +53,22 @@ class CodeRenderer(BaseRenderer):
         """
         content_type = content.get("type")
 
-        if content_type in ["code", "python", "json"]:
+        if content_type in ["code", "code_block", "python", "json"]:
             code_text = content.get("code", content.get("content", {}).get("code", ""))
+            if not code_text:
+                code_text = content.get("text", "")
             title = content.get("title", content.get("content", {}).get("title", ""))
             language = content.get("language", content_type)
             return self._render_code_block_simple(code_text, title, language)
         elif content_type in ["shell", "command", "terminal"]:
             code_text = content.get("code", content.get("content", {}).get("code", ""))
+            if not code_text:
+                code_text = content.get("text", "")
             title = content.get("title", content.get("content", {}).get("title", ""))
             return self._render_terminal_block_simple(code_text, title)
         else:
             code_text = content.get("code", content.get("text", ""))
             return self._render_code_block_simple(code_text, "", "text")
-
-    def _render_code_block(self, code_data: Dict[str, Any], language: str = "text") -> QWidget:
-        """
-        Создает виджет блока кода.
-
-        Args:
-            code_data: Данные кода (code, title, highlight)
-            language: Язык программирования для подсветки
-
-        Returns:
-            QWidget: Виджет с блоком кода
-        """
-        container = QWidget()
-        layout = QVBoxLayout(container)
-
-        code_text = code_data.get("code", "")
-        title = code_data.get("title", "")
-        readonly = code_data.get("readonly", True)
-
-        # Заголовок блока кода
-        if title:
-            header_layout = QHBoxLayout()
-
-            title_label = QLabel(title)
-            title_label.setStyleSheet(f"""
-                QLabel {{
-                    font-weight: bold;
-                    color: {self._get_safe_theme_color("text_primary", "#000000")};
-                    padding: 4px 8px;
-                    background-color: {self._get_safe_theme_color("surface", "#FFFFFF")};
-                    border-radius: 4px 4px 0px 0px;
-                    border: 1px solid {self._get_safe_theme_color("border", "#CCCCCC")};
-                    border-bottom: none;
-                }}
-            """)
-
-            # Кнопка копирования
-            copy_button = QPushButton("📋 Copy")
-            copy_button.setMaximumWidth(80)
-            copy_button.clicked.connect(lambda: self._copy_to_clipboard(code_text))
-
-            header_layout.addWidget(title_label)
-            header_layout.addStretch()
-            header_layout.addWidget(copy_button)
-
-            layout.addLayout(header_layout)
-
-        # Текстовый редактор для кода
-        code_editor = QTextEdit()
-        code_editor.setPlainText(code_text)
-        code_editor.setReadOnly(readonly)
-
-        # Настройки шрифта
-        font = self.get_theme_font("code")
-        if not font:
-            font = QFont("Consolas", 10)
-            font.setFamily("monospace")
-
-        code_editor.setFont(font)
-
-        # Стилизация редактора кода
-        bg_color = self._get_safe_theme_color("surface", "#FFFFFF")
-        text_color = self._get_safe_theme_color("text_primary", "#000000")
-        border_color = self._get_safe_theme_color("border", "#CCCCCC")
-
-        code_editor.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {bg_color};
-                color: {text_color};
-                border: 1px solid {border_color};
-                border-radius: 0px 0px 4px 4px;
-                padding: 8px;
-                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-                line-height: 1.4;
-            }}
-            QScrollBar:vertical {{
-                background-color: {self._get_safe_theme_color("background", "#F0F0F0")};
-                width: 12px;
-                border-radius: 6px;
-            }}
-            QScrollBar::handle:vertical {{
-                background-color: {self._get_safe_theme_color("border", "#CCCCCC")};
-                border-radius: 6px;
-                min-height: 20px;
-            }}
-        """)
-
-        # Устанавливаем размер
-        font_metrics = QFontMetrics(font)
-        line_height = font_metrics.lineSpacing()
-        num_lines = min(code_text.count("\n") + 1, 20)  # Максимум 20 строк
-        height = line_height * num_lines + 20  # Добавляем отступы
-        code_editor.setMaximumHeight(height)
-        code_editor.setMinimumHeight(min(height, 100))
-
-        layout.addWidget(code_editor)
-
-        # Добавляем информацию о языке
-        if language and language != "text":
-            lang_label = QLabel(f"Language: {language.upper()}")
-            lang_label.setStyleSheet(f"""
-                QLabel {{
-                    color: {self._get_safe_theme_color("text_secondary", "#666666")};
-                    font-size: 10px;
-                    padding: 2px 8px;
-                    text-align: right;
-                }}
-            """)
-            layout.addWidget(lang_label)
-
-        return container
-
-    def _render_terminal_block(self, terminal_data: Dict[str, Any]) -> QWidget:
-        """
-        Создает виджет терминального блока.
-
-        Args:
-            terminal_data: Данные терминала
-
-        Returns:
-            QWidget: Виджет терминала
-        """
-        container = QWidget()
-        layout = QVBoxLayout(container)
-
-        command = terminal_data.get("command", "")
-        output = terminal_data.get("output", "")
-        prompt = terminal_data.get("prompt", "$")
-
-        # Заголовок терминала
-        header = QLabel("💻 Terminal")
-        header.setStyleSheet(f"""
-            QLabel {{
-                background-color: {self._get_safe_theme_color("terminal_header_background", "#2d3748")};
-                color: {self._get_safe_theme_color("terminal_header_text", "#FFFFFF")};
-                padding: 6px 12px;
-                font-weight: bold;
-                border-radius: 4px 4px 0px 0px;
-            }}
-        """)
-        layout.addWidget(header)
-
-        # Контент терминала
-        terminal_widget = QTextEdit()
-        terminal_widget.setReadOnly(True)
-
-        # Формируем текст терминала
-        terminal_text = ""
-        if command:
-            terminal_text += f"{prompt} {command}\n"
-        if output:
-            terminal_text += output
-
-        terminal_widget.setPlainText(terminal_text)
-
-        # Терминальный шрифт и стилизация
-        font = QFont("Consolas", 10)
-        font.setFamily("monospace")
-        terminal_widget.setFont(font)
-
-        terminal_widget.setStyleSheet(f"""
-            QTextEdit {{
-                background-color: {self._get_safe_theme_color("terminal_background", "#1a202c")};
-                color: {self._get_safe_theme_color("terminal_text", "#e2e8f0")};
-                border: 1px solid {self._get_safe_theme_color("terminal_border", "#4a5568")};
-                border-radius: 0px 0px 4px 4px;
-                padding: 8px;
-                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            }}
-            QScrollBar:vertical {{
-                background-color: {self._get_safe_theme_color("scrollbar_background", "#2d3748")};
-                width: 12px;
-                border-radius: 6px;
-            }}
-            QScrollBar::handle:vertical {{
-                background-color: {self._get_safe_theme_color("scrollbar_handle", "#4a5568")};
-                border-radius: 6px;
-            }}
-        """)
-
-        # Размер терминала
-        font_metrics = QFontMetrics(font)
-        line_height = font_metrics.lineSpacing()
-        num_lines = min(terminal_text.count("\n") + 1, 15)
-        height = line_height * num_lines + 20
-        terminal_widget.setMaximumHeight(height)
-        terminal_widget.setMinimumHeight(min(height, 80))
-
-        layout.addWidget(terminal_widget)
-
-        # Кнопка копирования команды
-        if command:
-            copy_layout = QHBoxLayout()
-            copy_layout.addStretch()
-
-            copy_cmd_button = QPushButton("📋 Copy Command")
-            copy_cmd_button.clicked.connect(lambda: self._copy_to_clipboard(command))
-            copy_cmd_button.setMaximumWidth(120)
-
-            copy_layout.addWidget(copy_cmd_button)
-            layout.addLayout(copy_layout)
-
-        return container
-
-    def _copy_to_clipboard(self, text: str) -> None:
-        """
-        Копирует текст в буфер обмена.
-
-        Args:
-            text: Текст для копирования
-        """
-        clipboard = QApplication.clipboard()
-        clipboard.setText(text)
-
-        # Можно добавить уведомление о копировании
 
     def _render_code_block_simple(self, code_text: str, title: str = "", language: str = "text") -> QWidget:
         """
@@ -322,8 +111,18 @@ class CodeRenderer(BaseRenderer):
 
         # Применяем моноширинный шрифт
         font = self.get_theme_font("code")
-        if font:
-            code_widget.setFont(font)
+        if not font:
+            font = QFont("Consolas", 10)
+            font.setFamily("monospace")
+        code_widget.setFont(font)
+
+        # Вычисляем высоту на основе количества строк
+        font_metrics = QFontMetrics(font)
+        line_height = font_metrics.lineSpacing()
+        num_lines = min(code_text.count("\n") + 1, 20)  # Максимум 20 строк
+        height = line_height * num_lines + 20  # Добавляем отступы
+        code_widget.setMaximumHeight(height)
+        code_widget.setMinimumHeight(min(height, 80))
 
         code_widget.setStyleSheet(f"""
             QTextEdit {{
@@ -332,11 +131,26 @@ class CodeRenderer(BaseRenderer):
                 border: 1px solid {self._get_safe_theme_color("border_primary", "#CCCCCC")};
                 border-radius: 4px;
                 padding: 8px;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
                 selection-background-color: {self._get_safe_theme_color("selection_background", "#D0D0D0")};
             }}
         """)
 
         layout.addWidget(code_widget)
+
+        # Добавляем информацию о языке если нужно
+        if language and language != "text":
+            lang_label = QLabel(f"Language: {language.upper()}")
+            lang_label.setStyleSheet(f"""
+                QLabel {{
+                    color: {self._get_safe_theme_color("text_secondary", "#666666")};
+                    font-size: 10px;
+                    padding: 2px 8px;
+                    text-align: right;
+                }}
+            """)
+            layout.addWidget(lang_label)
+
         return container
 
     def _render_terminal_block_simple(self, code_text: str, title: str = "") -> QWidget:
@@ -375,8 +189,18 @@ class CodeRenderer(BaseRenderer):
 
         # Применяем моноширинный шрифт
         font = self.get_theme_font("code")
-        if font:
-            terminal_widget.setFont(font)
+        if not font:
+            font = QFont("Consolas", 10)
+            font.setFamily("monospace")
+        terminal_widget.setFont(font)
+
+        # Вычисляем высоту на основе количества строк
+        font_metrics = QFontMetrics(font)
+        line_height = font_metrics.lineSpacing()
+        num_lines = min(code_text.count("\n") + 1, 15)
+        height = line_height * num_lines + 20
+        terminal_widget.setMaximumHeight(height)
+        terminal_widget.setMinimumHeight(min(height, 60))
 
         terminal_widget.setStyleSheet(f"""
             QTextEdit {{
@@ -385,6 +209,7 @@ class CodeRenderer(BaseRenderer):
                 border: 1px solid {self._get_safe_theme_color("border_primary", "#4a5568")};
                 border-radius: 4px;
                 padding: 8px;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
                 selection-background-color: {self._get_safe_theme_color("selection_background", "#D0D0D0")};
             }}
         """)

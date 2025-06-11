@@ -121,11 +121,11 @@ class ContentWidget(QWidget):
             "section_change", {"current_section": self.current_section}, {"current_section": section_id}
         )
 
-        self.current_section = section_id
-
-        # Используем таймер для избежания множественных обновлений
+        self.current_section = section_id  # Используем таймер для избежания множественных обновлений
         self.update_timer.stop()
-        self.update_timer.start(50)  # 50ms задержка    def _update_content_delayed(self) -> None:
+        self.update_timer.start(50)  # 50ms задержка
+
+    def _update_content_delayed(self) -> None:
         """Отложенное обновление контента с безопасной проверкой типов."""
         if not self.current_section:
             return

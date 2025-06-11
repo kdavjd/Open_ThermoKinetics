@@ -3,9 +3,146 @@ State Logger - Comprehensive state logger with assert functionality for User Gui
 """
 
 import time
-from typing import Any, Dict
+from collections import defaultdict, deque
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 from src.core.logger_config import LoggerManager
+
+
+@dataclass
+class LogEvent:
+    """Individual log event for aggregation."""
+
+    timestamp: float
+    level: str
+    module: str
+    operation: str
+    status: Optional[str] = None
+    content_type: Optional[str] = None
+
+
+class LogAggregator:
+    """Cascading log aggregation system to reduce verbose rendering logs."""
+
+    def __init__(self, aggregation_window: float = 1.0):
+        """
+        Initialize log aggregator.
+
+        Args:
+            aggregation_window: Time window in seconds to group related operations
+        """
+        self.aggregation_window = aggregation_window
+        self.pending_events: deque = deque()
+        self.operation_groups: Dict[str, List[LogEvent]] = defaultdict(list)
+        self.last_flush = time.time()
+
+    def add_event(
+        self,
+        module: str,
+        operation: str,
+        level: str = "DEBUG",
+        status: Optional[str] = None,
+        content_type: Optional[str] = None,
+    ) -> None:
+        """
+        Add log event for potential aggregation.
+
+        Args:
+            module: Source module name
+            operation: Operation type (e.g., 'rendering', 'content_update')
+            level: Log level
+            status: Operation status (success, error, etc.)
+            content_type: Content type being processed
+        """
+        event = LogEvent(
+            timestamp=time.time(),
+            level=level,
+            module=module,
+            operation=operation,
+            status=status,
+            content_type=content_type,
+        )
+
+        self.pending_events.append(event)
+        self._check_flush()
+
+    def _check_flush(self) -> None:
+        """Check if aggregation window has passed and flush if needed."""
+        now = time.time()
+        if now - self.last_flush >= self.aggregation_window:
+            self._flush_aggregated_logs()
+
+    def _flush_aggregated_logs(self) -> None:
+        """Flush aggregated logs as summary tables."""
+        if not self.pending_events:
+            return
+
+        # Group events by operation type
+        operation_groups = defaultdict(list)
+        while self.pending_events:
+            event = self.pending_events.popleft()
+            operation_groups[event.operation].append(event)
+
+        # Generate summary for each operation group
+        for operation, events in operation_groups.items():
+            if len(events) >= 3:  # Only aggregate if 3+ similar events
+                self._log_operation_summary(operation, events)
+            else:
+                # Log individual events if not enough for aggregation
+                for event in events:
+                    self._log_individual_event(event)
+
+        self.last_flush = time.time()
+
+    def _log_operation_summary(self, operation: str, events: List[LogEvent]) -> None:
+        """Log aggregated summary table for operation."""
+        logger = LoggerManager.get_logger("state_logger")
+
+        if operation == "rendering":
+            # Special handling for content rendering
+            content_stats = defaultdict(lambda: {"count": 0, "success": 0, "error": 0})
+
+            for event in events:
+                content_type = event.content_type or "unknown"
+                content_stats[content_type]["count"] += 1
+                if event.status == "success":
+                    content_stats[content_type]["success"] += 1
+                elif event.status == "error":
+                    content_stats[content_type]["error"] += 1
+
+            # Create table
+            logger.info(f"Content Rendering Summary ({len(events)} operations):")
+            logger.info("┌─────────────┬───────┬─────────┬───────┐")
+            logger.info("│ Type        │ Count │ Success │ Error │")
+            logger.info("├─────────────┼───────┼─────────┼───────┤")
+
+            for content_type, stats in content_stats.items():
+                type_name = content_type[:11].ljust(11)
+                count = str(stats["count"]).center(5)
+                success = str(stats["success"]).center(7)
+                error = str(stats["error"]).center(5)
+                logger.info(f"│ {type_name} │ {count} │ {success} │ {error} │")
+
+            logger.info("└─────────────┴───────┴─────────┴───────┘")
+        else:
+            # Generic operation summary
+            success_count = sum(1 for e in events if e.status == "success")
+            error_count = sum(1 for e in events if e.status == "error")
+            logger.info(
+                f"{operation.title()} Summary: {len(events)} ops, {success_count} success, {error_count} errors"
+            )
+
+    def _log_individual_event(self, event: LogEvent) -> None:
+        """Log individual event normally."""
+        logger = LoggerManager.get_logger(event.module)
+        message = f"{event.operation}"
+        if event.content_type:
+            message += f" of type: {event.content_type}"
+        if event.status:
+            message += f" - {event.status}"
+
+        getattr(logger, event.level.lower())(message)
 
 
 class LogDebouncer:

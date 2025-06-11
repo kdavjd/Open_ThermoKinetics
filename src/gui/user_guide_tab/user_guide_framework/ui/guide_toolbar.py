@@ -297,6 +297,15 @@ class GuideToolBar(QWidget):
             }}
         """)
 
+    def update_theme(self) -> None:
+        """Update theme for guide toolbar."""
+        logger.debug("Updating GuideToolBar theme")
+        try:
+            self.apply_theme()
+            logger.debug("GuideToolBar theme updated successfully")
+        except Exception as e:
+            logger.error(f"Error updating GuideToolBar theme: {e}")
+
     def get_current_search_query(self) -> str:
         """Возвращает текущий поисковый запрос."""
         return self.search_field.text().strip()
