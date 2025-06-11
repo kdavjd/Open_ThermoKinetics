@@ -6,8 +6,12 @@ from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTreeView, QVBoxLayout, QWidget
 
-from ..core.navigation_manager import NavigationManager
-from ..core.theme_manager import ThemeManager
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.navigation_manager import NavigationManager
+from src.gui.user_guide_tab.user_guide_framework.core.theme_manager import ThemeManager
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class NavigationSidebar(QWidget):
@@ -16,6 +20,8 @@ class NavigationSidebar(QWidget):
 
     def __init__(self, navigation_manager: NavigationManager, theme_manager: ThemeManager, parent=None):
         super().__init__(parent)
+        logger.info("Initializing NavigationSidebar")
+
         self.navigation_manager = navigation_manager
         self.theme_manager = theme_manager
         self.current_language = "ru"
@@ -27,8 +33,13 @@ class NavigationSidebar(QWidget):
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.perform_search)
 
-        self._setup_ui()
-        self._connect_signals()
+        try:
+            self._setup_ui()
+            self._connect_signals()
+            logger.debug("NavigationSidebar setup completed successfully")
+        except Exception as e:
+            logger.error(f"Failed to setup NavigationSidebar: {e}")
+            raise
         self._load_navigation_data()
 
     def _setup_ui(self):

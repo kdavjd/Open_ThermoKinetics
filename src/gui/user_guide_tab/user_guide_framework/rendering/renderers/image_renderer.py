@@ -9,7 +9,11 @@ from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QMovie, QPixmap
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
-from .base_renderer import BaseRenderer
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.base_renderer import BaseRenderer
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class ImageRenderer(BaseRenderer):

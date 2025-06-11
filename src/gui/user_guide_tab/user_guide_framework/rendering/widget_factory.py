@@ -19,6 +19,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.core.logger_config import LoggerManager
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
+
 
 class WidgetFactory:
     """

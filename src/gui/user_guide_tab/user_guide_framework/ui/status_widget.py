@@ -5,7 +5,11 @@ Status Widget - Виджет статуса для User Guide Framework
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
 
-from ..core.theme_manager import ThemeManager
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.theme_manager import ThemeManager
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class StatusWidget(QWidget):

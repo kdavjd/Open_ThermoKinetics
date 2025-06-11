@@ -8,7 +8,11 @@ from typing import Dict, List, Optional
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from .exceptions import GuideFrameworkError, LocalizationError
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.exceptions import GuideFrameworkError, LocalizationError
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class LocalizationManager(QObject):

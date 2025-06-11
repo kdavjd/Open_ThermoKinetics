@@ -9,7 +9,11 @@ from typing import Any, Dict, List, Optional
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtGui import QColor, QFont
 
-from .exceptions import GuideFrameworkError, ThemeNotFoundError
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.exceptions import GuideFrameworkError, ThemeNotFoundError
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class ThemeManager(QObject):

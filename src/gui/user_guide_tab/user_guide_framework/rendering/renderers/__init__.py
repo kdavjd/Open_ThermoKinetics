@@ -2,7 +2,8 @@
 Renderers module - Модуль рендереров контента
 """
 
-from .base_renderer import BaseRenderer
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.base_renderer import BaseRenderer
+
 from .code_renderer import CodeRenderer
 from .image_renderer import ImageRenderer
 from .interactive_renderer import InteractiveRenderer

@@ -17,7 +17,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from .base_renderer import BaseRenderer
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.base_renderer import BaseRenderer
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class WorkflowRenderer(BaseRenderer):

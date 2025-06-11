@@ -5,8 +5,12 @@ NavigationManager - управление иерархической структ
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .content_manager import ContentManager
-from .exceptions import NavigationError
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.content_manager import ContentManager
+from src.gui.user_guide_tab.user_guide_framework.core.exceptions import NavigationError
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 @dataclass
@@ -81,21 +85,32 @@ class NavigationManager:
         Args:
             content_manager: ContentManager instance for accessing TOC data
         """
+        logger.info("Initializing NavigationManager")
         self.content_manager = content_manager
         self.root_nodes: List[NavigationNode] = []
         self.node_map: Dict[str, NavigationNode] = {}
         self._languages: List[str] = []
-        self.build_navigation_tree()
+
+        try:
+            self.build_navigation_tree()
+            logger.debug(f"Navigation tree built successfully with {len(self.root_nodes)} root nodes")
+        except Exception as e:
+            logger.error(f"Failed to build navigation tree: {e}")
+            raise
 
     def build_navigation_tree(self) -> None:
         """Build navigation tree from TOC structure"""
+        logger.debug("Building navigation tree from TOC structure")
+
         structure = self.content_manager.get_navigation_structure()
         metadata = self.content_manager.get_metadata()
 
         # Get available languages
         self._languages = metadata.get("languages", ["ru", "en"])
+        logger.debug(f"Available languages: {self._languages}")
 
         if not structure:
+            logger.error("No navigation structure found in table of contents")
             raise NavigationError("No navigation structure found in table of contents")
 
         # Clear existing data

@@ -5,8 +5,12 @@ Guide Toolbar - Панель инструментов для управлени�
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
 
-from ..core.localization_manager import LocalizationManager
-from ..core.theme_manager import ThemeManager
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.localization_manager import LocalizationManager
+from src.gui.user_guide_tab.user_guide_framework.core.theme_manager import ThemeManager
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class GuideToolBar(QWidget):

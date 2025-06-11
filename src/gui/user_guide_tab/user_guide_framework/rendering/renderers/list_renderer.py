@@ -7,7 +7,11 @@ from typing import Any, Dict, List
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox, QHBoxLayout, QLabel, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
-from .base_renderer import BaseRenderer
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.base_renderer import BaseRenderer
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class ListRenderer(BaseRenderer):

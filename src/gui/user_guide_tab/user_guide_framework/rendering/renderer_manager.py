@@ -6,7 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from PyQt6.QtWidgets import QLabel, QWidget
 
-from .renderers import (
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers import (
     BaseRenderer,
     CodeRenderer,
     ImageRenderer,
@@ -15,6 +16,9 @@ from .renderers import (
     TextRenderer,
     WorkflowRenderer,
 )
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class RendererManager:
@@ -30,15 +34,22 @@ class RendererManager:
         Args:
             theme_manager: Менеджер тем для стилизации
         """
+        logger.info("Initializing RendererManager")
         self.theme_manager = theme_manager
         self.renderers: List[BaseRenderer] = []
         self.renderer_map: Dict[str, BaseRenderer] = {}
 
-        self._initialize_renderers()
-        self._build_renderer_map()
+        try:
+            self._initialize_renderers()
+            self._build_renderer_map()
+            logger.debug(f"RendererManager initialized with {len(self.renderers)} renderers")
+        except Exception as e:
+            logger.error(f"Failed to initialize RendererManager: {e}")
+            raise
 
     def _initialize_renderers(self) -> None:
         """Инициализирует все доступные рендереры."""
+        logger.debug("Initializing renderers")
         self.renderers = [
             TextRenderer(self.theme_manager),
             ImageRenderer(self.theme_manager),
@@ -50,6 +61,7 @@ class RendererManager:
 
     def _build_renderer_map(self) -> None:
         """Строит карту соответствия типов контента и рендереров."""
+        logger.debug("Building renderer map")
         self.renderer_map = {}
 
         for renderer in self.renderers:
@@ -68,26 +80,34 @@ class RendererManager:
             QWidget: Созданный виджет или None если рендерер не найден
         """
         if not content or not isinstance(content, dict):
+            logger.warning("Invalid content format provided to render_block")
             return self._create_error_widget("Invalid content format")
 
         content_type = content.get("type", "")
         if not content_type:
+            logger.warning("Content type not specified in render_block")
             return self._create_error_widget("Content type not specified")
+
+        logger.debug(f"Rendering content block of type: {content_type}")
 
         # Ищем подходящий рендерер
         renderer = self.renderer_map.get(content_type)
         if not renderer:
+            logger.error(f"No renderer found for content type: {content_type}")
             return self._create_error_widget(f"No renderer found for type: {content_type}")
 
         try:
             # Рендерим контент
             widget = renderer.render(content)
             if widget:
+                logger.debug(f"Successfully rendered content block of type: {content_type}")
                 return widget
             else:
+                logger.error(f"Renderer failed to create widget for type: {content_type}")
                 return self._create_error_widget(f"Renderer failed to create widget for: {content_type}")
 
         except Exception as e:
+            logger.error(f"Error rendering {content_type}: {e}")
             error_message = f"Error rendering {content_type}: {str(e)}"
             return self._create_error_widget(error_message)
 
@@ -101,6 +121,7 @@ class RendererManager:
         Returns:
             List[QWidget]: Список созданных виджетов
         """
+        logger.debug(f"Rendering content list with {len(content_list)} blocks")
         widgets = []
 
         for content_block in content_list:
@@ -108,6 +129,7 @@ class RendererManager:
             if widget:
                 widgets.append(widget)
 
+        logger.debug(f"Successfully rendered {len(widgets)} widgets from content list")
         return widgets
 
     def get_supported_types(self) -> List[str]:
@@ -132,6 +154,7 @@ class RendererManager:
         if not isinstance(renderer, BaseRenderer):
             raise ValueError("Renderer must inherit from BaseRenderer")
 
+        logger.info(f"Adding renderer: {renderer.__class__.__name__}")
         self.renderers.append(renderer)
 
         # Обновляем карту рендереров
@@ -159,6 +182,7 @@ class RendererManager:
 
         # Удаляем найденные рендереры
         for renderer in renderers_to_remove:
+            logger.info(f"Removing renderer: {renderer.__class__.__name__}")
             self.renderers.remove(renderer)
 
         # Пересобираем карту
@@ -186,6 +210,7 @@ class RendererManager:
         Args:
             theme_manager: Новый менеджер тем
         """
+        logger.info("Updating theme manager for all renderers")
         self.theme_manager = theme_manager
 
         for renderer in self.renderers:

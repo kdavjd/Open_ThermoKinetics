@@ -3,6 +3,11 @@ from typing import Any, Dict, List
 
 from PyQt6.QtWidgets import QWidget
 
+from src.core.logger_config import LoggerManager
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
+
 
 class BaseRenderer(ABC):
     def __init__(self, theme_manager=None):

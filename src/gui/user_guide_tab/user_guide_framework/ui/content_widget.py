@@ -5,17 +5,15 @@ Content Widget - Виджет динамического отображения 
 from typing import Dict, List, Optional
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
-from ..core.content_manager import ContentManager, ContentSection
-from ..core.localization_manager import LocalizationManager
-from ..rendering.renderer_manager import RendererManager
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.content_manager import ContentManager, ContentSection
+from src.gui.user_guide_tab.user_guide_framework.core.localization_manager import LocalizationManager
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderer_manager import RendererManager
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 class ContentWidget(QWidget):
@@ -40,6 +38,7 @@ class ContentWidget(QWidget):
             parent: Родительский виджет
         """
         super().__init__(parent)
+        logger.info("Initializing ContentWidget")
 
         self.content_manager = content_manager
         self.renderer_manager = renderer_manager

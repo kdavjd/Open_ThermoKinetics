@@ -61,10 +61,8 @@ def test_ui_components():
         # Тест GuideToolBar
         toolbar = GuideToolBar(localization_manager, theme_manager)
         assert toolbar is not None  # Используем переменную для проверки
-        print("✓ GuideToolBar создан")
-
-        # Тест StatusWidget
-        status_widget = StatusWidget(theme_manager)
+        print("✓ GuideToolBar создан")  # Тест StatusWidget
+        status_widget = StatusWidget(theme_manager, None)
         assert status_widget is not None  # Используем переменную для проверки
         print("✓ StatusWidget создан")
 

@@ -7,7 +7,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .exceptions import ContentNotFoundError, GuideFrameworkError
+from src.core.logger_config import LoggerManager
+from src.gui.user_guide_tab.user_guide_framework.core.exceptions import ContentNotFoundError, GuideFrameworkError
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
 
 
 @dataclass
@@ -39,22 +43,32 @@ class ContentManager:
         Args:
             data_directory: Path to the directory containing content JSON files
         """
+        logger.info(f"Initializing ContentManager with data directory: {data_directory}")
         self.data_dir = Path(data_directory)
         self.toc_data: Optional[Dict[str, Any]] = None
         self.content_cache: Dict[str, ContentSection] = {}
         self._metadata_cache: Dict[str, Any] = {}
         self.load_toc()
+        logger.debug("ContentManager initialization completed")
 
     def load_toc(self) -> None:
         """Load table of contents from toc.json"""
         toc_path = self.data_dir / "toc.json"
+        logger.debug(f"Loading table of contents from: {toc_path}")
 
         if not toc_path.exists():
+            logger.error(f"Table of contents not found at {toc_path}")
             raise ContentNotFoundError(f"Table of contents not found at {toc_path}")
 
         try:
             with open(toc_path, "r", encoding="utf-8") as f:
                 self.toc_data = json.load(f)
+                logger.info(
+                    f"Successfully loaded table of contents with {len(self.toc_data.get('sections', []))} sections"
+                )
+        except Exception as e:
+            logger.error(f"Failed to load table of contents from {toc_path}: {e}")
+            raise
         except json.JSONDecodeError as e:
             raise GuideFrameworkError(f"Invalid JSON in table of contents: {e}")
         except Exception as e:

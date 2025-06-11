@@ -2,6 +2,11 @@
 Custom exceptions for the User Guide Framework
 """
 
+from src.core.logger_config import LoggerManager
+
+# Initialize logger for this module
+logger = LoggerManager.get_logger(__name__)
+
 
 class GuideFrameworkError(Exception):
     """Base exception for all user guide framework errors"""
