@@ -1,276 +1,244 @@
-# User Guide Framework Integration - Progress Report
+# План исправления ошибок приложения кинетики твердофазных реакций
 
-## 📋 Current Status: COMPLETED - Phase 1
+## Анализ проблем
 
-### ✅ What Was Accomplished
+На основе анализа 1000 строк логов выявлены следующие критические проблемы:
 
-**MAIN TASK:** Move `src\gui\user_guide_framework` inside `src\gui\user_guide_tab` and add comprehensive logging to all components using absolute imports and centralized `LoggerManager`.
+### 1. Каскадные повторяющиеся логи при инициализации
+**Проблема**: Одинаковые последовательности логов повторяются множественно при каждом запуске приложения, засоряя логи и усложняя отладку.
 
-#### 1. Directory Structure Reorganization ✅
-- **MOVED**: `src\gui\user_guide_framework` → `src\gui\user_guide_tab\user_guide_framework`
-- **UPDATED**: All import paths throughout the framework
-- **VERIFIED**: Directory structure integrity maintained
+**Примеры из логов**:
+```
+2025-06-11 18:54:05 - DEBUG - renderer_manager.py:64 - Building renderer map
+2025-06-11 18:54:05 - DEBUG - renderer_manager.py:45 - RendererManager initialized with 6 renderers
+[...повторяется 4 раза подряд...]
+```
 
-#### 2. Comprehensive Logging Implementation ✅
-**Added centralized logging to ALL components:**
+### 2. Отсутствующие методы в NavigationSidebar
+**Ошибки**:
+- `'NavigationSidebar' object has no attribute 'update_theme'` (строка 197 guide_framework.py)
+- `NavigationSidebar.update_language() missing 1 required positional argument: 'language'` (строка 184 guide_framework.py)
 
-**Core Components:**
-- ✅ `UserGuideTab` - Main tab initialization and UI setup
-- ✅ `GuideFramework` - Central framework coordination
-- ✅ `ContentManager` - Content loading and management
-- ✅ `NavigationManager` - Navigation state management
-- ✅ `ThemeManager` - Theme handling (import fixes)
-- ✅ `LocalizationManager` - Language management (import fixes)
+### 3. Отсутствующий метод в StatusWidget (решено)
+**Ошибка**: `'StatusWidget' object has no attribute 'update_section_info'` (строка 166 guide_framework.py)
+**Статус**: ✅ **РЕШЕНО** - метод `update_section_info` уже существует в StatusWidget
 
-**UI Components:**
-- ✅ `NavigationSidebar` - Tree navigation with language switching
-- ✅ `ContentWidget` - Dynamic content display
-- ✅ `GuideToolBar` - Toolbar controls (import fixes)
-- ✅ `StatusWidget` - Status and progress display (import fixes)
+### 4. Проблемы с отображением кодовых блоков
+**Проблема**: Code widgets показывают черный фон без видимого контента
 
-**Rendering System:**
-- ✅ `RendererManager` - Central rendering coordination
-- ✅ `BaseRenderer` - Base renderer class (import fixes)
-- ✅ `TextRenderer` - Text content rendering (import fixes)
-- ✅ `ImageRenderer` - Image content rendering (import fixes)
-- ✅ `CodeRenderer` - Code block rendering (import fixes)
-- ✅ `ListRenderer` - List content rendering (import fixes)
-- ✅ `InteractiveRenderer` - Interactive elements (import fixes)
-- ✅ `WorkflowRenderer` - Workflow sequences (import fixes)
-- ✅ `WidgetFactory` - Widget creation utilities (import fixes)
+### 5. Ошибки типов данных
+**Проблема**: Некоторые секции показывают ошибки `'str' has no attribute 'get'`
 
-#### 3. Import System Standardization ✅
-**Converted ALL relative imports to absolute imports:**
-- **Pattern**: `from ..module import Class` → `from src.gui.user_guide_tab.user_guide_framework.module import Class`
-- **Fixed**: Import syntax errors in renderer files where logger imports interrupted PyQt6 imports
-- **Verified**: All imports work correctly throughout the framework
+## План исправления
 
-#### 4. Signal Connection Fixes ✅
-**Resolved critical signal connection issues:**
-- ✅ **StatusWidget Constructor**: Fixed parameter order (`theme_manager, parent` instead of wrong order)
-- ✅ **Language Signal**: Fixed connection from `toolbar.language_changed` to `navigation_sidebar.language_changed`
-- ✅ **Content Signal**: Removed non-existent `content_widget.content_loaded` connection
-- ✅ **Method Call**: Fixed `display_content()` to `display_section()` in ContentWidget
+### Фаза 1: Исправление критических ошибок в NavigationSidebar
 
-#### 5. Application Stability ✅
-**Application successfully:**
-- ✅ **Starts without errors** - All TypeError and AttributeError issues resolved
-- ✅ **Loads User Guide Tab** - Framework initializes correctly
-- ✅ **Shows logging output** - Comprehensive logging working at INFO and DEBUG levels
-- ✅ **Navigation works** - Tree navigation responds to clicks (content display pending content data)
-
-### 🔧 Technical Implementation Details
-
-#### Logging Pattern Applied
+#### 1.1 Добавление недостающего метода `update_theme`
 ```python
-from src.core.logger_config import LoggerManager
-
-# Initialize logger for this module
-logger = LoggerManager.get_logger(__name__)
-
-# Usage in methods
-logger.info("Component initialization started")
-logger.debug("Detailed debug information")
-logger.error(f"Error occurred: {e}")
+def update_theme(self) -> None:
+    """Update theme for navigation sidebar."""
+    if not self.theme_manager:
+        return
+    
+    # Apply theme colors to UI elements
+    bg_color = self.theme_manager.get_color("background")
+    text_color = self.theme_manager.get_color("text_primary")
+    border_color = self.theme_manager.get_color("border")
+    
+    if all([bg_color, text_color, border_color]):
+        self.setStyleSheet(f"""
+            NavigationSidebar {{
+                background-color: {bg_color.name()};
+                color: {text_color.name()};
+                border-right: 1px solid {border_color.name()};
+            }}
+        """)
 ```
 
-#### Import Pattern Applied
+#### 1.2 Исправление сигнатуры метода `update_language`
+**Проблема**: Метод `update_language()` в guide_framework.py вызывается без параметра `language`
+
+**Исправление**: Обновить вызовы метода в guide_framework.py:
 ```python
-# Before (relative imports)
-from ..core.content_manager import ContentManager
-from .navigation_sidebar import NavigationSidebar
-
-# After (absolute imports)
-from src.gui.user_guide_tab.user_guide_framework.core.content_manager import ContentManager
-from src.gui.user_guide_tab.user_guide_framework.ui.navigation_sidebar import NavigationSidebar
+# guide_framework.py строка ~172
+self.navigation_sidebar.update_language(language_code)
 ```
 
-#### Directory Structure Result
-```
-src/gui/user_guide_tab/
-├── user_guide_tab.py                    # Main tab (with logging)
-└── user_guide_framework/                # Moved framework
-    ├── __init__.py
-    ├── core/                            # Core logic (all with logging)
-    │   ├── content_manager.py
-    │   ├── navigation_manager.py
-    │   ├── theme_manager.py
-    │   ├── localization_manager.py
-    │   └── exceptions.py
-    ├── ui/                              # UI components (all with logging)
-    │   ├── guide_framework.py
-    │   ├── navigation_sidebar.py
-    │   ├── content_widget.py
-    │   ├── guide_toolbar.py
-    │   └── status_widget.py
-    ├── rendering/                       # Rendering system (all with logging)
-    │   ├── renderer_manager.py
-    │   ├── widget_factory.py
-    │   └── renderers/
-    │       ├── base_renderer.py
-    │       ├── text_renderer.py
-    │       ├── image_renderer.py
-    │       ├── code_renderer.py
-    │       ├── list_renderer.py
-    │       ├── interactive_renderer.py
-    │       └── workflow_renderer.py
-    └── data/                            # Content data
-        ├── toc.json
-        └── content/
-```
+### Фаза 2: Реализация комплексной системы логирования
 
-### 📊 Logging Verification Results
+#### 2.1 Создание StateLogger с assert-логикой
+Создать новый модуль `src/core/state_logger.py`:
 
-**Console Logging (INFO level):**
-```
-18:54:53 - INFO - user_guide_tab.py:25 - Initializing UserGuideTab
-18:54:53 - INFO - guide_framework.py:44 - Initializing GuideFramework
-18:54:53 - INFO - content_manager.py:46 - Initializing ContentManager
-18:54:53 - INFO - navigation_manager.py:88 - Initializing NavigationManager
-18:54:53 - INFO - renderer_manager.py:37 - Initializing RendererManager
-18:54:53 - INFO - navigation_sidebar.py:23 - Initializing NavigationSidebar
-18:54:53 - INFO - content_widget.py:41 - Initializing ContentWidget
-18:54:53 - INFO - guide_framework.py:77 - Framework initialization completed
-```
-
-**File Logging (DEBUG level):**
-- Comprehensive debug information saved to `logs/solid_state_kinetics.log`
-- All component lifecycle events tracked
-- Error handling and recovery logged
-
----
-
-## 🎯 Next Phase: Content System Implementation
-
-### 📋 Phase 2 Objectives
-
-#### 1. Content Data Implementation
-**Priority: HIGH**
-- [ ] **ContentManager Integration**: Implement proper content loading from JSON/YAML files
-- [ ] **Content Format Definition**: Define standardized content format for guide sections
-- [ ] **Sample Content Creation**: Create sample guide content for testing
-- [ ] **Content Validation**: Add content format validation and error handling
-
-#### 2. Rendering System Completion
-**Priority: HIGH**
-- [ ] **Renderer Method Fix**: Fix missing `display_section` method in ContentWidget
-- [ ] **Content Type Mapping**: Implement proper content type to renderer mapping
-- [ ] **Renderer Testing**: Verify all renderer types work with real content
-- [ ] **Error Rendering**: Improve error display when content fails to load
-
-#### 3. Navigation Enhancement
-**Priority: MEDIUM**
-- [ ] **Dynamic Tree Loading**: Implement dynamic navigation tree population from content
-- [ ] **Search Functionality**: Implement content search across all sections
-- [ ] **Breadcrumb Navigation**: Add breadcrumb trail for current section
-- [ ] **Section History**: Implement back/forward navigation history
-
-#### 4. Language System Implementation
-**Priority: MEDIUM**
-- [ ] **LocalizationManager**: Complete localization system implementation
-- [ ] **Bilingual Content**: Implement Russian/English content switching
-- [ ] **UI Language Switching**: Complete UI text localization
-- [ ] **Language Persistence**: Save user's language preference
-
-#### 5. StatusWidget Enhancement
-**Priority: LOW**
-- [ ] **Status Methods**: Implement missing status methods (`update_section_info`, etc.)
-- [ ] **Progress Tracking**: Add content loading progress display
-- [ ] **Error Status**: Enhanced error status display
-- [ ] **Section Info**: Current section information display
-
-### 🚀 Immediate Next Steps
-
-#### Step 1: Fix ContentWidget Display Method
 ```python
-# In ContentWidget - implement missing method
+class StateLogger:
+    """Comprehensive state logger with assert functionality."""
+    
+    def __init__(self, component_name: str):
+        self.component_name = component_name
+        self.logger = LoggerManager.get_logger(f"state.{component_name}")
+        self.state_cache = {}
+    
+    def log_state_change(self, operation: str, before_state: dict, after_state: dict):
+        """Log state changes with comprehensive details."""
+        changes = self._calculate_changes(before_state, after_state)
+        self.logger.info(f"{operation} - State changes: {changes}")
+    
+    def assert_state(self, condition: bool, message: str, **context):
+        """Assert with comprehensive state logging."""
+        if not condition:
+            self.logger.error(f"ASSERTION FAILED: {message} | Context: {context}")
+            raise AssertionError(f"{self.component_name}: {message}")
+        else:
+            self.logger.debug(f"ASSERTION PASSED: {message}")
+```
+
+#### 2.2 Добавление StateLogger в ключевые компоненты
+- `GuideFramework` - для трекинга состояния UI
+- `NavigationSidebar` - для отслеживания навигации
+- `ContentWidget` - для контроля рендеринга
+- `BaseSignals` - для мониторинга межмодульной коммуникации
+
+#### 2.3 Реализация интеллектуального дебаунсинга логов
+```python
+class LogDebouncer:
+    """Intelligent log debouncing to prevent cascading identical logs."""
+    
+    def __init__(self, window_seconds: int = 5):
+        self.window_seconds = window_seconds
+        self.recent_logs = {}
+    
+    def should_log(self, message: str, level: str) -> bool:
+        """Determine if message should be logged based on recent history."""
+        key = f"{level}:{hash(message)}"
+        now = time.time()
+        
+        if key in self.recent_logs:
+            if now - self.recent_logs[key] < self.window_seconds:
+                return False
+        
+        self.recent_logs[key] = now
+        return True
+```
+
+### Фаза 3: Исправление проблем с кодовыми блоками
+
+#### 3.1 Обновление цветовой схемы в CodeRenderer
+**Проблема**: Неправильные цвета темы приводят к черному фону
+
+**Исправление**:
+```python
+def _get_safe_theme_color(self, color_key: str, fallback: str) -> str:
+    """Get theme color with safe fallback."""
+    color = self.get_theme_color(color_key)
+    return color.name() if color else fallback
+
+def _render_code_block_simple(self, code_text: str, title: str = "", language: str = "text") -> QWidget:
+    # Используем безопасные цвета с фоллбэками
+    bg_color = self._get_safe_theme_color("code_background", "#f8f9fa")
+    text_color = self._get_safe_theme_color("code_text", "#212529")
+    border_color = self._get_safe_theme_color("border_primary", "#dee2e6")
+    
+    code_widget.setStyleSheet(f"""
+        QTextEdit {{
+            background-color: {bg_color};
+            color: {text_color};
+            border: 1px solid {border_color};
+            border-radius: 4px;
+            padding: 8px;
+        }}
+    """)
+```
+
+#### 3.2 Добавление валидации контента
+```python
+def render(self, content: Dict[str, Any]) -> QWidget:
+    """Render with comprehensive validation."""
+    assert content is not None, "Content cannot be None"
+    assert isinstance(content, dict), f"Content must be dict, got {type(content)}"
+    
+    content_type = content.get("type")
+    assert content_type in self.get_supported_types(), f"Unsupported content type: {content_type}"
+    
+    # Продолжить с рендерингом...
+```
+
+### Фаза 4: Обработка ошибок типов данных
+
+#### 4.1 Добавление проверок типов в ContentWidget
+```python
 def display_section(self, section_id: str) -> None:
-    """Display content for specified section."""
+    """Display section with type validation."""
     try:
         content = self.content_manager.get_section_content(section_id)
-        if content:
-            self._render_content(content)
-        else:
-            self._show_no_content_message(section_id)
+        
+        # Валидация типов
+        if content is None:
+            self.state_logger.log_error(f"No content for section: {section_id}")
+            return
+            
+        if isinstance(content, str):
+            # Обработка строкового контента
+            content = {"type": "text", "content": content}
+        elif not isinstance(content, dict):
+            self.state_logger.log_error(f"Invalid content type for {section_id}: {type(content)}")
+            return
+            
+        self._render_content_safely(content)
+        
     except Exception as e:
-        logger.error(f"Error displaying section {section_id}: {e}")
-        self._show_error_message(str(e))
+        self.state_logger.log_error(f"Error displaying section {section_id}: {e}")
 ```
 
-#### Step 2: Content Format Design
-```yaml
-# Example content format (content/overview.yaml)
-section_id: "overview"
-title:
-  ru: "Обзор Open ThermoKinetics"
-  en: "Open ThermoKinetics Overview"
-content:
-  - type: "text"
-    data:
-      ru: "Open ThermoKinetics - программа для анализа..."
-      en: "Open ThermoKinetics is a program for analysis..."
-  - type: "image"
-    data:
-      src: "images/overview.png"
-      alt: "Application screenshot"
-  - type: "workflow"
-    data:
-      steps:
-        - "Load experimental data"
-        - "Perform deconvolution"
-        - "Analyze kinetics"
-```
+### Фаза 5: Реструктуризация системы логирования
 
-#### Step 3: StatusWidget Methods
+#### 5.1 Создание иерархической структуры логгеров
 ```python
-# In StatusWidget - implement missing methods
-def update_section_info(self, section_id: str) -> None:
-    """Update current section information."""
-    section_name = self._get_section_display_name(section_id)
-    self.set_current_section(section_name)
+# Основные категории логгеров
+LOGGER_CATEGORIES = {
+    "ui": "User interface components",
+    "state": "Application state changes", 
+    "navigation": "Navigation and routing",
+    "rendering": "Content rendering",
+    "communication": "Inter-component communication",
+    "errors": "Error tracking and recovery"
+}
 ```
 
-### 🎯 Success Criteria for Phase 2
+#### 5.2 Добавление контекстных логгеров
+```python
+class ContextLogger:
+    """Logger with automatic context injection."""
+    
+    def __init__(self, base_logger: Logger, context: dict):
+        self.base_logger = base_logger
+        self.context = context
+    
+    def log(self, level: str, message: str, **extra_context):
+        """Log with full context."""
+        full_context = {**self.context, **extra_context}
+        enhanced_message = f"{message} | Context: {full_context}"
+        getattr(self.base_logger, level)(enhanced_message)
+```
 
-**Content System:**
-- [ ] Navigation tree populated with real content structure
-- [ ] Content sections display properly with all renderer types
-- [ ] Search functionality works across all content
-- [ ] Error handling gracefully manages missing/invalid content
+## Приоритеты выполнения
 
-**User Experience:**
-- [ ] Smooth navigation between sections
-- [ ] Language switching works for all content and UI
-- [ ] Progress indication during content loading
-- [ ] Professional appearance with consistent styling
+1. **Критический (сразу)**: Исправление NavigationSidebar методов
+2. **Высокий (1-2 дня)**: Реализация StateLogger и дебаунсинга логов
+3. **Средний (3-5 дней)**: Исправление кодовых блоков и валидации контента
+4. **Низкий (1 неделя)**: Полная реструктуризация системы логирования
 
-**Technical Quality:**
-- [ ] All logging continues to work properly
-- [ ] No errors in console or logs during normal operation
-- [ ] Performance acceptable for large content sets
-- [ ] Code maintainability and documentation quality
+## Критерии успеха
 
-### 📁 Current Code State
+1. ✅ Отсутствие ошибок AttributeError в логах
+2. ✅ Видимость всех кодовых блоков с правильным форматированием  
+3. ✅ Сокращение объема логов на 70% при сохранении информативности
+4. ✅ Comprehensive state tracking во всех критических компонентах
+5. ✅ Assert-based валидация в местах потенциальных ошибок
 
-**All files ready for Phase 2:**
-- ✅ **Directory structure**: Correctly organized under `user_guide_tab`
-- ✅ **Logging integration**: Comprehensive logging in all components
-- ✅ **Import system**: All absolute imports working correctly
-- ✅ **Signal connections**: All major signal issues resolved
-- ✅ **Application stability**: Launches and runs without critical errors
+## Следующие шаги
 
-**Pending content system work:**
-- 🔧 Content data implementation and content loading
-- 🔧 Renderer system completion with real content
-- 🔧 StatusWidget method implementation
-- 🔧 Navigation enhancement with dynamic content
-
----
-
-## 🎉 Summary
-
-**Phase 1 COMPLETE** - User Guide Framework integration with comprehensive logging successfully implemented. The framework is now properly integrated into the application architecture with centralized logging, standardized imports, and resolved signal connections.
-
-**Ready for Phase 2** - Content system implementation to create a fully functional user guide with real content, enhanced navigation, and complete rendering capabilities.
-
-The application is stable and ready for the next development phase! 🚀
+1. Исправить методы NavigationSidebar
+2. Реализовать StateLogger для GuideFramework
+3. Обновить CodeRenderer с безопасными цветами
+4. Добавить assert-логику в критические места
+5. Запустить полное тестирование исправлений

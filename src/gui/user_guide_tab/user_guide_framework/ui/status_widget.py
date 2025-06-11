@@ -273,3 +273,21 @@ class StatusWidget(QWidget):
     def is_loading(self) -> bool:
         """Проверяет, активен ли индикатор загрузки."""
         return self.progress_bar.isVisible() and self.progress_bar.maximum() == 0
+
+    def update_section_info(self, section_id: str) -> None:
+        """
+        Обновление информации о текущем разделе.
+
+        Args:
+            section_id: Идентификатор раздела
+        """
+        if section_id:
+            self.set_current_section(section_id)
+            self.set_info(f"Загружен раздел: {section_id}")
+        else:
+            self.set_current_section("")
+            self.set_info("")
+
+    def update_theme(self) -> None:
+        """Обновление темы виджета."""
+        self.apply_theme()

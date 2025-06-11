@@ -13,7 +13,7 @@ class LoggerManager:
     @classmethod
     def configure_logging(
         cls,
-        log_level: int = logging.INFO,
+        log_level: int = logging.DEBUG,
         console_level: Optional[int] = None,
         file_level: Optional[int] = None,
         log_file: Optional[str] = None,

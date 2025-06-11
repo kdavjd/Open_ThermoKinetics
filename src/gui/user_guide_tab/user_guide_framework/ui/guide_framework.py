@@ -124,15 +124,15 @@ class GuideFramework(QWidget):
         logger.debug("Creating content area with toolbar and status")
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        # Панель инструментов
+        layout.setContentsMargins(0, 0, 0, 0)  # Панель инструментов
         self.toolbar = GuideToolBar(self.localization_manager, self.theme_manager)
         layout.addWidget(self.toolbar)
 
         # Область контента
-        self.content_widget = ContentWidget(self.renderer_manager, self.content_manager, self.theme_manager)
-        layout.addWidget(self.content_widget)  # Статусная панель
+        self.content_widget = ContentWidget(self.content_manager, self.renderer_manager, self.localization_manager)
+        layout.addWidget(self.content_widget)
+
+        # Статусная панель
         self.status_widget = StatusWidget(self.theme_manager, self)
         layout.addWidget(self.status_widget)
 
