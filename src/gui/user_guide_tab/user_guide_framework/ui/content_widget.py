@@ -2,12 +2,13 @@
 Content Widget - Виджет динамического отображения контента
 """
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from src.core.logger_config import LoggerManager
+from src.core.state_logger import StateLogger
 from src.gui.user_guide_tab.user_guide_framework.core.content_manager import ContentManager, ContentSection
 from src.gui.user_guide_tab.user_guide_framework.core.localization_manager import LocalizationManager
 from src.gui.user_guide_tab.user_guide_framework.rendering.renderer_manager import RendererManager
@@ -43,6 +44,9 @@ class ContentWidget(QWidget):
         self.content_manager = content_manager
         self.renderer_manager = renderer_manager
         self.localization_manager = localization_manager
+
+        # Initialize state logger for comprehensive tracking
+        self.state_logger = StateLogger("ContentWidget")
 
         self.current_section: Optional[str] = None
         self.current_language = "ru"
@@ -105,67 +109,126 @@ class ContentWidget(QWidget):
         Args:
             section_id: Идентификатор раздела
         """
+        # Type validation with StateLogger
+        self.state_logger.assert_state(
+            isinstance(section_id, str), "section_id must be string", section_id=section_id, type=type(section_id)
+        )
+
         if section_id == self.current_section:
             return
+
+        self.state_logger.log_state_change(
+            "section_change", {"current_section": self.current_section}, {"current_section": section_id}
+        )
 
         self.current_section = section_id
 
         # Используем таймер для избежания множественных обновлений
         self.update_timer.stop()
-        self.update_timer.start(50)  # 50ms задержка
-
-    def _update_content_delayed(self) -> None:
-        """Отложенное обновление контента."""
+        self.update_timer.start(50)  # 50ms задержка    def _update_content_delayed(self) -> None:
+        """Отложенное обновление контента с безопасной проверкой типов."""
         if not self.current_section:
             return
 
+        self.state_logger.log_operation_start("content_update", section_id=self.current_section)
         self._clear_content()
 
-        # Получение контента раздела
-        section_content = self.content_manager.get_section_content(self.current_section)
-        if not section_content:
-            self._show_error_message("Раздел не найден")
-            return
-
         try:
-            # Отображение метаданных раздела
-            self._display_section_metadata(section_content)
-
-            # Рендеринг блоков контента
-            content_blocks = section_content.content.get(self.current_language, [])
-            if not content_blocks:
-                # Пробуем английский как fallback
-                content_blocks = section_content.content.get("en", [])
-
-            if not content_blocks:
-                self._show_error_message("Контент для данного языка недоступен")
+            section_content = self._get_and_validate_content()
+            if section_content is None:
                 return
 
-            # Рендеринг каждого блока
-            for block in content_blocks:
-                try:
-                    widget = self.renderer_manager.render_block(block)
-                    if widget:
-                        self.content_layout.insertWidget(self.content_layout.count() - 1, widget)
-                except Exception as e:
-                    error_widget = self._create_error_block(f"Ошибка рендеринга блока: {e}")
-                    self.content_layout.insertWidget(self.content_layout.count() - 1, error_widget)
-
-            # Отображение связанных разделов
-            self._display_related_sections(section_content.related_sections)
-
-            # Прокрутка в начало
-            self.scroll_area.verticalScrollBar().setValue(0)
+            self._render_section_content(section_content)
+            self._finalize_content_update()
 
         except Exception as e:
+            self.state_logger.log_error("Error loading content", error=str(e), section_id=self.current_section)
             self._show_error_message(f"Ошибка загрузки контента: {e}")
+
+    def _get_and_validate_content(self):
+        """Get and validate section content."""
+        section_content = self.content_manager.get_section_content(self.current_section)
+
+        if section_content is None:
+            self.state_logger.log_error("No content found for section", section_id=self.current_section)
+            self._show_error_message("Раздел не найден")
+            return None
+
+        # Validate content structure
+        self.state_logger.assert_state(
+            hasattr(section_content, "content"),
+            "Section content must have content attribute",
+            section_id=self.current_section,
+        )
+
+        return section_content
+
+    def _render_section_content(self, section_content) -> None:
+        """Render section content and metadata."""
+        # Отображение метаданных раздела
+        self._display_section_metadata(section_content)
+
+        # Get content blocks for current language
+        content_blocks = self._get_content_blocks(section_content)
+        if not content_blocks:
+            self._show_error_message("Контент для данного языка недоступен")
+            return
+
+        # Render content blocks
+        self._render_content_blocks(content_blocks)
+
+        # Display related sections if available
+        if hasattr(section_content, "related_sections"):
+            self._display_related_sections(section_content.related_sections)
+
+    def _get_content_blocks(self, section_content) -> list:
+        """Get content blocks for current language with fallback."""
+        content_blocks = section_content.content.get(self.current_language, [])
+        if not content_blocks:
+            # Try English as fallback
+            content_blocks = section_content.content.get("en", [])
+        return content_blocks
+
+    def _render_content_blocks(self, content_blocks: list) -> None:
+        """Render individual content blocks."""
+        for block in content_blocks:
+            try:
+                validated_block = self._validate_content_block(block)
+                if validated_block is None:
+                    continue
+
+                widget = self.renderer_manager.render_block(validated_block)
+                if widget:
+                    self.content_layout.insertWidget(self.content_layout.count() - 1, widget)
+            except Exception as e:
+                self.state_logger.log_error("Error rendering block", error=str(e), block=block)
+                error_widget = self._create_error_block(f"Ошибка рендеринга блока: {e}")
+                self.content_layout.insertWidget(self.content_layout.count() - 1, error_widget)
+
+    def _validate_content_block(self, block):
+        """Validate and normalize content block."""
+        if isinstance(block, str):
+            return {"type": "text", "content": block}
+        elif isinstance(block, dict):
+            return block
+        else:
+            self.state_logger.log_error(
+                "Invalid content block type", block_type=type(block), section_id=self.current_section
+            )
+            return None
+
+    def _finalize_content_update(self) -> None:
+        """Finalize content update."""
+        # Scroll to top
+        self.scroll_area.verticalScrollBar().setValue(0)
+        self.state_logger.log_operation_end("content_update", success=True)
 
     def _display_section_metadata(self, section: ContentSection) -> None:
         """Отображение метаданных раздела."""
-        metadata = section.metadata
-
-        if not metadata:
+        if not hasattr(section, "metadata") or not section.metadata:
             return
+
+        metadata = section.metadata
 
         # Создание контейнера метаданных
         metadata_widget = QWidget()
@@ -202,28 +265,6 @@ class ContentWidget(QWidget):
             """)
             metadata_layout.addWidget(desc_label)
 
-        # Дополнительная информация
-        info_layout = QHBoxLayout()
-
-        # Сложность
-        difficulty = metadata.get("difficulty", "")
-        if difficulty:
-            difficulty_label = QLabel(f"Сложность: {difficulty}")
-            difficulty_label.setStyleSheet("QLabel { color: #17a2b8; font-weight: bold; }")
-            info_layout.addWidget(difficulty_label)
-
-        # Время
-        estimated_time = metadata.get("estimated_time", "")
-        if estimated_time:
-            time_label = QLabel(f"Время: {estimated_time}")
-            time_label.setStyleSheet("QLabel { color: #28a745; font-weight: bold; }")
-            info_layout.addWidget(time_label)
-
-        info_layout.addStretch()
-
-        if info_layout.count() > 1:  # Есть хотя бы одна метка
-            metadata_layout.addLayout(info_layout)
-
         self.content_layout.insertWidget(0, metadata_widget)
 
     def _display_related_sections(self, related_sections: List[str]) -> None:
@@ -250,9 +291,12 @@ class ContentWidget(QWidget):
         # Список связанных разделов
         for section_id in related_sections:
             # Получаем информацию о разделе
-            section_content = self.content_manager.get_section_content(section_id)
-            if section_content:
-                title = section_content.metadata.get("title", {}).get(self.current_language, section_id)
+            try:
+                section_content = self.content_manager.get_section_content(section_id)
+                if section_content and hasattr(section_content, "metadata"):
+                    title = section_content.metadata.get("title", {}).get(self.current_language, section_id)
+                else:
+                    title = section_id
 
                 link_label = QLabel(f"• {title}")
                 link_label.setStyleSheet("""
@@ -266,88 +310,11 @@ class ContentWidget(QWidget):
                     }
                 """)
                 link_label.setCursor(Qt.CursorShape.PointingHandCursor)
-
-                # Здесь можно добавить обработчик клика для навигации
-
                 related_layout.addWidget(link_label)
+            except Exception as e:
+                self.state_logger.log_warning("Error loading related section", section_id=section_id, error=str(e))
 
         self.content_layout.insertWidget(self.content_layout.count() - 1, related_widget)
-
-    def display_search_results(self, results: List[Dict]) -> None:
-        """
-        Отображение результатов поиска.
-
-        Args:
-            results: Список результатов поиска
-        """
-        self._clear_content()
-
-        # Заголовок результатов
-        header_label = QLabel(f"Результаты поиска ({len(results)} найдено)")
-        header_label.setStyleSheet("""
-            QLabel {
-                font-size: 20px;
-                font-weight: bold;
-                color: #2c3e50;
-                padding: 8px 0px;
-                border-bottom: 2px solid #3498db;
-                margin-bottom: 16px;
-            }
-        """)
-        self.content_layout.insertWidget(0, header_label)
-
-        # Отображение результатов
-        for result in results:
-            result_widget = self._create_search_result_widget(result)
-            self.content_layout.insertWidget(self.content_layout.count() - 1, result_widget)
-
-        # Прокрутка в начало
-        self.scroll_area.verticalScrollBar().setValue(0)
-
-    def _create_search_result_widget(self, result: Dict) -> QWidget:
-        """Создание виджета результата поиска."""
-        widget = QWidget()
-        layout = QVBoxLayout(widget)
-
-        # Заголовок результата
-        title = result.get("title", "Без названия")
-        title_label = QLabel(title)
-        title_label.setStyleSheet("""
-            QLabel {
-                font-size: 16px;
-                font-weight: bold;
-                color: #3498db;
-                text-decoration: underline;
-            }
-        """)
-        title_label.setCursor(Qt.CursorShape.PointingHandCursor)
-        layout.addWidget(title_label)
-
-        # Фрагмент текста
-        snippet = result.get("snippet", "")
-        if snippet:
-            snippet_label = QLabel(snippet)
-            snippet_label.setWordWrap(True)
-            snippet_label.setStyleSheet("""
-                QLabel {
-                    color: #6c757d;
-                    padding: 4px 0px;
-                    line-height: 1.4;
-                }
-            """)
-            layout.addWidget(snippet_label)
-
-        widget.setStyleSheet("""
-            QWidget {
-                border: 1px solid #e9ecef;
-                border-radius: 4px;
-                background-color: #f8f9fa;
-                margin: 4px 0px;
-                padding: 8px;
-            }
-        """)
-
-        return widget
 
     def _clear_content(self) -> None:
         """Очистка текущего контента."""
@@ -401,3 +368,8 @@ class ContentWidget(QWidget):
             # Перерендеринг текущего раздела
             if self.current_section:
                 self.display_section(self.current_section)
+
+    def update_theme(self) -> None:
+        """Update theme for content widget."""
+        # Theme update implementation can be added here
+        pass

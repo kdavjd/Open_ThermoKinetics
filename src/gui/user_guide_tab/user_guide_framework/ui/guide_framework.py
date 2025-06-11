@@ -9,6 +9,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QSplitter, QVBoxLayout, QWidget
 
 from src.core.logger_config import LoggerManager
+from src.core.state_logger import StateLogger
 from src.gui.user_guide_tab.user_guide_framework.core.content_manager import ContentManager
 from src.gui.user_guide_tab.user_guide_framework.core.localization_manager import LocalizationManager
 from src.gui.user_guide_tab.user_guide_framework.core.navigation_manager import NavigationManager
@@ -42,6 +43,10 @@ class GuideFramework(QWidget):
         """
         super().__init__(parent)
         logger.info(f"Initializing GuideFramework with data directory: {data_directory}")
+
+        # Initialize state logger for comprehensive tracking
+        self.state_logger = StateLogger("GuideFramework")
+        self.state_logger.log_operation_start("initialization", data_directory=str(data_directory))
 
         # Инициализация менеджеров
         try:
@@ -124,7 +129,9 @@ class GuideFramework(QWidget):
         logger.debug("Creating content area with toolbar and status")
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(0, 0, 0, 0)  # Панель инструментов
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Панель инструментов
         self.toolbar = GuideToolBar(self.localization_manager, self.theme_manager)
         layout.addWidget(self.toolbar)
 
@@ -141,7 +148,9 @@ class GuideFramework(QWidget):
 
     def setup_connections(self) -> None:
         """Настройка сигналов и слотов между компонентами."""
-        logger.debug("Setting up signal connections")  # Навигация
+        logger.debug("Setting up signal connections")
+
+        # Навигация
         self.navigation_sidebar.section_selected.connect(self.on_section_selected)
         self.navigation_sidebar.section_selected.connect(self.section_changed)
         self.navigation_sidebar.language_changed.connect(self.on_language_changed)
@@ -170,7 +179,7 @@ class GuideFramework(QWidget):
         logger.info(f"Language changed to: {language_code}")
         try:
             self.localization_manager.set_language(language_code)
-            self.navigation_sidebar.update_language()
+            self.navigation_sidebar.update_language(language_code)
             self.toolbar.update_language()
             self.status_widget.update_language()
 

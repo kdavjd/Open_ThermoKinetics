@@ -8,6 +8,7 @@ from PyQt6.QtGui import QFont, QFontMetrics
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
 from src.core.logger_config import LoggerManager
+from src.core.state_logger import StateLogger
 from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.base_renderer import BaseRenderer
 
 # Initialize logger for this module
@@ -18,6 +19,23 @@ class CodeRenderer(BaseRenderer):
     """
     Рендерер для блоков кода, команд и синтаксиса.
     """
+
+    def __init__(self, theme_manager):
+        super().__init__(theme_manager)
+        self.state_logger = StateLogger("CodeRenderer")
+
+    def _get_safe_theme_color(self, color_key: str, fallback: str) -> str:
+        """Get theme color with safe fallback."""
+        try:
+            color = self.get_theme_color(color_key)
+            if color and hasattr(color, "name"):
+                return color.name()
+            else:
+                self.state_logger.log_warning(f"Invalid color for key: {color_key}", fallback=fallback)
+                return fallback
+        except Exception as e:
+            self.state_logger.log_error(f"Error getting theme color: {color_key}", error=str(e), fallback=fallback)
+            return fallback
 
     def get_supported_types(self) -> List[str]:
         """Возвращает список поддерживаемых типов кода."""
@@ -74,11 +92,11 @@ class CodeRenderer(BaseRenderer):
             title_label.setStyleSheet(f"""
                 QLabel {{
                     font-weight: bold;
-                    color: {self.get_theme_color("text_primary")};
+                    color: {self._get_safe_theme_color("text_primary", "#000000")};
                     padding: 4px 8px;
-                    background-color: {self.get_theme_color("surface")};
+                    background-color: {self._get_safe_theme_color("surface", "#FFFFFF")};
                     border-radius: 4px 4px 0px 0px;
-                    border: 1px solid {self.get_theme_color("border")};
+                    border: 1px solid {self._get_safe_theme_color("border", "#CCCCCC")};
                     border-bottom: none;
                 }}
             """)
@@ -108,9 +126,9 @@ class CodeRenderer(BaseRenderer):
         code_editor.setFont(font)
 
         # Стилизация редактора кода
-        bg_color = self.get_theme_color("surface")
-        text_color = self.get_theme_color("text_primary")
-        border_color = self.get_theme_color("border")
+        bg_color = self._get_safe_theme_color("surface", "#FFFFFF")
+        text_color = self._get_safe_theme_color("text_primary", "#000000")
+        border_color = self._get_safe_theme_color("border", "#CCCCCC")
 
         code_editor.setStyleSheet(f"""
             QTextEdit {{
@@ -123,12 +141,12 @@ class CodeRenderer(BaseRenderer):
                 line-height: 1.4;
             }}
             QScrollBar:vertical {{
-                background-color: {self.get_theme_color("background")};
+                background-color: {self._get_safe_theme_color("background", "#F0F0F0")};
                 width: 12px;
                 border-radius: 6px;
             }}
             QScrollBar::handle:vertical {{
-                background-color: {self.get_theme_color("border")};
+                background-color: {self._get_safe_theme_color("border", "#CCCCCC")};
                 border-radius: 6px;
                 min-height: 20px;
             }}
@@ -149,7 +167,7 @@ class CodeRenderer(BaseRenderer):
             lang_label = QLabel(f"Language: {language.upper()}")
             lang_label.setStyleSheet(f"""
                 QLabel {{
-                    color: {self.get_theme_color("text_secondary")};
+                    color: {self._get_safe_theme_color("text_secondary", "#666666")};
                     font-size: 10px;
                     padding: 2px 8px;
                     text-align: right;
@@ -178,14 +196,14 @@ class CodeRenderer(BaseRenderer):
 
         # Заголовок терминала
         header = QLabel("💻 Terminal")
-        header.setStyleSheet("""
-            QLabel {
-                background-color: #2d3748;
-                color: white;
+        header.setStyleSheet(f"""
+            QLabel {{
+                background-color: {self._get_safe_theme_color("terminal_header_background", "#2d3748")};
+                color: {self._get_safe_theme_color("terminal_header_text", "#FFFFFF")};
                 padding: 6px 12px;
                 font-weight: bold;
                 border-radius: 4px 4px 0px 0px;
-            }
+            }}
         """)
         layout.addWidget(header)
 
@@ -207,24 +225,24 @@ class CodeRenderer(BaseRenderer):
         font.setFamily("monospace")
         terminal_widget.setFont(font)
 
-        terminal_widget.setStyleSheet("""
-            QTextEdit {
-                background-color: #1a202c;
-                color: #e2e8f0;
-                border: 1px solid #4a5568;
+        terminal_widget.setStyleSheet(f"""
+            QTextEdit {{
+                background-color: {self._get_safe_theme_color("terminal_background", "#1a202c")};
+                color: {self._get_safe_theme_color("terminal_text", "#e2e8f0")};
+                border: 1px solid {self._get_safe_theme_color("terminal_border", "#4a5568")};
                 border-radius: 0px 0px 4px 4px;
                 padding: 8px;
                 font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            }
-            QScrollBar:vertical {
-                background-color: #2d3748;
+            }}
+            QScrollBar:vertical {{
+                background-color: {self._get_safe_theme_color("scrollbar_background", "#2d3748")};
                 width: 12px;
                 border-radius: 6px;
-            }
-            QScrollBar::handle:vertical {
-                background-color: #4a5568;
+            }}
+            QScrollBar::handle:vertical {{
+                background-color: {self._get_safe_theme_color("scrollbar_handle", "#4a5568")};
                 border-radius: 6px;
-            }
+            }}
         """)
 
         # Размер терминала
@@ -290,7 +308,7 @@ class CodeRenderer(BaseRenderer):
                 title_label.setFont(font)
             title_label.setStyleSheet(f"""
                 QLabel {{
-                    color: {self.get_theme_color("text_primary")};
+                    color: {self._get_safe_theme_color("text_primary", "#000000")};
                     font-weight: bold;
                     padding: 4px 0px;
                 }}
@@ -309,12 +327,12 @@ class CodeRenderer(BaseRenderer):
 
         code_widget.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {self.get_theme_color("code_background")};
-                color: {self.get_theme_color("code_text")};
-                border: 1px solid {self.get_theme_color("border_primary")};
+                background-color: {self._get_safe_theme_color("code_background", "#F5F5F5")};
+                color: {self._get_safe_theme_color("code_text", "#333333")};
+                border: 1px solid {self._get_safe_theme_color("border_primary", "#CCCCCC")};
                 border-radius: 4px;
                 padding: 8px;
-                selection-background-color: {self.get_theme_color("selection_background")};
+                selection-background-color: {self._get_safe_theme_color("selection_background", "#D0D0D0")};
             }}
         """)
 
@@ -343,7 +361,7 @@ class CodeRenderer(BaseRenderer):
                 title_label.setFont(font)
             title_label.setStyleSheet(f"""
                 QLabel {{
-                    color: {self.get_theme_color("text_primary")};
+                    color: {self._get_safe_theme_color("text_primary", "#000000")};
                     font-weight: bold;
                     padding: 4px 0px;
                 }}
@@ -362,12 +380,12 @@ class CodeRenderer(BaseRenderer):
 
         terminal_widget.setStyleSheet(f"""
             QTextEdit {{
-                background-color: {self.get_theme_color("terminal_background")};
-                color: {self.get_theme_color("terminal_text")};
-                border: 1px solid {self.get_theme_color("border_primary")};
+                background-color: {self._get_safe_theme_color("terminal_background", "#1a202c")};
+                color: {self._get_safe_theme_color("terminal_text", "#e2e8f0")};
+                border: 1px solid {self._get_safe_theme_color("border_primary", "#4a5568")};
                 border-radius: 4px;
                 padding: 8px;
-                selection-background-color: {self.get_theme_color("selection_background")};
+                selection-background-color: {self._get_safe_theme_color("selection_background", "#D0D0D0")};
             }}
         """)
 

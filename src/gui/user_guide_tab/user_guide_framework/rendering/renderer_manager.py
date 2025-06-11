@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 from PyQt6.QtWidgets import QLabel, QWidget
 
 from src.core.logger_config import LoggerManager
+from src.core.state_logger import StateLogger
 from src.gui.user_guide_tab.user_guide_framework.rendering.renderers import (
     BaseRenderer,
     CodeRenderer,
@@ -37,7 +38,9 @@ class RendererManager:
         logger.info("Initializing RendererManager")
         self.theme_manager = theme_manager
         self.renderers: List[BaseRenderer] = []
-        self.renderer_map: Dict[str, BaseRenderer] = {}
+        self.renderer_map: Dict[str, BaseRenderer] = {}  # Initialize state logger for comprehensive tracking
+        self.state_logger = StateLogger("RendererManager")
+        self.state_logger.log_operation_start("initialization")
 
         try:
             self._initialize_renderers()
@@ -49,7 +52,8 @@ class RendererManager:
 
     def _initialize_renderers(self) -> None:
         """Инициализирует все доступные рендереры."""
-        logger.debug("Initializing renderers")
+        self.state_logger.log_operation_start("renderer_initialization")
+
         self.renderers = [
             TextRenderer(self.theme_manager),
             ImageRenderer(self.theme_manager),
@@ -59,15 +63,19 @@ class RendererManager:
             WorkflowRenderer(self.theme_manager),
         ]
 
+        self.state_logger.log_operation_end("renderer_initialization", success=True, count=len(self.renderers))
+
     def _build_renderer_map(self) -> None:
         """Строит карту соответствия типов контента и рендереров."""
-        logger.debug("Building renderer map")
+        self.state_logger.log_operation_start("building_renderer_map")
         self.renderer_map = {}
 
         for renderer in self.renderers:
             supported_types = renderer.get_supported_types()
             for content_type in supported_types:
                 self.renderer_map[content_type] = renderer
+
+        self.state_logger.log_operation_end("building_renderer_map", success=True, map_size=len(self.renderer_map))
 
     def render_block(self, content: Dict[str, Any]) -> Optional[QWidget]:
         """

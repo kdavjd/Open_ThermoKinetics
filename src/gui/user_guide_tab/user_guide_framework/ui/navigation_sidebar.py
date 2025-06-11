@@ -2,11 +2,14 @@
 Navigation Sidebar - Боковая панель навигации для User Guide Framework
 """
 
+from typing import Optional
+
 from PyQt6.QtCore import QTimer, pyqtSignal
 from PyQt6.QtGui import QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTreeView, QVBoxLayout, QWidget
 
 from src.core.logger_config import LoggerManager
+from src.core.state_logger import StateLogger
 from src.gui.user_guide_tab.user_guide_framework.core.navigation_manager import NavigationManager
 from src.gui.user_guide_tab.user_guide_framework.core.theme_manager import ThemeManager
 
@@ -25,6 +28,10 @@ class NavigationSidebar(QWidget):
         self.navigation_manager = navigation_manager
         self.theme_manager = theme_manager
         self.current_language = "ru"
+
+        # Initialize state logger for comprehensive tracking
+        self.state_logger = StateLogger("NavigationSidebar")
+        self.state_logger.log_operation_start("initialization")
 
         self.tree_model = QStandardItemModel()
         self.tree_model.setHorizontalHeaderLabels(["Разделы"])
@@ -119,7 +126,11 @@ class NavigationSidebar(QWidget):
     def on_language_changed(self, language_text):
         language_code = "ru" if language_text == "Русский" else "en"
         if language_code != self.current_language:
+            before_state = {"language": self.current_language}
             self.current_language = language_code
+            after_state = {"language": self.current_language}
+
+            self.state_logger.log_state_change("language_change", before_state, after_state)
             self._load_navigation_data()
             self.language_changed.emit(language_code)
 
@@ -164,3 +175,83 @@ class NavigationSidebar(QWidget):
 
     def refresh_navigation(self):
         self._load_navigation_data()
+
+    def update_theme(self) -> None:
+        """Update theme for navigation sidebar."""
+        if not self.theme_manager:
+            logger.warning("ThemeManager not available for NavigationSidebar theme update")
+            return
+
+        try:
+            # Apply theme colors to UI elements
+            bg_color = self.theme_manager.get_color("background")
+            text_color = self.theme_manager.get_color("text_primary")
+            border_color = self.theme_manager.get_color("border")
+
+            if all([bg_color, text_color, border_color]):
+                self.setStyleSheet(f"""
+                    NavigationSidebar {{
+                        background-color: {bg_color.name()};
+                        color: {text_color.name()};
+                        border-right: 1px solid {border_color.name()};
+                    }}
+                    QTreeView {{
+                        background-color: {bg_color.name()};
+                        color: {text_color.name()};
+                        border: none;
+                    }}
+                    QComboBox {{
+                        background-color: {bg_color.name()};
+                        color: {text_color.name()};
+                        border: 1px solid {border_color.name()};
+                    }}
+                    QLineEdit {{
+                        background-color: {bg_color.name()};
+                        color: {text_color.name()};
+                        border: 1px solid {border_color.name()};
+                    }}
+                """)
+                logger.debug("NavigationSidebar theme updated successfully")
+            else:
+                logger.warning("Some theme colors are missing, using default styling")
+        except Exception as e:
+            logger.error(f"Error updating NavigationSidebar theme: {e}")
+
+    def get_current_section(self) -> Optional[str]:
+        """Get currently selected section ID."""
+        current_index = self.tree_view.currentIndex()
+        if current_index.isValid():
+            item = self.tree_model.itemFromIndex(current_index)
+            if item:
+                section_id = item.data(role=1000)
+                logger.debug(f"Current section: {section_id}")
+                return section_id
+        logger.debug("No section currently selected")
+        return None
+
+    def select_section(self, section_id: str) -> None:
+        """Programmatically select a section."""
+        logger.debug(f"Selecting section programmatically: {section_id}")
+        # Find the item with the given section_id
+        root_item = self.tree_model.invisibleRootItem()
+        item_to_select = self._find_item_by_section_id(root_item, section_id)
+
+        if item_to_select:
+            index = self.tree_model.indexFromItem(item_to_select)
+            self.tree_view.setCurrentIndex(index)
+            self.tree_view.scrollTo(index)
+            logger.debug(f"Section {section_id} selected successfully")
+        else:
+            logger.warning(f"Section {section_id} not found in navigation tree")
+
+    def _find_item_by_section_id(self, parent_item, section_id: str):
+        """Recursively find item by section_id."""
+        for row in range(parent_item.rowCount()):
+            item = parent_item.child(row)
+            if item and item.data(role=1000) == section_id:
+                return item
+            # Search in children
+            found_item = self._find_item_by_section_id(item, section_id)
+            if found_item:
+                return found_item
+        return None
