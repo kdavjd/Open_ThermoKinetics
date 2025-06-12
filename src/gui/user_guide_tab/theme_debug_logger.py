@@ -15,9 +15,11 @@ def log_theme_colors_table(theme_manager, theme_name: str) -> None:
         theme_manager: ThemeManager instance
         theme_name: Name of the current theme
     """
-    logger.info("=" * 80)
+    # Table width calculation: 16+16+12+8 + separators = 68 chars
+    table_width = 68
+    logger.info("=" * table_width)
     logger.info(f"THEME COLORS DEBUG TABLE - Theme: '{theme_name}'")
-    logger.info("=" * 80)
+    logger.info("=" * table_width)
 
     # Get all colors from current theme
     colors = theme_manager.current_theme.get("colors", {})
@@ -26,21 +28,23 @@ def log_theme_colors_table(theme_manager, theme_name: str) -> None:
         logger.warning("No colors found in theme!")
         return
 
-    # Header
-    logger.info(f"{'Color Key':<20} | {'Theme Value':<20} | {'QColor Result':<15} | {'Status':<10}")
-    logger.info("-" * 80)
+    # Header with proper column widths
+    logger.info(f"{'Color Key':<16} | {'Theme Value':<16} | {'QColor':<12} | {'Status':<8}")
+    logger.info("-" * table_width)
 
     # Log each color available in theme
     for color_key, color_value in colors.items():
         try:
             qcolor = theme_manager.get_color(color_key)
             is_valid = "✓ Valid" if qcolor.isValid() else "✗ Invalid"
-            value_str = str(color_value)[:20]  # Truncate long values
-            logger.info(f"{color_key:<20} | {value_str:<20} | {qcolor.name():<15} | {is_valid:<10}")
+            value_str = str(color_value)[:16]  # Truncate to fit column
+            qcolor_str = qcolor.name()[:12]  # Truncate to fit column
+            logger.info(f"{color_key:<16} | {value_str:<16} | {qcolor_str:<12} | {is_valid:<8}")
         except Exception as e:
-            logger.error(f"{color_key:<20} | {str(color_value):<20} | ERROR: {str(e)[:10]}")
+            error_str = str(e)[:8]  # Truncate error message
+            logger.error(f"{color_key:<16} | {str(color_value)[:16]:<16} | ERROR:{error_str:<7} | ✗")
 
-    logger.info("-" * 80)
+    logger.info("-" * table_width)
 
     # Test commonly requested colors that components might be looking for
     common_requests = [
@@ -58,23 +62,25 @@ def log_theme_colors_table(theme_manager, theme_name: str) -> None:
     ]
 
     logger.info("COMPONENT COLOR REQUESTS TEST:")
-    logger.info("-" * 80)
+    logger.info("-" * table_width)
 
     for key in common_requests:
         try:
             color = theme_manager.get_color(key)
             if key in colors:
                 status = "✓ Found"
-                expected = str(colors[key])[:20]
+                expected = str(colors[key])[:16]
             else:
                 status = "✗ Missing"
-                expected = "N/A (fallback #000000)"
+                expected = "N/A (fallback)"
 
-            logger.info(f"{key:<20} | {expected:<20} | {color.name():<15} | {status}")
+            color_str = color.name()[:12]  # Truncate to fit column
+            logger.info(f"{key:<16} | {expected:<16} | {color_str:<12} | {status:<8}")
         except Exception as e:
-            logger.error(f"{key:<20} | ERROR: {str(e)}")
+            error_str = str(e)[:8]  # Truncate error message
+            logger.error(f"{key:<16} | ERROR:{error_str:<11} | | ✗")
 
-    logger.info("=" * 80)
+    logger.info("=" * table_width)
 
 
 def log_component_theme_application(component_name: str, color_requests: list, theme_manager) -> None:
@@ -86,8 +92,10 @@ def log_component_theme_application(component_name: str, color_requests: list, t
         color_requests: List of color keys the component is requesting
         theme_manager: ThemeManager instance
     """
+    # Use shorter table for component application
+    table_width = 60
     logger.info(f"COMPONENT THEME APPLICATION: {component_name}")
-    logger.info("-" * 60)
+    logger.info("-" * table_width)
 
     colors = theme_manager.current_theme.get("colors", {})
 
@@ -102,9 +110,12 @@ def log_component_theme_application(component_name: str, color_requests: list, t
                 status = "✗ Missing (using fallback)"
                 expected = "#000000"
 
-            logger.info(f"  {color_key:<20} | Expected: {str(expected):<15} | Got: {color.name():<10} | {status}")
+            # Truncate values to fit properly
+            expected_str = str(expected)[:15]
+            color_str = color.name()[:10]
+            logger.info(f"  {color_key:<20} | Expected: {expected_str:<15} | Got: {color_str:<10} | {status}")
 
         except Exception as e:
             logger.error(f"  {color_key:<20} | ERROR: {e}")
 
-    logger.info("-" * 60)
+    logger.info("-" * table_width)

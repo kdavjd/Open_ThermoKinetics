@@ -28,8 +28,8 @@ class CodeRenderer(BaseRenderer):
         """Get theme color with safe fallback."""
         try:
             color = self.get_theme_color(color_key)
-            if color and hasattr(color, "name"):
-                return color.name()
+            if color and isinstance(color, str) and color.startswith("#"):
+                return color
             else:
                 self.state_logger.log_warning(f"Invalid color for key: {color_key}", fallback=fallback)
                 return fallback

@@ -276,7 +276,7 @@ class ThemeManager(QObject):
         Returns:
             List of theme names
         """
-        themes = ["default"]
+        themes = ["default", "dark", "high_contrast"]
         themes.extend(self.available_themes.keys())
         return themes
 
@@ -303,10 +303,16 @@ class ThemeManager(QObject):
                 "text_primary": "#2c3e50",
                 "text_secondary": "#6c757d",
                 "border": "#e9ecef",
+                "border_primary": "#e9ecef",
                 "success": "#28a745",
                 "warning": "#ffc107",
                 "error": "#dc3545",
                 "info": "#17a2b8",
+                "code_background": "#f8f9fa",
+                "code_text": "#2c3e50",
+                "selection_background": "#e9ecef",
+                "terminal_background": "#1a202c",
+                "terminal_text": "#e2e8f0",
             },
             "fonts": {
                 "heading": {"family": "Arial", "size": 16, "weight": "bold"},
@@ -405,10 +411,16 @@ class ThemeManager(QObject):
                     "text_primary": "#000000",
                     "text_secondary": "#333333",
                     "border": "#000000",
+                    "border_primary": "#000000",
                     "success": "#006600",
                     "warning": "#cc6600",
                     "error": "#cc0000",
                     "info": "#0066cc",
+                    "code_background": "#f0f0f0",
+                    "code_text": "#000000",
+                    "selection_background": "#d0d0d0",
+                    "terminal_background": "#000000",
+                    "terminal_text": "#ffffff",
                 },
             }
         )
@@ -429,10 +441,16 @@ class ThemeManager(QObject):
                     "text_primary": "#ffffff",
                     "text_secondary": "#a0aec0",
                     "border": "#718096",
+                    "border_primary": "#718096",
                     "success": "#68d391",
                     "warning": "#f6e05e",
                     "error": "#fc8181",
                     "info": "#63b3ed",
+                    "code_background": "#1a202c",
+                    "code_text": "#e2e8f0",
+                    "selection_background": "#4a5568",
+                    "terminal_background": "#000000",
+                    "terminal_text": "#00ff00",
                 },
             }
         )
