@@ -10,7 +10,15 @@ from src.gui.main_tab.sub_sidebar.series.series_sub_bar import SeriesSubBar
 
 
 class SubSideHub(QWidget):
+    """
+    Dynamic content manager for analysis panels in sub-sidebar.
+
+    Manages switching between different analysis interfaces (deconvolution,
+    model-based, experiments, etc.) based on sidebar navigation selection.
+    """
+
     def __init__(self, parent=None):
+        """Initialize all analysis panels and hide them by default."""
         super().__init__(parent)
         self.layout = QVBoxLayout(self)
 
@@ -31,6 +39,12 @@ class SubSideHub(QWidget):
         self.current_widget = None
 
     def update_content(self, content_type):
+        """
+        Switch displayed panel based on content type from sidebar navigation.
+
+        Args:
+            content_type: Analysis panel identifier from SideBarNames enum
+        """
         if self.current_widget is not None:
             self.layout.removeWidget(self.current_widget)
             self.current_widget.hide()

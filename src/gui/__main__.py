@@ -1,3 +1,10 @@
+"""
+Entry point for Open ThermoKinetics GUI application.
+
+Initializes PyQt6 application with all core modules and their signal
+communication system for solid-state reaction kinetics analysis.
+"""
+
 import os
 import sys
 
@@ -18,6 +25,12 @@ from src.gui.main_window import MainWindow
 
 
 def main():
+    """
+    Initialize and run the Open ThermoKinetics application.
+
+    Creates PyQt6 application, instantiates all core modules with signal
+    communication, establishes module connections, and starts the main window.
+    """
     app = QApplication(sys.argv)
     signals = BaseSignals()
     window = MainWindow(signals=signals)

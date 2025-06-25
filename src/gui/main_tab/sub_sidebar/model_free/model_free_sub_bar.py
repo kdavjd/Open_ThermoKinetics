@@ -1,3 +1,10 @@
+"""
+Model-free analysis panel for isoconversional kinetic analysis.
+
+Provides interface for Friedman, KAS, and Starink methods to determine
+activation energy as a function of conversion degree.
+"""
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -23,11 +30,19 @@ from src.core.logger_config import logger  # noqa: F401
 
 
 class ModelFreeSubBar(QWidget):
+    """
+    Model-free isoconversional analysis panel.
+
+    Provides interface for differential (Friedman) and integral (KAS, Starink)
+    isoconversional methods to determine activation energy vs. conversion.
+    """
+
     model_free_calculation_signal = pyqtSignal(dict)
     table_combobox_text_changed_signal = pyqtSignal(dict)
     plot_model_free_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
+        """Initialize model-free panel with method selection and conversion range inputs."""
         super().__init__(parent)
 
         self.layout = QVBoxLayout(self)
@@ -294,7 +309,15 @@ class ModelFreeSubBar(QWidget):
 
 
 class ModelFreeAnnotationSettingsDialog(QDialog):
+    """
+    Dialog for configuring model-free plot annotation settings.
+
+    Allows configuration of annotation positioning, styling, and enable/disable state
+    for displaying activation energy values on model-free isoconversional plots.
+    """
+
     def __init__(self, parent, is_annotate, config):
+        """Initialize annotation settings dialog for model-free analysis plots."""
         super().__init__(parent)
         self.setWindowTitle("annotation settings")
         self.resize(300, 300)

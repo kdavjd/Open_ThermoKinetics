@@ -13,10 +13,27 @@ from src.gui.user_guide_tab.user_guide_tab import UserGuideTab
 
 
 class MainWindow(QMainWindow):
+    """
+    Main application window managing tabbed interface and inter-component communication.
+
+    Coordinates signal routing between GUI components and core modules, handles
+    user operations through centralized request-response pattern, and manages
+    main application tabs (Main and User Guide). Serves as primary interface
+    between PyQt6 GUI layer and backend calculation modules.
+
+    Attributes
+    ----------
+    to_main_tab_signal : pyqtSignal
+        Signal for sending responses back to main tab components.
+    model_based_calculation_signal : pyqtSignal
+        Signal for triggering model-based calculation scenarios.
+    """
+
     to_main_tab_signal = pyqtSignal(dict)
     model_based_calculation_signal = pyqtSignal(dict)
 
     def __init__(self, signals: BaseSignals):
+        """Initialize main window with tabs and signal connections."""
         super().__init__()
         self.setWindowTitle("Open ThermoKinetics")
 
@@ -44,6 +61,14 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(dict)
     def process_request(self, params: dict):
+        """
+        Process incoming requests from other components with error handling.
+
+        Routes requests to appropriate handler methods using operation type.
+        Provides centralized error handling and response formatting for
+        GUI-related operations like plotting, file name retrieval, and
+        calculation status updates.
+        """
         operation = params.get("operation")
         actor = params.get("actor")
         response = params.copy()
@@ -75,16 +100,25 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(dict)
     def process_response(self, params: dict):
+        """Delegate response processing to base slots handler."""
         logger.debug(f"{self.actor_name} received response: {params}")
         self.base_slots.process_response(params)
 
     def handle_request_cycle(self, target: str, operation: str, **kwargs):
+        """Execute request-response cycle with logging for debugging."""
         result = self.base_slots.handle_request_cycle(target, operation, **kwargs)
         logger.debug(f"handle_request_cycle result for '{operation}': {result}")
         return result
 
     @pyqtSlot(dict)
     def handle_request_from_main_tab(self, params: dict):
+        """
+        Route main tab requests to specialized handler methods.
+
+        Handles diverse operations from GUI components including file operations,
+        reactions management, calculations, plotting, and series analysis.
+        Serves as central dispatcher for main tab interactions with core modules.
+        """
         operation = params.pop("operation")
 
         logger.info(f"{self.actor_name} handle_request_from_main_tab '{operation}' with {params=}")
@@ -124,11 +158,11 @@ class MainWindow(QMainWindow):
             logger.error(f"{self.actor_name} unknown operation: {operation},\n\n {params=}")
 
     def _handle_get_file_name(self, params: dict):
-        """Handle GET_FILE_NAME operation"""
+        """Return name of currently active file from sidebar."""
         return self.main_tab.sidebar.active_file_item.text()
 
     def _handle_plot_df(self, params: dict):
-        """Handle PLOT_DF operation"""
+        """Plot DataFrame data on canvas."""
         df = params.get("df", None)
         if df is not None:
             self.main_tab.plot_canvas.plot_data_from_dataframe(df)
@@ -138,17 +172,23 @@ class MainWindow(QMainWindow):
             return False
 
     def _handle_plot_mse_line(self, params: dict):
-        """Handle PLOT_MSE_LINE operation"""
+        """Plot MSE history data on canvas."""
         mse_data = params.get("mse_data", [])
         self.main_tab.plot_canvas.plot_mse_history(mse_data)
         return True
 
     def _handle_calculation_finished(self, params: dict):
-        """Handle CALCULATION_FINISHED operation"""
+        """Reset calculation buttons when optimization completes."""
         self.main_tab.sub_sidebar.deconvolution_sub_bar.calc_buttons.revert_to_default()
         return True
 
     def _handle_model_free_calculation(self, params: dict):
+        """
+        Execute model-free kinetic analysis on selected series.
+
+        Validates series selection, checks for deconvolution results, prepares
+        reaction DataFrames, and updates series with model-free analysis results.
+        """
         series_name = params.get("series_name")
         if not series_name:
             console.log("\nIt is necessary to select a series for calculation\n")
@@ -333,6 +373,12 @@ class MainWindow(QMainWindow):
         self._handle_select_series(params)
 
     def _handle_select_series(self, params: dict):
+        """
+        Load and display selected experimental series data.
+
+        Retrieves series data, plots experimental or deconvolution results,
+        and updates GUI components with reaction schemes and settings.
+        """
         series_name = params.get("series_name")
         if not series_name:
             logger.error("No series_name provided for SELECT_SERIES")
@@ -366,6 +412,7 @@ class MainWindow(QMainWindow):
         self.main_tab.sub_sidebar.series_sub_bar.update_series_ui(series_df, deconvolution_results)
 
     def _handle_model_params_change(self, params: dict):
+        """Update reaction scheme parameters and trigger simulation if requested."""
         series_name = params.get("series_name")
         if not series_name:
             logger.error("No series_name provided for MODEL_PARAMS_CHANGE")
@@ -389,6 +436,7 @@ class MainWindow(QMainWindow):
             self.update_model_simulation(series_name)
 
     def _handle_scheme_change(self, params: dict):
+        """Update reaction scheme in series data and refresh GUI components."""
         is_ok = self.handle_request_cycle("series_data", OperationType.SCHEME_CHANGE, **params)
         if not is_ok:
             logger.error("Failed to update scheme in series_data")
@@ -427,37 +475,44 @@ class MainWindow(QMainWindow):
             logger.error(f"{self.actor_name} no response in handle_request_from_main_tab")
 
     def _handle_add_reaction(self, params):
+        """Add new reaction to deconvolution analysis."""
         is_ok = self.handle_request_cycle("calculations_data_operations", OperationType.ADD_REACTION, **params)
         if not is_ok:
             console.log("\n\nit is necessary to bring the data to da/dT.\nexperiments -> your experiment -> da/dT")
             self.main_tab.sub_sidebar.deconvolution_sub_bar.reactions_table.on_fail_add_reaction()
 
     def _handle_highlight_reaction(self, params):
+        """Highlight selected reaction on plot canvas."""
         df = self.handle_request_cycle("file_data", OperationType.GET_DF_DATA, **params)
         self.main_tab.plot_canvas.plot_data_from_dataframe(df)
         is_ok = self.handle_request_cycle("calculations_data_operations", OperationType.HIGHLIGHT_REACTION, **params)
         logger.debug(f"{OperationType.HIGHLIGHT_REACTION=} {is_ok=}")
 
     def _handle_remove_reaction(self, params):
+        """Remove reaction from deconvolution analysis."""
         is_ok = self.handle_request_cycle("calculations_data_operations", OperationType.REMOVE_REACTION, **params)
         logger.debug(f"{OperationType.REMOVE_REACTION=} {is_ok=}")
 
     def _handle_update_value(self, params):
+        """Update parameter values in data storage."""
         target = params.pop("target", "calculations_data_operations")
         is_ok = self.handle_request_cycle(target, OperationType.UPDATE_VALUE, **params)
         logger.debug(f"{OperationType.UPDATE_VALUE=} {is_ok=}")
 
     def _handle_reset_file_data(self, params):
+        """Reset file data to original state and refresh plot."""
         is_ok = self.handle_request_cycle("file_data", OperationType.RESET_FILE_DATA, **params)
         df = self.handle_request_cycle("file_data", OperationType.GET_DF_DATA, **params)
         self.main_tab.plot_canvas.plot_data_from_dataframe(df)
         logger.debug(f"{OperationType.RESET_FILE_DATA=} {is_ok=}")
 
     def _handle_import_reactions(self, params):
+        """Import reaction configurations from file."""
         data = self.handle_request_cycle("calculations_data", OperationType.IMPORT_REACTIONS, **params)
         self.main_tab.update_reactions_table(data)
 
     def _handle_export_reactions(self, params):
+        """Export current reaction configurations to file."""
         data = self.handle_request_cycle("calculations_data", OperationType.GET_VALUE, **params)
         suggested_file_name = params["function"](params["file_name"], data)
         self.main_tab.sub_sidebar.deconvolution_sub_bar.file_transfer_buttons.export_reactions(
@@ -465,10 +520,12 @@ class MainWindow(QMainWindow):
         )
 
     def _handle_deconvolution(self, params):
+        """Execute deconvolution optimization calculation."""
         data = self.handle_request_cycle("calculations_data_operations", OperationType.DECONVOLUTION, **params)
         logger.debug(f"{data=}")
 
     def _handle_stop_calculation(self, params):
+        """Stop currently running calculation."""
         _ = self.handle_request_cycle("calculations", OperationType.STOP_CALCULATION)
 
     def _handle_add_new_series(self, params):

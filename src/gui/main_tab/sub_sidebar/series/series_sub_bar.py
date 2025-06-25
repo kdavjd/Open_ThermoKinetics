@@ -1,3 +1,10 @@
+"""
+Series analysis panel for multi-heating-rate experiments.
+
+Provides interface for loading deconvolution results from multiple heating rates,
+performing model-fit and model-free analysis, and visualizing kinetic parameters.
+"""
+
 import json
 
 import numpy as np
@@ -27,7 +34,15 @@ from src.gui.main_tab.sub_sidebar.series.config import SeriesConfig
 
 
 class DeconvolutionResultsLoadDialog(QDialog):
+    """
+    Dialog for loading deconvolution results from multiple heating rate files.
+
+    Allows user to specify files and their corresponding heating rates
+    for series analysis.
+    """
+
     def __init__(self, parent=None):
+        """Initialize dialog with dynamic file input capability."""
         super().__init__(parent)
 
         self.config = SeriesConfig()
@@ -122,10 +137,19 @@ class DeconvolutionResultsLoadDialog(QDialog):
 
 
 class SeriesSubBar(QWidget):
+    """
+    Series analysis panel for multi-heating-rate kinetic studies.
+
+    Provides interface for loading deconvolution results from multiple files,
+    performing model-fit/model-free analysis, and displaying kinetic parameters
+    in tabular format with export functionality.
+    """
+
     load_deconvolution_results_signal = pyqtSignal(dict)
     results_combobox_text_changed_signal = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Initialize series analysis panel with load button, combo boxes, and results table."""
         super().__init__(parent)
 
         self.layout = QVBoxLayout(self)

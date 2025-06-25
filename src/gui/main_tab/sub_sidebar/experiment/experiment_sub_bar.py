@@ -13,6 +13,7 @@ class SmoothingBlock(QWidget):
     """
 
     def __init__(self, parent=None):
+        """Initialize smoothing configuration UI with method selection and parameters."""
         super().__init__(parent)
         self.config = ExperimentConfig()
         self.setLayout(QVBoxLayout())
@@ -68,6 +69,7 @@ class BackgroundSubtractionBlock(QWidget):
     """
 
     def __init__(self, parent=None):
+        """Initialize background subtraction UI with method selection and range inputs."""
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
 
@@ -120,12 +122,19 @@ class BackgroundSubtractionBlock(QWidget):
 
 
 class ActionButtonsBlock(QWidget):
+    """
+    Widget providing workflow action buttons for data preprocessing operations.
+
+    Emits signals for reset, conversion, DTG transformation, and deconvolution mode.
+    """
+
     cancel_changes_clicked = pyqtSignal(dict)
     conversion_clicked = pyqtSignal(dict)
     DTG_clicked = pyqtSignal(dict)
     deconvolution_clicked = pyqtSignal(str)
 
     def __init__(self, parent=None):
+        """Initialize action buttons with signal connections for workflow operations."""
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
 
@@ -145,24 +154,37 @@ class ActionButtonsBlock(QWidget):
         self.layout().addWidget(self.cancel_changes_button)
 
     def emit_cancel_changes_signal(self):
+        """Emit signal to reset file data to original state."""
         self.cancel_changes_clicked.emit({"operation": OperationType.RESET_FILE_DATA})
 
     def emit_conversion_signal(self):
+        """Emit signal to convert data to α(t) format."""
         self.conversion_clicked.emit({"operation": OperationType.TO_A_T})
 
     def emit_DTG_signal(self):
+        """Emit signal to convert data to DTG format."""
         self.DTG_clicked.emit({"operation": OperationType.TO_DTG})
 
     def emit_deconvolution_signal(self):
+        """Emit signal to switch to deconvolution analysis mode."""
         self.deconvolution_clicked.emit(SideBarNames.DECONVOLUTION.value)
 
 
 class ExperimentSubBar(QWidget):
+    """
+    Experiment preprocessing panel with data smoothing and background subtraction.
+
+    Provides UI blocks for Savitzky-Golay filtering, baseline correction,
+    and workflow actions for experimental data preprocessing.
+    """
+
     def __init__(self, parent=None):
+        """Initialize experiment sub-panel with preprocessing blocks."""
         super().__init__(parent)
         self.init_ui()
 
     def init_ui(self):
+        """Initialize UI layout with smoothing, background subtraction, and action blocks."""
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 

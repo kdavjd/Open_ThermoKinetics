@@ -37,6 +37,7 @@ class SideBar(QWidget):
     to_main_window_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
+        """Initialize sidebar with tree view, navigation sections, and load button."""
         super().__init__(parent)
         self.layout = QVBoxLayout()
 
@@ -147,6 +148,12 @@ class SideBar(QWidget):
         item.setFont(font)
 
     def on_item_clicked(self, index):  # noqa: C901
+        """
+        Handle tree item clicks and route to appropriate actions.
+
+        Manages navigation between experiments, series, calculations, and settings.
+        Updates active file/series selection and emits relevant signals.
+        """
         item = self.model.itemFromIndex(index)
 
         if item == self.add_data_item:
@@ -308,6 +315,7 @@ class SideBar(QWidget):
         return series_names
 
     def add_series(self, series_name: str):
+        """Add new series item to the tree view if name is valid."""
         if not series_name:
             logger.warning("An empty series name will not be added.")
             return
@@ -331,7 +339,15 @@ class SideBar(QWidget):
 
 
 class SelectFileDataDialog(QDialog):
+    """
+    Dialog for selecting multiple files and heating rates for series creation.
+
+    Provides interface for choosing experiment files and specifying their
+    corresponding heating rates for multi-rate kinetic analysis.
+    """
+
     def __init__(self, df_copies, parent=None):
+        """Initialize file selection dialog with checkboxes and heating rate inputs."""
         super().__init__(parent)
         self.setWindowTitle("Select Files for Series")
         self.selected_files = []

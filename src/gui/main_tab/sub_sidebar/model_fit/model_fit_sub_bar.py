@@ -1,3 +1,10 @@
+"""
+Model-fit analysis panel for kinetic parameter determination.
+
+Provides interface for direct-differential and Coats-Redfern methods
+to determine kinetic parameters from deconvoluted reaction data.
+"""
+
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -22,11 +29,19 @@ from src.gui.main_tab.sub_sidebar.model_fit.config import ModelFitConfig
 
 
 class ModelFitSubBar(QWidget):
+    """
+    Model-fit analysis panel for determining kinetic parameters.
+
+    Provides interface for direct-differential and Coats-Redfern methods
+    with conversion range selection and nucleation model configuration.
+    """
+
     model_fit_calculation = pyqtSignal(dict)
     table_combobox_text_changed_signal = pyqtSignal(dict)
     plot_model_fit_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
+        """Initialize model-fit panel with method selection and parameter inputs."""
         super().__init__(parent)
 
         self.config = ModelFitConfig()
@@ -238,7 +253,15 @@ class ModelFitSubBar(QWidget):
 
 
 class ModelFitAnnotationSettingsDialog(QDialog):
+    """
+    Dialog for configuring model-fit plot annotation settings.
+
+    Allows configuration of annotation positioning, styling, and enable/disable state
+    for displaying kinetic parameters on model-fit analysis plots.
+    """
+
     def __init__(self, parent, is_annotate, config):
+        """Initialize annotation settings dialog with current configuration."""
         super().__init__(parent)
         self.config = config
         self.setWindowTitle(self.config.dialog.annotation_settings_title)
