@@ -181,7 +181,16 @@ def integrate_ode_for_beta(
     M0 = exp_mass[0]
     Mfin = exp_mass[-1]
     int_sum = np.sum(contributions[:, np.newaxis] * rates_int, axis=0)
-    model_mass = M0 - (M0 - Mfin) * int_sum
+
+    # Physical constraint: prevent negative mass by clamping int_sum to [0, 1]
+    # This ensures model_mass remains between Mfin and M0 as physically required
+    int_sum_clamped = np.clip(int_sum, 0.0, 1.0)
+
+    model_mass = M0 - (M0 - Mfin) * int_sum_clamped
+
+    # Sanity check: ensure mass is always non-negative and within physical bounds
+    model_mass = np.clip(model_mass, Mfin, M0)
+
     mse_i = np.mean((model_mass - exp_mass) ** 2)
     return mse_i
 
