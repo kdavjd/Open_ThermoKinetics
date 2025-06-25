@@ -6,7 +6,7 @@ from scipy.constants import R
 from scipy.integrate import solve_ivp
 from scipy.optimize import NonlinearConstraint
 
-from src.core.app_settings import NUC_MODELS_TABLE
+from src.core.app_settings import NUC_MODELS_TABLE, PARAMETER_BOUNDS
 from src.core.curve_fitting import CurveFitting as cft
 from src.core.logger_config import logger
 
@@ -236,14 +236,15 @@ class ModelBasedScenario(BaseCalculationScenario):
             raise ValueError("No 'reactions' in reaction_scheme.")
 
         bounds = []
+        bounds_config = PARAMETER_BOUNDS.model_based
         for reaction in reactions:
-            logA_min = reaction.get("log_A_min", -50)
-            logA_max = reaction.get("log_A_max", 50)
+            logA_min = reaction.get("log_A_min", bounds_config.scenario_log_a_min)
+            logA_max = reaction.get("log_A_max", bounds_config.scenario_log_a_max)
             bounds.append((logA_min, logA_max))
 
         for reaction in reactions:
-            Ea_min = reaction.get("Ea_min", 1)
-            Ea_max = reaction.get("Ea_max", 2000)
+            Ea_min = reaction.get("Ea_min", bounds_config.ea_min)
+            Ea_max = reaction.get("Ea_max", bounds_config.ea_max)
             bounds.append((Ea_min, Ea_max))
 
         for reaction in reactions:
@@ -251,8 +252,8 @@ class ModelBasedScenario(BaseCalculationScenario):
             bounds.append((0, num_models - 1))
 
         for reaction in reactions:
-            contrib_min = reaction.get("contribution_min", 0)
-            contrib_max = reaction.get("contribution_max", 1)
+            contrib_min = reaction.get("contribution_min", bounds_config.scenario_contribution_min)
+            contrib_max = reaction.get("contribution_max", bounds_config.scenario_contribution_max)
             bounds.append((contrib_min, contrib_max))
         return bounds
 

@@ -1,7 +1,97 @@
+from dataclasses import dataclass
 from enum import Enum
 
 import numpy as np
 from numba import njit
+
+
+@dataclass(frozen=True)
+class ModelBasedParameterBounds:
+    """Parameter bounds for model-based kinetic analysis."""
+
+    # Activation energy bounds (kJ/mol)
+    ea_min: float = 1.0
+    ea_max: float = 250.0
+    ea_default: float = 120.0
+
+    # Pre-exponential factor bounds (log scale)
+    log_a_min: float = -15.0
+    log_a_max: float = 30.0
+    log_a_default: float = 8.0
+
+    # Contribution fraction bounds
+    contribution_min: float = 0.01
+    contribution_max: float = 1.0
+    contribution_default: float = 0.5
+
+    # Fallback bounds for calculation scenarios (more conservative)
+    scenario_log_a_min: float = -50.0
+    scenario_log_a_max: float = 50.0
+    scenario_contribution_min: float = 0.0
+    scenario_contribution_max: float = 1.0
+
+
+@dataclass(frozen=True)
+class ModelFreeParameterBounds:
+    """Parameter bounds for model-free kinetic analysis."""
+
+    ea_min: float = 10000.0
+    ea_max: float = 300000.0
+
+    # Conversion range for analysis
+    alpha_min: float = 0.005
+    alpha_max: float = 0.995
+
+
+@dataclass(frozen=True)
+class DeconvolutionParameterBounds:
+    """Parameter bounds for deconvolution analysis."""
+
+    # Peak height bounds
+    h_min: float = 0.0
+    h_max: float = 1.0
+    h_default: float = 0.1
+
+    # Peak position bounds (temperature dependent)
+    z_min: float = 0.0
+    z_max: float = 1000.0  # Should be set relative to temperature range
+    z_default: float = 300.0
+
+    # Peak width bounds
+    w_min: float = 1.0
+    w_max: float = 200.0
+    w_default: float = 50.0
+
+    # ADS parameter bounds
+    ads1_min: float = 0.1
+    ads1_max: float = 100.0
+    ads1_default: float = 25.0
+
+    ads2_min: float = 0.1
+    ads2_max: float = 10.0
+    ads2_default: float = 2.0
+
+    # Fraser parameter bounds
+    fr_min: float = 0.1
+    fr_max: float = 10.0
+    fr_default: float = 1.0
+
+
+@dataclass(frozen=True)
+class ParameterBoundsConfig:
+    """Complete parameter bounds configuration."""
+
+    model_based: ModelBasedParameterBounds
+    model_free: ModelFreeParameterBounds
+    deconvolution: DeconvolutionParameterBounds
+
+    def __init__(self):
+        object.__setattr__(self, "model_based", ModelBasedParameterBounds())
+        object.__setattr__(self, "model_free", ModelFreeParameterBounds())
+        object.__setattr__(self, "deconvolution", DeconvolutionParameterBounds())
+
+
+PARAMETER_BOUNDS = ParameterBoundsConfig()
 
 
 class OperationType(Enum):
@@ -50,41 +140,89 @@ class OperationType(Enum):
     UPDATE_MODEL_BASED_BEST_VALUES = "update_model_based_best_values"
 
 
-MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
-    "strategy": "best1bin",
-    "maxiter": 200,
-    "popsize": 2,
-    "tol": 0.01,
-    "mutation": (0.5, 1),
-    "recombination": 0.7,
-    "seed": None,
-    "callback": None,
-    "disp": True,
-    "polish": False,
-    "init": "latinhypercube",
-    "atol": 0,
-    "updating": "deferred",
-    "workers": 1,  # Changed from 4 to 1 to avoid multiprocessing issues
-    "constraints": (),
-}
+@dataclass(frozen=True)
+class DifferentialEvolutionConfig:
+    strategy: str = "best1bin"
+    maxiter: int = 1000
+    popsize: int = 15
+    tol: float = 0.01
+    mutation: tuple = (0.5, 1)
+    recombination: float = 0.7
+    seed: object = None
+    callback: object = None
+    disp: bool = False
+    polish: bool = True
+    init: str = "latinhypercube"
+    atol: float = 0
+    updating: str = "deferred"
+    workers: int = 1
+    constraints: tuple = ()
 
-MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = {
-    "strategy": "best1bin",
-    "maxiter": 1000,
-    "popsize": 15,
-    "tol": 0.01,
-    "mutation": (0.5, 1),
-    "recombination": 0.7,
-    "seed": None,
-    "callback": None,
-    "disp": False,
-    "polish": True,
-    "init": "latinhypercube",
-    "atol": 0,
-    "updating": "deferred",
-    "workers": 1,
-    "constraints": (),
-}
+    def to_dict(self) -> dict:
+        return {
+            "strategy": self.strategy,
+            "maxiter": self.maxiter,
+            "popsize": self.popsize,
+            "tol": self.tol,
+            "mutation": self.mutation,
+            "recombination": self.recombination,
+            "seed": self.seed,
+            "callback": self.callback,
+            "disp": self.disp,
+            "polish": self.polish,
+            "init": self.init,
+            "atol": self.atol,
+            "updating": self.updating,
+            "workers": self.workers,
+            "constraints": self.constraints,
+        }
+
+
+@dataclass(frozen=True)
+class DeconvolutionDifferentialEvolutionConfig(DifferentialEvolutionConfig):
+    workers: int = 1
+    maxiter: int = 1000
+    popsize: int = 15
+    disp: bool = False
+    polish: bool = True
+
+
+@dataclass(frozen=True)
+class ModelBasedDifferentialEvolutionConfig(DifferentialEvolutionConfig):
+    workers: int = 6
+    maxiter: int = 500
+    popsize: int = 24
+    disp: bool = True
+    polish: bool = False
+    updating: str = "immediate"
+
+
+@dataclass(frozen=True)
+class ModelFreeDifferentialEvolutionConfig(DifferentialEvolutionConfig):
+    pass
+
+
+@dataclass(frozen=True)
+class OptimizationConfig:
+    """Complete optimization configuration."""
+
+    model_based: ModelBasedDifferentialEvolutionConfig
+    deconvolution: DeconvolutionDifferentialEvolutionConfig
+    model_free: ModelFreeDifferentialEvolutionConfig
+
+    def __init__(self):
+        object.__setattr__(self, "model_based", ModelBasedDifferentialEvolutionConfig())
+        object.__setattr__(self, "deconvolution", DeconvolutionDifferentialEvolutionConfig())
+        object.__setattr__(self, "model_free", ModelFreeDifferentialEvolutionConfig())
+
+
+OPTIMIZATION_CONFIG = OptimizationConfig()
+
+MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = OPTIMIZATION_CONFIG.model_based.to_dict()
+
+MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = OPTIMIZATION_CONFIG.model_free.to_dict()
+
+DECONVOLUTION_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS = OPTIMIZATION_CONFIG.deconvolution.to_dict()
 
 MODEL_FIT_METHODS = ["direct-diff", "Coats-Redfern", "Freeman-Carroll"]
 MODEL_FREE_METHODS = [

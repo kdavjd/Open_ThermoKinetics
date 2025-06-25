@@ -1,7 +1,7 @@
 from functools import reduce
 from typing import Any, Optional
 
-from src.core.app_settings import MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS, OperationType
+from src.core.app_settings import OPTIMIZATION_CONFIG, PARAMETER_BOUNDS, OperationType
 from src.core.base_signals import BaseSlots
 from src.core.logger_config import logger
 
@@ -98,18 +98,19 @@ class SeriesData(BaseSlots):
         self.signals.response_signal.emit(response)
 
     def _get_default_reaction_params(self, series_name: str):
+        bounds = PARAMETER_BOUNDS.model_based
         default_params = {
             "reaction_type": "F2",
             "allowed_models": ["F1/3", "F3/4", "F3/2", "F2", "F3"],
-            "Ea": 120,
-            "log_A": 8,
-            "contribution": 0.5,
-            "Ea_min": 1,
-            "Ea_max": 2000,
-            "log_A_min": -100,
-            "log_A_max": 100,
-            "contribution_min": 0.01,
-            "contribution_max": 1,
+            "Ea": bounds.ea_default,
+            "log_A": bounds.log_a_default,
+            "contribution": bounds.contribution_default,
+            "Ea_min": bounds.ea_min,
+            "Ea_max": bounds.ea_max,
+            "log_A_min": bounds.log_a_min,
+            "log_A_max": bounds.log_a_max,
+            "contribution_min": bounds.contribution_min,
+            "contribution_max": bounds.contribution_max,
         }
 
         series_entry = self.series.get(series_name)
@@ -158,7 +159,7 @@ class SeriesData(BaseSlots):
             "reaction_scheme": reaction_scheme,
             "calculation_settings": {
                 "method": "differential_evolution",
-                "method_parameters": MODEL_BASED_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS,
+                "method_parameters": OPTIMIZATION_CONFIG.model_based.to_dict(),
             },
         }
 

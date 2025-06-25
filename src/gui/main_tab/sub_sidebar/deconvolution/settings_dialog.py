@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
-from src.core.app_settings import MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS
+from src.core.app_settings import DECONVOLUTION_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS
 
 from .config import DeconvolutionConfig
 
@@ -192,7 +192,7 @@ class CalculationSettingsDialog(QDialog):
             initial_params = self.initial_deconvolution_settings.get("method_parameters", {})
 
         row = 0
-        for key, default_value in MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS.items():
+        for key, default_value in DECONVOLUTION_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS.items():
             # Create label with tooltip
             label = QLabel(key)
             tooltip = self._get_tooltip_for_parameter(key)
@@ -289,7 +289,7 @@ class CalculationSettingsDialog(QDialog):
                     parameters[key] = field.currentText()
                 else:
                     text = field.text()
-                    default_value = MODEL_FREE_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS[key]
+                    default_value = DECONVOLUTION_DIFFERENTIAL_EVOLUTION_DEFAULT_KWARGS[key]
                     value = self._convert_to_type(text, default_value)
 
                     is_valid, error_msg = self._validate_parameter(key, value)

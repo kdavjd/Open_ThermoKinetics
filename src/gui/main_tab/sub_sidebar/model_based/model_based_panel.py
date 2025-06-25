@@ -9,7 +9,7 @@ from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMessageBox, QVBoxLayout, QWidget
 from scipy.integrate import solve_ivp
 
-from src.core.app_settings import NUC_MODELS_LIST, OperationType
+from src.core.app_settings import NUC_MODELS_LIST, PARAMETER_BOUNDS, OperationType
 from src.core.calculation_scenarios import integrate_ode_for_beta, ode_function
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
@@ -298,10 +298,11 @@ class ModelBasedTab(QWidget):
         to_comp = self._reactions_list[current_index].get("to")
         reaction_type = self.reaction_type_combo.currentText()
 
-        # Get parameter values with validation
-        ea_val = self._get_float_value(self.reaction_table.activation_energy_edit.text(), 120)
-        loga_val = self._get_float_value(self.reaction_table.log_a_edit.text(), 8)
-        contrib_val = self._get_float_value(self.reaction_table.contribution_edit.text(), 0.5)
+        # Get parameter values with validation using centralized bounds
+        bounds = PARAMETER_BOUNDS.model_based
+        ea_val = self._get_float_value(self.reaction_table.activation_energy_edit.text(), bounds.ea_default)
+        loga_val = self._get_float_value(self.reaction_table.log_a_edit.text(), bounds.log_a_default)
+        contrib_val = self._get_float_value(self.reaction_table.contribution_edit.text(), bounds.contribution_default)
 
         # Get range values with defaults
         defaults = self.reaction_table.defaults

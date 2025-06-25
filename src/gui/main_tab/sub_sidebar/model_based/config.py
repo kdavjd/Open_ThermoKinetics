@@ -6,6 +6,8 @@ Contains all settings and constants specific to model-based analysis.
 from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 
+from src.core.app_settings import PARAMETER_BOUNDS
+
 
 @dataclass
 class ModelBasedAdjustmentDefaults:
@@ -21,15 +23,17 @@ class ModelBasedAdjustmentDefaults:
 class ModelBasedReactionParams:
     """Default parameters for reactions."""
 
-    ea_default: float = 120
-    log_a_default: float = 8
-    contribution_default: float = 0.5
-    ea_button_step: float = 10
-    log_a_button_step: float = 1
-    contribution_button_step: float = 0.1
-    ea_slider_scale: float = 1
-    log_a_slider_scale: float = 0.1
-    contribution_slider_scale: float = 0.01
+    def __init__(self):
+        bounds = PARAMETER_BOUNDS.model_based
+        self.ea_default = bounds.ea_default
+        self.log_a_default = bounds.log_a_default
+        self.contribution_default = bounds.contribution_default
+        self.ea_button_step = 10.0
+        self.log_a_button_step = 1.0
+        self.contribution_button_step = 0.1
+        self.ea_slider_scale = 1.0
+        self.log_a_slider_scale = 0.1
+        self.contribution_slider_scale = 0.01
 
 
 @dataclass

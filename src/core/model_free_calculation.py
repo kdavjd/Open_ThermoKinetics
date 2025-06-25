@@ -6,7 +6,7 @@ from scipy import integrate
 from scipy.constants import R
 from scipy.interpolate import interp1d
 
-from src.core.app_settings import NUC_MODELS_TABLE, OperationType
+from src.core.app_settings import NUC_MODELS_TABLE, PARAMETER_BOUNDS, OperationType
 from src.core.base_signals import BaseSlots
 from src.core.logger_config import logger
 
@@ -56,15 +56,24 @@ class ModelFreeCalculation(BaseSlots):
             logger.error(f"Unknown fit method: {fit_method}, \n\n{calculation_params=}")
             return
 
+        bounds_config = PARAMETER_BOUNDS.model_free
         kwargs = {
-            "alpha_min": calculation_params.get("alpha_min", 0.005),
-            "alpha_max": calculation_params.get("alpha_max", 0.995),
+            "alpha_min": calculation_params.get("alpha_min", bounds_config.alpha_min),
+            "alpha_max": calculation_params.get("alpha_max", bounds_config.alpha_max),
         }
-        if calculation_params.get("ea_mean") is not None:
-            kwargs["ea_mean"] = calculation_params["ea_mean"] * 1000  #  kJ/mol to J/mol
-        elif calculation_params.get("ea_min") is not None and calculation_params.get("ea_max") is not None:
-            kwargs["ea_min"] = calculation_params["ea_min"] * 1000
-            kwargs["ea_max"] = calculation_params["ea_max"] * 1000
+
+        # Add ea parameters only for methods that support them
+        if fit_method == "Vyazovkin":
+            if calculation_params.get("ea_min") is not None and calculation_params.get("ea_max") is not None:
+                kwargs["ea_min"] = calculation_params["ea_min"] * 1000
+                kwargs["ea_max"] = calculation_params["ea_max"] * 1000
+            else:
+                # Use default bounds from configuration
+                kwargs["ea_min"] = bounds_config.ea_min
+                kwargs["ea_max"] = bounds_config.ea_max
+        elif fit_method == "master plots":
+            if calculation_params.get("ea_mean") is not None:
+                kwargs["ea_mean"] = calculation_params["ea_mean"] * 1000  #  kJ/mol to J/mol
 
         strategy = FitMethod(**kwargs)
 
@@ -300,10 +309,12 @@ class Kissinger:
 
 
 class Vyazovkin:
-    def __init__(self, alpha_min: float, alpha_max: float, ea_min: float = 10000, ea_max: float = 300000):
+    def __init__(self, alpha_min: float, alpha_max: float, ea_min: float = None, ea_max: float = None):
+        bounds_config = PARAMETER_BOUNDS.model_free
         self.alpha_min = alpha_min
         self.alpha_max = alpha_max
-        self.ea_min = ea_min
+        self.ea_min = ea_min if ea_min is not None else bounds_config.ea_min
+        self.ea_max = ea_max if ea_max is not None else bounds_config.ea_max
         self.ea_max = ea_max
 
     def calculate(self, reaction_df: pd.DataFrame) -> pd.DataFrame:  # noqa: C901

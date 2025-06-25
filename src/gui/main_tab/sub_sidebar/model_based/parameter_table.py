@@ -7,6 +7,8 @@ from dataclasses import dataclass
 
 from PyQt6.QtWidgets import QLineEdit, QTableWidget, QTableWidgetItem
 
+from src.core.app_settings import PARAMETER_BOUNDS
+
 from .config import MODEL_BASED_CONFIG
 
 
@@ -14,12 +16,14 @@ from .config import MODEL_BASED_CONFIG
 class ReactionDefaults:
     """Default reaction parameter values."""
 
-    Ea_default: float = 120
-    log_A_default: float = 8
-    contribution_default: float = 0.5
-    Ea_range: tuple = (1, 2000)
-    log_A_range: tuple = (-100, 100)
-    contribution_range: tuple = (-1, 1)
+    def __init__(self):
+        bounds = PARAMETER_BOUNDS.model_based
+        self.Ea_default = bounds.ea_default
+        self.log_A_default = bounds.log_a_default
+        self.contribution_default = bounds.contribution_default
+        self.Ea_range = (bounds.ea_min, bounds.ea_max)
+        self.log_A_range = (bounds.log_a_min, bounds.log_a_max)
+        self.contribution_range = (bounds.contribution_min, bounds.contribution_max)
 
 
 class ReactionTable(QTableWidget):

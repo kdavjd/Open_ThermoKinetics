@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
+from src.core.app_settings import PARAMETER_BOUNDS
+
 
 class CurveFitting:
     @staticmethod
@@ -43,14 +45,27 @@ class CurveFitting:
         x = df["temperature"].copy()
         y_columns = [col for col in df.columns if col != "temperature"]
         if y_columns:
+            bounds = PARAMETER_BOUNDS.deconvolution
             y = df[y_columns[0]]
+
+            # Calculate defaults based on data characteristics
             h = 0.3 * y.max()
             z = x.mean()
             w = 0.1 * (x.max() - x.min())
 
+            # Apply bounds constraints to ensure physical validity
+            h = max(bounds.h_min, min(h, bounds.h_max))
+            z = max(bounds.z_min, min(z, bounds.z_max))
+            w = max(bounds.w_min, min(w, bounds.w_max))
+
+            # Use small variation for bounds (1% variation)
             h_lower, h_upper = h * 0.99, h * 1.01
             w_lower, w_upper = w * 0.99, w * 1.01
-            fr, ads1, ads2 = -1, 1, 1
+
+            # Use configured defaults for other parameters
+            fr = bounds.fr_default
+            ads1 = bounds.ads1_default
+            ads2 = bounds.ads2_default
 
             result_dict = {
                 "function": "gauss",
