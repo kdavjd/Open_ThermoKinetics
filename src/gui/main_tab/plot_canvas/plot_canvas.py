@@ -141,23 +141,45 @@ class PlotCanvas(QWidget, PlotInteractionMixin, PlotStylingMixin):
             console.log("The file does not contain a 'temperature' column for X-axis.")
 
     def plot_mse_history(self, mse_data):
-        """Plot MSE history over time."""
+        """Plot MSE history over time with proper clearing and time formatting."""
         if not mse_data:
+            logger.debug("No MSE data to plot")
             return
-        times, mses = zip(*mse_data)
 
+        # Extract times and MSE values
+        times, mses = zip(*mse_data)
+        logger.debug(f"Plotting MSE history with {len(times)} points")
+        logger.debug(f"Time range: {times[0].strftime('%H:%M:%S')} to {times[-1].strftime('%H:%M:%S')}")
+
+        # Clear previous plot completely
         self.axes.clear()
         self.lines.clear()
 
+        # Clear any existing anchors that might interfere
+        if hasattr(self, "position_anchor_group"):
+            self.position_anchor_group = None
+        if hasattr(self, "height_anchor_group"):
+            self.height_anchor_group = None
+
+        # Set up the plot
         self.axes.set_title("MSE over time")
         self.axes.set_xlabel("Time")
         self.axes.set_ylabel("MSE")
 
+        # Plot the MSE line
         self.add_or_update_line("mse_line", times, mses, color="red", marker="o", linestyle="-")
 
+        # Format time axis
         self.axes.xaxis.set_major_locator(mdates.AutoDateLocator())
         self.axes.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
+
+        # Rotate date labels for better readability
         self.figure.autofmt_xdate()
+
+        # Ensure the plot is redrawn
+        self.canvas.draw()
+        self.figure.tight_layout()
+        logger.debug("MSE history plot updated")
 
     @pyqtSlot(tuple, list)
     def plot_reaction(self, keys, values):

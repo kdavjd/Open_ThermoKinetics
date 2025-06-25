@@ -29,6 +29,7 @@ class DeconvolutionStrategy(BestResultStrategy):
             self.calculation.best_mse = best_mse
             self.calculation.best_combination = best_combination
             self.calculation.mse_history.append((datetime.datetime.now(), best_mse))
+            logger.debug(f"Added MSE to history at {datetime.datetime.now().strftime('%H:%M:%S')}: {best_mse}")
             logger.info("A new best MSE has been found.")
 
             self.calculation.handle_request_cycle(
@@ -168,7 +169,6 @@ class ModelBasedCalculationStrategy(BestResultStrategy):
             Ea = []
             contributions = []
 
-            # Extract values from the parameters dict
             for i, reaction in enumerate(reactions):
                 reaction_from = reaction.get("from", "A")
                 reaction_to = reaction.get("to", "B")
@@ -203,6 +203,7 @@ class ModelBasedCalculationStrategy(BestResultStrategy):
             logger.debug(f"New best MSE found: {best_mse} (previous: {self.calculation.best_mse})")
             self.calculation.best_mse = best_mse
             self.calculation.mse_history.append((datetime.datetime.now(), best_mse))
+            logger.debug(f"Added MSE to history at {datetime.datetime.now().strftime('%H:%M:%S')}: {best_mse}")
             logger.info("A new best MSE has been found in model calculation.")
 
             self.calculation.handle_request_cycle(

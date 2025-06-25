@@ -324,19 +324,49 @@ class CalculationSettingsDialog(QDialog):
             elif isinstance(default_value, float):
                 return float(text)
             elif isinstance(default_value, tuple):
-                values = text.strip("() ").split(",")
-                return tuple(float(v.strip()) for v in values)
+                return self._convert_to_tuple(text, default_value)
             elif isinstance(default_value, str):
                 return text
             elif default_value is None:
-                if text == "" or text.lower() == "none":
-                    return None
-                else:
-                    return text
+                return self._convert_none_type(text)
             else:
                 return text
         except ValueError:
             return default_value
+
+    def _convert_to_tuple(self, text: str, default_value: tuple) -> tuple:
+        """Convert text to tuple with fallback handling."""
+        if text.strip() == "()":
+            return ()
+
+        try:
+            # Safe evaluation of tuple literals like "(0.5, 1)"
+            import ast
+
+            result = ast.literal_eval(text)
+            if isinstance(result, tuple):
+                return result
+            elif isinstance(result, (int, float)):
+                return (result,)  # Convert single number to single-element tuple
+            else:
+                return default_value
+        except (ValueError, SyntaxError):
+            # Fallback: try to parse comma-separated values
+            return self._parse_comma_separated(text, default_value)
+
+    def _parse_comma_separated(self, text: str, default_value: tuple) -> tuple:
+        """Parse comma-separated values into tuple."""
+        values = text.strip("() ").split(",")
+        if values and values[0]:  # Check if we have non-empty values
+            return tuple(float(v.strip()) for v in values if v.strip())
+        return default_value
+
+    def _convert_none_type(self, text: str):
+        """Convert text for None-type default values."""
+        if text == "" or text.lower() == "none":
+            return None
+        else:
+            return text
 
     def _validate_parameter(self, key: str, value: Any) -> Tuple[bool, str]:  # noqa: C901
         """

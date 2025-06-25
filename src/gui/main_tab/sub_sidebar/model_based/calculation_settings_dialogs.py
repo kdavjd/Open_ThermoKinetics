@@ -354,7 +354,7 @@ class CalculationSettingsDialog(QDialog):
         return options.get(param_name, ["default"])
 
     def convert_to_type(self, text, default_value):
-        """Convert text input to appropriate type."""
+        """Convert text input to appropriate type with tuple support."""
         if default_value is None:
             return text if text != "None" else None
 
@@ -364,17 +364,76 @@ class CalculationSettingsDialog(QDialog):
             return float(text)
         elif isinstance(default_value, bool):
             return text.lower() in ("true", "1", "yes")
+        elif isinstance(default_value, tuple):
+            # Handle tuple conversion from string representation
+            if text.strip() == "()":
+                return ()
+            try:
+                # Safe evaluation of tuple literals like "(0.5, 1)"
+                import ast
+
+                result = ast.literal_eval(text)
+                if isinstance(result, tuple):
+                    return result
+                elif isinstance(result, (int, float)):
+                    return (result,)  # Convert single number to single-element tuple
+                else:
+                    return default_value
+            except (ValueError, SyntaxError):
+                return default_value
         else:
             return text
 
     def validate_parameter(self, param_name, value):
-        """Validate parameter value."""
-        if param_name == "maxiter" and (not isinstance(value, int) or value <= 0):
+        """Validate parameter value with support for tuple types."""
+        # Basic numeric validations
+        if param_name == "maxiter":
+            return self._validate_positive_integer(value)
+        if param_name == "popsize":
+            return self._validate_positive_integer(value)
+        if param_name == "workers":
+            return self._validate_min_integer(value, 1)
+
+        # Complex type validations
+        if param_name == "mutation":
+            return self._validate_mutation(value)
+        if param_name == "constraints":
+            return self._validate_constraints(value)
+
+        return True, ""
+
+    def _validate_positive_integer(self, value):
+        """Validate that value is a positive integer."""
+        if not isinstance(value, int) or value <= 0:
             return False, "Must be a positive integer"
-        if param_name == "popsize" and (not isinstance(value, int) or value <= 0):
-            return False, "Must be a positive integer"
-        if param_name == "workers" and (not isinstance(value, int) or value < 1):
-            return False, "Must be an integer >= 1"
+        return True, ""
+
+    def _validate_min_integer(self, value, min_val):
+        """Validate that value is an integer >= min_val."""
+        if not isinstance(value, int) or value < min_val:
+            return False, f"Must be an integer >= {min_val}"
+        return True, ""
+
+    def _validate_mutation(self, value):
+        """Validate mutation parameter (number or tuple of two numbers)."""
+        if isinstance(value, tuple):
+            if len(value) != 2:
+                return False, "Must be a tuple of two numbers"
+            if not all(isinstance(x, (int, float)) for x in value):
+                return False, "Must be a tuple of two numbers"
+            if not all(0 <= x <= 2 for x in value):
+                return False, "Values must be between 0 and 2"
+        elif isinstance(value, (int, float)):
+            if not (0 <= value <= 2):
+                return False, "Value must be between 0 and 2"
+        else:
+            return False, "Must be a number or tuple of two numbers"
+        return True, ""
+
+    def _validate_constraints(self, value):
+        """Validate constraints parameter (must be tuple)."""
+        if not isinstance(value, tuple):
+            return False, "Must be a tuple"
         return True, ""
 
 

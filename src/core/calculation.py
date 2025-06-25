@@ -105,6 +105,10 @@ class Calculations(BaseSlots):
                     calc_params["constraints"] = scenario_instance.get_constraints()
                     calc_params["callback"] = make_de_callback(target_function, self)
 
+                logger.debug("Differential evolution parameters before execution:")
+                for key, value in calc_params.items():
+                    logger.debug(f"  {key}: {value} (type: {type(value).__name__})")
+
                 self.start_differential_evolution(bounds=bounds, target_function=target_function, **calc_params)
             else:
                 logger.error(f"Unsupported optimization method: {optimization_method}")
@@ -114,6 +118,11 @@ class Calculations(BaseSlots):
             console.log(f"Error setting up scenario '{scenario_key}': {e}")
 
     def start_differential_evolution(self, bounds, target_function, **kwargs):
+        # Clear MSE history at the start of new calculation
+        self.mse_history = []
+        self.best_mse = float("inf")
+        logger.debug("Starting new differential evolution calculation - cleared MSE history")
+
         self.start_calculation_thread(
             differential_evolution,
             target_function,
@@ -147,7 +156,7 @@ class Calculations(BaseSlots):
         self.result_strategy = None
         self.best_mse = float("inf")
         self.best_combination = None
-        self.mse_history = []
+        # Keep mse_history for display - it will be cleared on next calculation start
         self.handle_request_cycle("main_window", OperationType.CALCULATION_FINISHED)
 
     @pyqtSlot(dict)
