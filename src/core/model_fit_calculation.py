@@ -8,6 +8,7 @@ from src.core.logger_config import logger
 
 
 def r2_score(y_true, y_pred):
+    """Calculate R-squared coefficient of determination."""
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
     ss_res = np.sum((y_true - y_pred) ** 2)
@@ -16,6 +17,14 @@ def r2_score(y_true, y_pred):
 
 
 class ModelFitCalculation(BaseSlots):
+    """
+    Handles model-fitting kinetic analysis using multiple strategies.
+
+    Provides direct-differential, Coats-Redfern, and Freeman-Carroll methods
+    for determining kinetic parameters from experimental data. Supports
+    multiple nucleation models and statistical validation of results.
+    """
+
     def __init__(self, actor_name: str = "model_fit_calculation", signals=None):
         super().__init__(actor_name=actor_name, signals=signals)
         self.strategies = {
@@ -25,6 +34,7 @@ class ModelFitCalculation(BaseSlots):
         }
 
     def process_request(self, params: dict) -> None:
+        """Process model-fit calculation and plotting requests."""
         operation = params.get("operation")
         calculation_params = params.get("calculation_params")
         logger.debug(f"{self.actor_name} processing operation: {operation}")
@@ -51,6 +61,7 @@ class ModelFitCalculation(BaseSlots):
         self.signals.response_signal.emit(response)
 
     def _handle_plot_model_fit_result(self, calculation_params: dict, response: dict) -> None:
+        """Prepare plotting data for model-fit visualization."""
         fit_method = calculation_params.get("fit_method")
         model_series = calculation_params.get("model_series")
         reaction_df = calculation_params.get("reaction_df")
@@ -73,6 +84,7 @@ class ModelFitCalculation(BaseSlots):
         response["data"] = plot_data
 
     def _handle_model_fit_calculation(self, calculation_params: dict, response: dict) -> None:
+        """Execute model-fit calculations using specified strategy and parameters."""
         fit_method = calculation_params.get("fit_method")
         reaction_data = calculation_params.get("reaction_data")
         alpha_min = calculation_params.get("alpha_min", 0.005)

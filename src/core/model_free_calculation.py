@@ -12,6 +12,14 @@ from src.core.logger_config import logger
 
 
 class ModelFreeCalculation(BaseSlots):
+    """
+    Handles model-free kinetic analysis using isoconversional methods.
+
+    Provides linear approximation, Friedman, Kissinger, Vyazovkin, and master plots
+    methods for determining activation energies without kinetic model assumptions.
+    Supports multiple heating rates and conversion-dependent analysis.
+    """
+
     def __init__(self, actor_name: str = "model_free_calculation", signals=None):
         super().__init__(actor_name=actor_name, signals=signals)
         self.strategies = {
@@ -23,6 +31,7 @@ class ModelFreeCalculation(BaseSlots):
         }
 
     def process_request(self, params: dict) -> None:
+        """Process model-free calculation and plotting requests."""
         operation = params.get("operation")
         calculation_params = params.get("calculation_params")
         logger.debug(f"{self.actor_name} processing operation: {operation}")

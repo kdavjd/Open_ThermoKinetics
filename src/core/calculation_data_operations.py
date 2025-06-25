@@ -12,6 +12,13 @@ from src.core.logger_console import LoggerConsole as console
 
 
 class CalculationsDataOperations(BaseSlots):
+    """High-level operations coordinator for reaction data management and visualization.
+
+    Handles complex reaction operations including parameter updates, plotting, deconvolution
+    preparation, and real-time GUI feedback. Coordinates between CalculationsData storage
+    and visual components through signal-slot architecture.
+    """
+
     deconvolution_signal = pyqtSignal(dict)
     plot_reaction = pyqtSignal(tuple, list)
     reaction_params_to_gui = pyqtSignal(dict)
@@ -25,12 +32,7 @@ class CalculationsDataOperations(BaseSlots):
 
     @pyqtSlot(dict)
     def process_request(self, params: dict):
-        """
-        Process incoming requests related to reaction data operations.
-
-        Args:
-            params (dict): Parameters dict with 'path_keys', 'operation', and additional details.
-        """
+        """Route incoming operation requests to appropriate handler methods."""
         path_keys = params.get("path_keys")
         operation = params.get("operation")
 
@@ -64,47 +66,23 @@ class CalculationsDataOperations(BaseSlots):
             logger.warning("Unknown or missing data operation.")
 
     def _protected_plot_update_curves(self, path_keys, params):
-        """
-        Update reaction curves if not currently in progress and a sufficient
-        time interval has passed since the last plot.
-
-        Args:
-            path_keys (list): Keys defining the data path.
-            params (dict): Additional parameters.
-        """
+        """Throttle plot updates to prevent excessive redrawing during rapid parameter changes."""
         if self.calculations_in_progress:
             logger.debug("Skipping plot update as calculations are in progress.")
             return
         current_time = time.time()
-        # Update only if at least 0.1 seconds have passed since the last plot
         if current_time - self.last_plot_time >= 0.1:
             self.last_plot_time = current_time
             logger.debug("Updating reaction curves based on updated values.")
             self.highlight_reaction(path_keys, params)
 
     def _extract_reaction_params(self, path_keys: list):
-        """
-        Extract reaction parameters from the calculations data.
-
-        Args:
-            path_keys (list): Keys to locate the reaction data.
-
-        Returns:
-            dict: Parsed reaction parameters from the given path keys.
-        """
+        """Get reaction parameters from storage and parse them for curve fitting."""
         reaction_params = self.handle_request_cycle("calculations_data", OperationType.GET_VALUE, path_keys=path_keys)
         return cft.parse_reaction_params(reaction_params)
 
     def _plot_reaction_curve(self, file_name, reaction_name, bound_label, params):
-        """
-        Plot a reaction curve for given reaction parameters and emit the plot signal.
-
-        Args:
-            file_name (str): Name of the file associated with the reaction.
-            reaction_name (str): Name of the reaction.
-            bound_label (str): Label for the bound coefficients (e.g., 'coeffs', 'upper_bound_coeffs').
-            params (list): Reaction parameters used for plotting.
-        """
+        """Calculate and emit reaction curve data for visualization."""
         if not params:
             logger.warning(f"No parameters found for {reaction_name} with bound {bound_label}. Skipping plot.")
             return
@@ -116,12 +94,14 @@ class CalculationsDataOperations(BaseSlots):
         self.plot_reaction.emit((file_name, curve_name), [x, y])
 
     def update_reactions_params(self, path_keys: list, params: dict):
-        """
-        Update reaction parameters based on the provided best combination of functions and parameter values.
+        """Apply optimized parameters from deconvolution results to all reaction bounds.
+
+        Takes the best combination of functions and their optimized coefficients,
+        distributes them to appropriate reactions, and updates storage with proper bounds.
 
         Args:
-            path_keys (list): Keys to locate the data (usually includes file name).
-            params (dict): Contains 'best_combination' and 'reactions_params' for updating reactions.
+            path_keys (list): Location keys, typically [file_name].
+            params (dict): Contains 'best_combination' and 'reactions_params' from optimization.
         """
         file_name = path_keys[0]
         reaction_functions: tuple[str] = params.get("best_combination", None)
@@ -141,7 +121,6 @@ class CalculationsDataOperations(BaseSlots):
         ordered_vars = ["h", "z", "w", "fr", "ads1", "ads2"]
         sorted_reactions = sorted(reactions_dict.keys(), key=lambda x: int(x.split("_")[1]))
 
-        # Updating parameters for each reaction and their allowed variables
         for i, reaction in enumerate(sorted_reactions):
             variables = self.reaction_variables[reaction]
             values = reactions_dict[reaction]
@@ -159,13 +138,7 @@ class CalculationsDataOperations(BaseSlots):
         console.log("Reaction parameters have been updated based on the best combination found.")
 
     def add_reaction(self, path_keys: list, _params: dict):
-        """
-        Add a new reaction to the calculations data and plot its initial curves.
-
-        Args:
-            path_keys (list): [file_name, reaction_name].
-            _params (dict): Additional parameters (unused directly).
-        """
+        """Create new reaction with default parameters and plot initial curves."""
         file_name, reaction_name = path_keys
         is_executed = self.handle_request_cycle(
             "file_data", OperationType.CHECK_OPERATION, file_name=file_name, checked_operation=OperationType.TO_DTG
@@ -180,7 +153,6 @@ class CalculationsDataOperations(BaseSlots):
             if is_exist:
                 logger.warning(f"Data already exists at path: {path_keys.copy()} - overwriting not performed.")
 
-            # Extract reaction parameters and plot them
             reaction_params = self._extract_reaction_params(path_keys)
             for bound_label, params in reaction_params.items():
                 self._plot_reaction_curve(file_name, reaction_name, bound_label, params)
@@ -191,13 +163,7 @@ class CalculationsDataOperations(BaseSlots):
             console.log(f"Failed to add reaction '{reaction_name}' due to missing differential data in '{file_name}'.")
 
     def remove_reaction(self, path_keys: list, _params: dict):
-        """
-        Remove a reaction from the calculations data.
-
-        Args:
-            path_keys (list): [file_name, reaction_name].
-            _params (dict): Additional parameters (unused directly).
-        """
+        """Delete reaction from data storage."""
         if len(path_keys) < 2:
             logger.error("Insufficient path_keys information to remove reaction.")
             return
@@ -211,12 +177,15 @@ class CalculationsDataOperations(BaseSlots):
             console.log(f"Reaction '{reaction_name}' was successfully removed from file '{file_name}'.")
 
     def highlight_reaction(self, path_keys: list, _params: dict):
-        """
-        Highlight the selected reaction by plotting individual reaction curves and cumulative curves.
+        """Plot individual and cumulative reaction curves for visualization.
+
+        Generates curves for all reactions in a file, with special highlighting
+        for the selected reaction. Emits both individual curves and cumulative
+        sums for comparison visualization.
 
         Args:
-            path_keys (list): Keys specifying the file and possibly the reaction to highlight.
-            _params (dict): Additional parameters (unused directly).
+            path_keys (list): Keys specifying file and optionally selected reaction.
+            _params (dict): Additional parameters (unused).
         """
         file_name = path_keys[0]
         data = self.handle_request_cycle("calculations_data", OperationType.GET_VALUE, path_keys=[file_name])
@@ -263,14 +232,7 @@ class CalculationsDataOperations(BaseSlots):
             logger.info("Cumulative curves have been plotted.")
 
     def _update_coeffs_value(self, path_keys: list[str], new_value):
-        """
-        Update the middle 'coeffs' value based on changes in 'upper_bound_coeffs' or
-        'lower_bound_coeffs' to maintain consistency.
-
-        Args:
-            path_keys (list[str]): Keys indicating the exact coefficient path.
-            new_value (float): The new value to set.
-        """
+        """Maintain coefficient consistency by averaging upper and lower bounds."""
         bound_keys = ["upper_bound_coeffs", "lower_bound_coeffs"]
         for key in bound_keys:
             if key in path_keys:
@@ -297,15 +259,18 @@ class CalculationsDataOperations(BaseSlots):
                     logger.error(f"No data found at {new_keys} for updating coeffs.")
 
     def update_value(self, path_keys: list[str], params: dict):
-        """
-        Update a specific value in the calculations data.
+        """Update reaction parameter and maintain coefficient consistency.
+
+        Handles individual parameter updates from GUI interactions, automatically
+        maintaining bound consistency when applicable. Used extensively for
+        real-time parameter adjustments.
 
         Args:
-            path_keys (list[str]): Keys identifying the target data path.
+            path_keys (list[str]): Location of parameter to update.
             params (dict): Contains 'value' to set and optional 'is_chain' bool.
 
         Returns:
-            dict or None: Returns a dict indicating the operation if successful and not chained.
+            dict or None: Operation result if successful and not part of chain.
         """
         try:
             new_value = params.get("value")
@@ -316,7 +281,6 @@ class CalculationsDataOperations(BaseSlots):
             if is_ok:
                 logger.debug(f"Data at {path_keys} updated to {new_value}.")
                 if not is_chain:
-                    # Update coeffs to keep consistency if bounds changed
                     self._update_coeffs_value(path_keys.copy(), new_value)
                     return {"operation": OperationType.UPDATE_VALUE, "data": None}
             else:
@@ -325,16 +289,18 @@ class CalculationsDataOperations(BaseSlots):
             logger.error(f"Unexpected error updating data at {path_keys}: {str(e)}")
 
     def deconvolution(self, path_keys: list[str], params: dict):
-        """
-        Prepare and return data required for deconvolution, including reaction variables,
-        chosen functions, bounds, and experimental data.
+        """Prepare comprehensive deconvolution configuration for optimization.
+
+        Assembles all necessary data for reaction deconvolution including function
+        combinations, parameter bounds, experimental data, and optimization settings.
+        Generates exhaustive function combinations for global optimization.
 
         Args:
-            path_keys (list[str]): Keys, typically [file_name].
+            path_keys (list[str]): Location keys, typically [file_name].
             params (dict): Must contain 'deconvolution_settings' and 'chosen_functions'.
 
         Returns:
-            dict: Information needed to perform the deconvolution process.
+            dict: Complete deconvolution configuration ready for optimization.
         """
         deconvolution_settings = params.get("deconvolution_settings", {})
         reaction_variables = {}
@@ -351,10 +317,8 @@ class CalculationsDataOperations(BaseSlots):
         if not functions_data:
             raise ValueError(f"No functions data found for file: {file_name}")
 
-        # Generate all possible combinations of chosen reaction functions
         reaction_combinations = list(product(*reaction_chosen_functions.values()))
 
-        # Determine variables and bounds for each reaction
         for reaction_name in reaction_chosen_functions:
             function_vars = set()
             reaction_params = functions_data[reaction_name]
@@ -367,7 +331,6 @@ class CalculationsDataOperations(BaseSlots):
 
             lower_coeffs = reaction_params["lower_bound_coeffs"].values()
             upper_coeffs = reaction_params["upper_bound_coeffs"].values()
-            # Filter pairs of lower/upper that correspond to allowed variables
             filtered_pairs = [
                 (lc, uc) for lc, uc, key in zip(lower_coeffs, upper_coeffs, check_keys) if key in function_vars
             ]

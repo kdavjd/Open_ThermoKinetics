@@ -7,12 +7,39 @@ from src.core.logger_config import logger
 
 
 class SeriesData(BaseSlots):
+    """
+    Manages experimental series with multiple heating rates and kinetic analysis results.
+
+    Handles creation, modification, and deletion of experimental series containing
+    data from multiple heating rates. Stores deconvolution results, model-fit parameters,
+    model-free analysis, and reaction schemes for comprehensive kinetic studies.
+
+    Attributes
+    ----------
+    series : dict[str, dict]
+        Dictionary containing all experimental series with complete analysis data.
+    default_name_counter : int
+        Counter for auto-generating unique series names.
+    """
+
     def __init__(self, actor_name: str = "series_data", signals=None):
         super().__init__(actor_name=actor_name, signals=signals)
         self.series = {}
         self.default_name_counter: int = 1
 
     def process_request(self, params: dict) -> None:  # noqa: C901
+        """
+        Central dispatcher for series operations and data management.
+
+        Handles ADD_NEW_SERIES, DELETE_SERIES, UPDATE_SERIES, GET_SERIES_VALUE,
+        and other series-related operations through internal handler functions.
+        Manages experimental data integration and analysis result storage.
+
+        Parameters
+        ----------
+        params : dict
+            Request parameters including operation type, series names, and data payloads.
+        """
         operation = params.get("operation")
         logger.debug(f"{self.actor_name} processing operation: {operation}")
 
@@ -98,6 +125,7 @@ class SeriesData(BaseSlots):
         self.signals.response_signal.emit(response)
 
     def _get_default_reaction_params(self, series_name: str):
+        """Set default kinetic parameters for all reactions in series scheme."""
         bounds = PARAMETER_BOUNDS.model_based
         default_params = {
             "reaction_type": "F2",
@@ -134,6 +162,27 @@ class SeriesData(BaseSlots):
         experimental_masses: list[float],
         name: Optional[str] = None,
     ):
+        """
+        Create new experimental series with default configuration.
+
+        Initializes series with experimental data, reaction scheme, and optimization
+        settings. Auto-generates unique names if not provided and prevents duplicates.
+        Sets up default two-component reaction scheme (A→B) with parameter bounds.
+
+        Parameters
+        ----------
+        data : Any
+            Experimental data (typically DataFrame with multiple heating rates).
+        experimental_masses : list[float]
+            Mass coefficients for each heating rate experiment.
+        name : str, optional
+            Series name. Auto-generated if None.
+
+        Returns
+        -------
+        tuple[bool, str or None]
+            (Success status, assigned series name)
+        """
         if name is None:
             name = f"Series {self.default_name_counter}"
             self.default_name_counter += 1
@@ -168,6 +217,25 @@ class SeriesData(BaseSlots):
         return True, name
 
     def update_series(self, series_name: str, update_data: dict) -> bool:
+        """
+        Update existing series with new data and configuration.
+
+        Supports updating reaction schemes, calculation settings, results, and other
+        series properties. Handles nested dictionary merging and reaction parameter
+        validation. Automatically refreshes default parameters after updates.
+
+        Parameters
+        ----------
+        series_name : str
+            Name of series to update.
+        update_data : dict
+            New data to merge into series configuration.
+
+        Returns
+        -------
+        bool
+            True if update successful, False if series not found.
+        """
         series_entry = self.series.get(series_name)
         if not series_entry:
             logger.error(f"Series '{series_name}' not found; update failed.")
@@ -192,6 +260,7 @@ class SeriesData(BaseSlots):
         return True
 
     def _update_reaction_scheme(self, series_entry: dict, new_scheme: dict) -> None:
+        """Merge new reaction scheme with existing one, preserving old reaction parameters."""
         old_scheme = series_entry.get("reaction_scheme", {})
 
         for key, value in new_scheme.items():
@@ -214,6 +283,7 @@ class SeriesData(BaseSlots):
         series_entry["reaction_scheme"] = old_scheme
 
     def delete_series(self, series_name: str) -> bool:
+        """Remove series from storage."""
         if series_name in self.series:
             del self.series[series_name]
             logger.info(f"Deleted series: {series_name}")
@@ -224,6 +294,7 @@ class SeriesData(BaseSlots):
             return False
 
     def rename_series(self, old_series_name: str, new_series_name: str) -> bool:
+        """Rename existing series with validation."""
         if old_series_name not in self.series:
             logger.error(f"Series with name '{old_series_name}' not found.")
             return False
@@ -237,6 +308,7 @@ class SeriesData(BaseSlots):
         return True
 
     def get_series(self, series_name: str, info_type: str = "experimental"):
+        """Retrieve specific series data by name and type."""
         series_entry: dict = self.series.get(series_name)
         if not series_entry:
             return None
@@ -252,15 +324,9 @@ class SeriesData(BaseSlots):
             return series_entry.copy()
 
     def get_all_series(self):
+        """Return copy of all series data."""
         return self.series.copy()
 
     def get_value(self, keys: list[str]) -> dict[str, Any]:
-        """Get a nested value from the data dictionary.
-
-        Args:
-            keys (list[str]): The list of keys representing the nested path.
-
-        Returns:
-            dict[str, Any]: The retrieved data or an empty dict if not found.
-        """
+        """Get nested value from series data using path keys."""
         return reduce(lambda data, key: data.get(key, {}), keys, self.series)

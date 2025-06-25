@@ -8,16 +8,22 @@ from src.core.logger_console import LoggerConsole as console
 
 
 class BestResultStrategy(ABC):
+    """Abstract base class for handling optimization results."""
+
     @abstractmethod
     def handle(self, result: Dict):
+        """Process optimization result based on strategy."""
         pass
 
 
 class DeconvolutionStrategy(BestResultStrategy):
+    """Strategy for handling deconvolution optimization results."""
+
     def __init__(self, calculation_instance):
         self.calculation = calculation_instance
 
     def handle(self, result: Dict):  # noqa: C901
+        """Process deconvolution result and update best parameters if improved."""
         best_mse = result.get("best_mse")
         best_combination = result.get("best_combination")
         params = result.get("params")

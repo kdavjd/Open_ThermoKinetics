@@ -14,9 +14,18 @@ from src.core.logger_console import LoggerConsole as console
 
 
 class Calculations(BaseSlots):
+    """
+    Manages calculation execution with threading and result handling strategies.
+
+    Provides threaded optimization calculations for deconvolution and model-based
+    analysis using scipy's differential evolution algorithm. Implements strategy
+    pattern for result processing and maintains MSE history for optimization tracking.
+    """
+
     new_best_result = pyqtSignal(dict)
 
     def __init__(self, signals):
+        """Initialize calculation manager with strategy instances and threading."""
         super().__init__(actor_name="calculations", signals=signals)
         self.thread: Optional[CalculationThread] = None
         self.best_combination: Optional[tuple] = None
@@ -34,6 +43,7 @@ class Calculations(BaseSlots):
         self.result_strategy: Optional[BestResultStrategy] = None
 
     def set_result_strategy(self, strategy_type: str):
+        """Configure result handling strategy for current calculation type."""
         if strategy_type == "deconvolution":
             self.result_strategy = self.deconvolution_strategy
         elif strategy_type == "model_based_calculation":
@@ -42,6 +52,7 @@ class Calculations(BaseSlots):
             raise ValueError(f"Unknown strategy type: {strategy_type}")
 
     def start_calculation_thread(self, func: Callable, *args, **kwargs) -> None:
+        """Start calculation in background thread with result handling."""
         self.stop_event.clear()
         self.calculation_active = True
         self.thread = CalculationThread(func, *args, **kwargs)
@@ -49,6 +60,7 @@ class Calculations(BaseSlots):
         self.thread.start()
 
     def stop_calculation(self):
+        """Stop active calculation thread and reset state."""
         if self.thread and self.thread.isRunning():
             logger.info("Stopping current calculation...")
             self.stop_event.set()
@@ -63,6 +75,7 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(dict)
     def process_request(self, params: dict):
+        """Handle stop calculation requests from other components."""
         operation = params.get("operation")
         response = params.copy()
         if operation == OperationType.STOP_CALCULATION:
@@ -73,6 +86,13 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(dict)
     def run_calculation_scenario(self, params: dict):
+        """
+        Execute calculation scenario with parameter validation and error handling.
+
+        Sets up optimization scenario, validates bounds, configures strategy, and
+        starts differential evolution with appropriate constraints and callbacks.
+        Supports both deconvolution and model-based calculation scenarios.
+        """
         self.calc_params = params.copy()
         scenario_key = params.get("calculation_scenario")
         if not scenario_key:
@@ -91,7 +111,7 @@ class Calculations(BaseSlots):
                 if ub < lb:
                     console.log("Invalid bounds: upper bound is less than lower bound.")
                     raise ValueError("Invalid bounds: upper bound is less than lower bound.")
-            # NEW: Pass calculations instance to scenario
+            # Pass calculations instance to scenario
             target_function = scenario_instance.get_target_function(calculations_instance=self)
             optimization_method = scenario_instance.get_optimization_method()
             strategy_type = scenario_instance.get_result_strategy_type()
@@ -118,6 +138,7 @@ class Calculations(BaseSlots):
             console.log(f"Error setting up scenario '{scenario_key}': {e}")
 
     def start_differential_evolution(self, bounds, target_function, **kwargs):
+        """Initialize and start differential evolution optimization."""
         # Clear MSE history at the start of new calculation
         self.mse_history = []
         self.best_mse = float("inf")
@@ -132,6 +153,7 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(object)
     def _calculation_finished(self, result):
+        """Handle calculation completion and reset state."""
         try:
             if isinstance(result, Exception):
                 if str(result) == "array must not contain infs or NaNs":
@@ -161,6 +183,7 @@ class Calculations(BaseSlots):
 
     @pyqtSlot(dict)
     def handle_new_best_result(self, result: dict):
+        """Process new best optimization results using configured strategy."""
         try:
             logger.debug(f"Handling new best result: {result}")
             if self.result_strategy:

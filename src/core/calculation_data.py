@@ -12,6 +12,13 @@ from src.core.logger_console import LoggerConsole as console
 
 
 class CalculationsData(BaseSlots):
+    """Central data storage for reaction configurations and parameters.
+
+    Manages hierarchical storage of reaction data using path_keys system for nested access.
+    Provides CRUD operations, import/export functionality, and automatic persistence.
+    Used extensively for deconvolution parameters, function coefficients, and optimization bounds.
+    """
+
     dataChanged = pyqtSignal(dict)
 
     def __init__(self, signals):
@@ -20,14 +27,18 @@ class CalculationsData(BaseSlots):
         self._filename: str = ""
 
     def load_reactions(self, load_file_name: str, file_name: str) -> Dict[str, Any]:
-        """Load reaction data from a file.
+        """Load and import reaction configurations from JSON file.
+
+        Automatically converts serialized numpy arrays back to proper format and stores
+        under the specified file_name key. Used for importing pre-configured reactions
+        with all parameters, bounds, and function types preserved.
 
         Args:
-            load_file_name (str): The file to load data from.
-            file_name (str): The key name under which data will be stored.
+            load_file_name (str): Path to the JSON file containing reaction data.
+            file_name (str): Key name under which data will be stored in the hierarchy.
 
         Returns:
-            Dict[str, Any]: The loaded data if successful, otherwise an empty dict.
+            Dict[str, Any]: The loaded reaction data if successful, otherwise empty dict.
         """
         try:
             with open(load_file_name, "r", encoding="utf-8") as file:
@@ -45,7 +56,7 @@ class CalculationsData(BaseSlots):
             return {}
 
     def save_data(self) -> None:
-        """Save the current data to a file."""
+        """Save current data to JSON file."""
         try:
             with open(self._filename, "w") as file:
                 json.dump(self._data, file, indent=4)
@@ -53,22 +64,29 @@ class CalculationsData(BaseSlots):
             logger.error(f"{e}")
 
     def get_value(self, keys: List[str]) -> Dict[str, Any]:
-        """Get a nested value from the data dictionary.
+        """Navigate nested dictionary using path_keys system.
+
+        Core method for hierarchical data access used throughout the application.
+        Supports path structures like ['file_name', 'reaction_0', 'coeffs', 'h']
+        for accessing deeply nested reaction parameters.
 
         Args:
-            keys (List[str]): The list of keys representing the nested path.
+            keys (List[str]): List of keys representing the nested path.
 
         Returns:
-            Dict[str, Any]: The retrieved data or an empty dict if not found.
+            Dict[str, Any]: Retrieved data or empty dict if path not found.
         """
         return reduce(lambda data, key: data.get(key, {}), keys, self._data)
 
     def set_value(self, keys: List[str], value: Any) -> None:
-        """Set a nested value in the data dictionary.
+        """Store value at specified path_keys location.
+
+        Creates intermediate dictionaries as needed for nested storage.
+        Extensively used for updating reaction parameters, bounds, and configurations.
 
         Args:
-            keys (List[str]): The list of keys to define the nested path.
-            value (Any): The value to set.
+            keys (List[str]): List of keys defining the nested storage path.
+            value (Any): Value to store at the specified location.
         """
         if not keys:
             return
@@ -77,14 +95,7 @@ class CalculationsData(BaseSlots):
         nested_dict[last_key] = value
 
     def exists(self, keys: List[str]) -> bool:
-        """Check if a nested key path exists in the data.
-
-        Args:
-            keys (List[str]): The list of keys representing the nested path.
-
-        Returns:
-            bool: True if the path exists, False otherwise.
-        """
+        """Check if path exists in the hierarchical data structure."""
         try:
             _ = reduce(lambda data, key: data[key], keys, self._data)
             return True
@@ -92,11 +103,7 @@ class CalculationsData(BaseSlots):
             return False
 
     def remove_value(self, keys: List[str]) -> None:
-        """Remove a nested value from the data dictionary.
-
-        Args:
-            keys (List[str]): The list of keys representing the nested path to remove.
-        """
+        """Delete value from specified path_keys location."""
         if not keys:
             return
         if self.exists(keys):
@@ -107,10 +114,14 @@ class CalculationsData(BaseSlots):
                 logger.debug({"operation": "remove_reaction", "keys": keys + [last_key]})
 
     def process_request(self, params: dict) -> None:
-        """Process incoming requests related to data operations.
+        """Handle incoming data operation requests through signal-slot system.
+
+        Processes various operations including GET_VALUE, SET_VALUE, REMOVE_VALUE,
+        IMPORT_REACTIONS, and GET_FULL_DATA. Validates parameters and emits responses
+        back through the centralized signal system.
 
         Args:
-            params (dict): The request parameters, must contain 'operation' and possibly 'path_keys', 'value', etc.
+            params (dict): Request parameters containing 'operation', 'path_keys', 'value', etc.
         """
         operation = params.get("operation")
         actor = params.get("actor")

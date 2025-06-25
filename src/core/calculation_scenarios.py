@@ -12,31 +12,42 @@ from src.core.logger_config import logger
 
 
 class BaseCalculationScenario:
+    """Base class for defining optimization scenarios."""
+
     def __init__(self, params: Dict, calculations):
         self.params = params
         self.calculations = calculations
 
     def get_bounds(self) -> list[tuple]:
+        """Return optimization parameter bounds."""
         raise NotImplementedError
 
     def get_target_function(self, **kwargs) -> Callable:
+        """Return objective function for optimization."""
         raise NotImplementedError
 
     def get_optimization_method(self) -> str:
+        """Return optimization algorithm name."""
         return "differential_evolution"
 
     def get_result_strategy_type(self) -> str:
+        """Return result handling strategy type."""
         raise NotImplementedError
 
     def get_constraints(self) -> list:
+        """Return optimization constraints."""
         return []
 
 
 class DeconvolutionScenario(BaseCalculationScenario):
+    """Scenario for peak deconvolution optimization."""
+
     def get_bounds(self) -> list[tuple]:
+        """Return deconvolution parameter bounds."""
         return self.params["bounds"]
 
     def get_optimization_method(self) -> str:
+        """Return deconvolution optimization method."""
         deconv_settings = self.params.get("deconvolution_settings", {})
         return deconv_settings.pop("method", "differential_evolution")
 

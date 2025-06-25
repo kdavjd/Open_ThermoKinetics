@@ -9,22 +9,18 @@ from numba import njit
 class ModelBasedParameterBounds:
     """Parameter bounds for model-based kinetic analysis."""
 
-    # Activation energy bounds (kJ/mol)
     ea_min: float = 1.0
     ea_max: float = 250.0
     ea_default: float = 120.0
 
-    # Pre-exponential factor bounds (log scale)
     log_a_min: float = -15.0
     log_a_max: float = 30.0
     log_a_default: float = 8.0
 
-    # Contribution fraction bounds
     contribution_min: float = 0.01
     contribution_max: float = 1.0
     contribution_default: float = 0.5
 
-    # Fallback bounds for calculation scenarios (more conservative)
     scenario_log_a_min: float = -50.0
     scenario_log_a_max: float = 50.0
     scenario_contribution_min: float = 0.0
@@ -38,7 +34,6 @@ class ModelFreeParameterBounds:
     ea_min: float = 10000.0
     ea_max: float = 300000.0
 
-    # Conversion range for analysis
     alpha_min: float = 0.005
     alpha_max: float = 0.995
 
@@ -47,22 +42,18 @@ class ModelFreeParameterBounds:
 class DeconvolutionParameterBounds:
     """Parameter bounds for deconvolution analysis."""
 
-    # Peak height bounds
     h_min: float = 0.0
     h_max: float = 1.0
     h_default: float = 0.1
 
-    # Peak position bounds (temperature dependent)
     z_min: float = 0.0
-    z_max: float = 1000.0  # Should be set relative to temperature range
+    z_max: float = 1000.0
     z_default: float = 300.0
 
-    # Peak width bounds
     w_min: float = 1.0
     w_max: float = 200.0
     w_default: float = 50.0
 
-    # ADS parameter bounds
     ads1_min: float = 0.1
     ads1_max: float = 100.0
     ads1_default: float = 25.0
@@ -71,7 +62,6 @@ class DeconvolutionParameterBounds:
     ads2_max: float = 10.0
     ads2_default: float = 2.0
 
-    # Fraser parameter bounds
     fr_min: float = 0.1
     fr_max: float = 10.0
     fr_default: float = 1.0
@@ -159,6 +149,7 @@ class DifferentialEvolutionConfig:
     constraints: tuple = ()
 
     def to_dict(self) -> dict:
+        """Convert configuration to dictionary format for scipy.optimize.differential_evolution."""
         return {
             "strategy": self.strategy,
             "maxiter": self.maxiter,
@@ -267,6 +258,8 @@ class SideBarNames(Enum):
 
 
 def ensure_array(func):
+    """Decorator to ensure input is converted to numpy array."""
+
     def wrapper(e, *args, **kwargs):
         e_array = np.asarray(e)
         return func(e_array, *args, **kwargs)
@@ -276,12 +269,14 @@ def ensure_array(func):
 
 @njit
 def clip_fraction(e, eps=1e-8):
+    """Clip values to valid fraction range [eps, 1-eps]."""
     return np.clip(e, eps, 1 - eps)
 
 
 @ensure_array
 @njit
 def differential_F1_3(e):
+    """F1/3 differential kinetic model."""
     e = clip_fraction(e)
     return (3.0 / 2.0) * e ** (1.0 / 3.0)
 
@@ -289,6 +284,7 @@ def differential_F1_3(e):
 @ensure_array
 @njit
 def integral_F1_3(e):
+    """F1/3 integral kinetic model."""
     e = clip_fraction(e)
     return 1 - e ** (2.0 / 3.0)
 
@@ -296,6 +292,7 @@ def integral_F1_3(e):
 @ensure_array
 @njit
 def differential_F3_4(e):
+    """F3/4 differential kinetic model."""
     e = clip_fraction(e)
     return 4.0 * e ** (3.0 / 4.0)
 
@@ -303,6 +300,7 @@ def differential_F3_4(e):
 @ensure_array
 @njit
 def integral_F3_4(e):
+    """F3/4 integral kinetic model."""
     e = clip_fraction(e)
     return 1 - e ** (1.0 / 4.0)
 
@@ -310,6 +308,7 @@ def integral_F3_4(e):
 @ensure_array
 @njit
 def differential_F3_2(e):
+    """F3/2 differential kinetic model."""
     e = clip_fraction(e)
     return 2.0 * e ** (3.0 / 2.0)
 
@@ -317,6 +316,7 @@ def differential_F3_2(e):
 @ensure_array
 @njit
 def integral_F3_2(e):
+    """F3/2 integral kinetic model."""
     e = clip_fraction(e)
     return e ** (-1.0 / 2.0) - 1
 
@@ -324,6 +324,7 @@ def integral_F3_2(e):
 @ensure_array
 @njit
 def differential_F2(e):
+    """F2 differential kinetic model."""
     e = clip_fraction(e)
     return e**2
 
@@ -331,6 +332,7 @@ def differential_F2(e):
 @ensure_array
 @njit
 def integral_F2(e):
+    """F2 integral kinetic model."""
     e = clip_fraction(e)
     return e ** (-1.0) - 1
 
@@ -338,6 +340,7 @@ def integral_F2(e):
 @ensure_array
 @njit
 def differential_F3(e):
+    """F3 differential kinetic model."""
     e = clip_fraction(e)
     return e**3
 
@@ -345,6 +348,7 @@ def differential_F3(e):
 @ensure_array
 @njit
 def integral_F3(e):
+    """F3 integral kinetic model."""
     e = clip_fraction(e)
     return e ** (-2.0) - 1
 
@@ -352,6 +356,7 @@ def integral_F3(e):
 @ensure_array
 @njit
 def differential_F1_A1(e):
+    """F1/A1 differential kinetic model."""
     e = clip_fraction(e)
     return e
 

@@ -14,9 +14,10 @@ from src.core.logger_console import LoggerConsole as console
 
 
 def detect_encoding(func):
+    """Decorator to automatically detect file encoding using chardet."""
+
     @wraps(func)
     def wrapper(self, *args, **kwargs):
-        # Attempt to detect encoding using chardet by reading a portion of the file.
         with open(self.file_path, "rb") as f:
             result = chardet.detect(f.read(100_000))
         kwargs["encoding"] = result["encoding"]
@@ -26,17 +27,15 @@ def detect_encoding(func):
 
 
 def detect_decimal(func):
+    """Decorator to automatically detect decimal separator from file content."""
+
     @wraps(func)
     def wrapper(self, **kwargs):
-        # Determine the encoding to read a sample of the file.
         encoding = kwargs.get("encoding", "utf-8")
         with open(self.file_path, "r", encoding=encoding) as f:
-            # Read a sample of lines (up to 100) from the file
-            # This is a heuristic to guess the decimal separator.
             sample_lines = [next(f) for _ in range(100)]
         sample_text = "".join(sample_lines)
 
-        # Heuristic: if commas appear more often than periods, assume comma decimal.
         decimal_sep = "," if sample_text.count(",") > sample_text.count(".") else "."
         kwargs["decimal"] = decimal_sep
         return func(self, **kwargs)
@@ -45,6 +44,27 @@ def detect_decimal(func):
 
 
 class FileData(BaseSlots):
+    """
+    Manages experimental data files with loading, modification tracking, and persistence.
+
+    Provides functionality to load CSV/TXT files, maintain operation history,
+    and manage multiple dataframe copies for non-destructive data transformations.
+    Supports automatic encoding/decimal detection and experimental data preprocessing.
+
+    Attributes
+    ----------
+    data : pd.DataFrame or None
+        Currently loaded DataFrame from file.
+    original_data : dict[str, pd.DataFrame]
+        Immutable original dataframes keyed by filename.
+    dataframe_copies : dict[str, pd.DataFrame]
+        Working copies for modifications without altering originals.
+    operations_history : dict[str, list]
+        Complete modification history per file for traceability.
+    loaded_files : set[str]
+        Loaded file paths to prevent duplicate loading.
+    """
+
     data_loaded_signal = pyqtSignal(pd.DataFrame)
 
     def __init__(self, signals):
@@ -60,6 +80,7 @@ class FileData(BaseSlots):
         self.loaded_files = set()
 
     def log_operation(self, params: dict):
+        """Log operation to history for traceability."""
         file_name = params.pop("file_name")
         if file_name not in self.operations_history:
             self.operations_history[file_name] = []
@@ -67,6 +88,7 @@ class FileData(BaseSlots):
         logger.debug(f"Updated operations history: {self.operations_history}")
 
     def check_operation_executed(self, file_name: str, operation: enum) -> bool:
+        """Check if specific operation was already executed on file."""
         if file_name in self.operations_history:
             for operation_record in self.operations_history[file_name]:
                 if operation_record["params"]["operation"] == operation:
@@ -75,6 +97,18 @@ class FileData(BaseSlots):
 
     @pyqtSlot(tuple)
     def load_file(self, file_info):
+        """
+        Load experimental data file with automatic format detection and validation.
+
+        Supports CSV and TXT formats with configurable delimiters, column names,
+        and skip rows. Prevents duplicate loading and maintains original copies.
+        Automatically detects encoding and decimal separators for robust parsing.
+
+        Parameters
+        ----------
+        file_info : tuple
+            (file_path, delimiter, skip_rows, columns_names) configuration tuple.
+        """
         self.file_path, self.delimiter, self.skip_rows, columns_names = file_info
 
         if self.file_path in self.loaded_files:
@@ -115,8 +149,8 @@ class FileData(BaseSlots):
     @detect_encoding
     @detect_decimal
     def load_csv(self, **kwargs):
+        """Load CSV file with flexible parsing and error handling."""
         try:
-            # Using 'engine="python"' to handle more complex separators and formats.
             self.data = pd.read_csv(
                 self.file_path,
                 sep=self.delimiter,
@@ -134,6 +168,7 @@ class FileData(BaseSlots):
     @detect_encoding
     @detect_decimal
     def load_txt(self, **kwargs):
+        """Load TXT file with configurable delimiter and encoding detection."""
         try:
             self.data = pd.read_table(
                 self.file_path,
@@ -148,13 +183,12 @@ class FileData(BaseSlots):
             console.log("\n\nError: Unable to load the TXT file.")
 
     def _fetch_data(self):
+        """Finalize data loading with column processing and signal emission."""
         file_basename = os.path.basename(self.file_path)
 
-        # If user-specified column names are provided, ensure they match the dataframe columns count.
         if self.columns_names is not None:
             if len(self.columns_names) != len(self.data.columns):
                 logger.warning("The number of user-provided column names does not match the dataset columns.")
-            # Attempt to convert all columns to numeric where possible.
             self.data = self.data.apply(pd.to_numeric, errors="coerce")
             self.data.columns = [name.strip() for name in self.columns_names]
         else:
@@ -173,6 +207,7 @@ class FileData(BaseSlots):
 
     @pyqtSlot(str)
     def plot_dataframe_copy(self, key):
+        """Request plotting of dataframe copy by key."""
         if key in self.dataframe_copies:
             _ = self.handle_request_cycle("main_window", OperationType.PLOT_DF, df=self.dataframe_copies[key])
             console.log(f"\n\nPlotting the DataFrame with key: {key}")
@@ -180,6 +215,7 @@ class FileData(BaseSlots):
             logger.error(f"Key '{key}' not found in dataframe_copies.")
 
     def reset_dataframe_copy(self, key):
+        """Reset dataframe copy to original state and clear operation history."""
         if key in self.original_data:
             self.dataframe_copies[key] = self.original_data[key].copy()
             if key in self.operations_history:
@@ -188,6 +224,20 @@ class FileData(BaseSlots):
             console.log(f"\n\nData reset for '{key}'. Original state restored.")
 
     def modify_data(self, func, params):
+        """
+        Apply transformation function to experimental data with operation logging.
+
+        Modifies all numeric columns except 'temperature', preserving original data
+        integrity. Logs operations for traceability and supports chained transformations
+        like smoothing, background subtraction, and derivative calculations.
+
+        Parameters
+        ----------
+        func : callable
+            Transformation function applied to each data column.
+        params : dict
+            Operation parameters including file_name for tracking.
+        """
         file_name = params.get("file_name")
         if not callable(func):
             logger.error("The provided 'func' is not callable.")
@@ -201,7 +251,6 @@ class FileData(BaseSlots):
 
         try:
             dataframe = self.dataframe_copies[file_name]
-            # Modify all columns except 'temperature'
             for column in dataframe.columns:
                 if column != "temperature":
                     dataframe[column] = func(dataframe[column])
@@ -213,6 +262,18 @@ class FileData(BaseSlots):
             logger.error(f"Error modifying data for file '{file_name}': {e}")
 
     def process_request(self, params: dict):  # noqa: C901
+        """
+        Central request dispatcher for file operations and data access.
+
+        Handles loading, modification, reset, and data retrieval operations.
+        Maintains operation history and prevents duplicate transformations.
+        Supports LOAD_FILE, GET_DF_DATA, RESET_FILE_DATA, and differential operations.
+
+        Parameters
+        ----------
+        params : dict
+            Request containing operation type, file_name, and optional function/parameters.
+        """
         operation = params.get("operation")
         file_name = params.get("file_name")
         func = params.get("function")

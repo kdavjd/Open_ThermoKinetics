@@ -6,10 +6,13 @@ from src.core.logger_config import logger
 
 
 class ActiveFileOperations(BaseSlots):
+    """Provides data transformation functions for experimental preprocessing."""
+
     def __init__(self, signals):
         super().__init__(actor_name="active_file_operations", signals=signals)
 
     def process_request(self, params: dict):
+        """Process transformation function requests for experimental data."""
         operation = params.get("operation")
         actor = params.get("actor")
         logger.debug(f"{self.actor_name} processing request '{operation}' from '{actor}'")
@@ -28,9 +31,11 @@ class ActiveFileOperations(BaseSlots):
         self.signals.response_signal.emit(response)
 
     def diff_function(self, series: pd.Series):
+        """Calculate derivative for DTG analysis."""
         return series.diff()
 
     def to_a_t_function(self, series: pd.Series) -> pd.Series:
+        """Convert mass loss data to conversion α(t) with validation."""
         if series.empty:
             logger.warning("Series is empty.")
             return series
