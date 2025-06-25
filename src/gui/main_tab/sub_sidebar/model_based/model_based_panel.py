@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMessageBox, QVBoxLa
 from scipy.integrate import solve_ivp
 
 from src.core.app_settings import NUC_MODELS_LIST, PARAMETER_BOUNDS, OperationType
-from src.core.calculation_scenarios import integrate_ode_for_beta, ode_function
+from src.core.calculation_scenarios import model_based_objective_function, ode_function
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
 from src.gui.main_tab.sub_sidebar.model_based.adjustment_controls import AdjustingSettingsBox
@@ -378,117 +378,121 @@ class ModelBasedTab(QWidget):
 
             QMessageBox.information(self, "Settings Saved", "The settings have been updated successfully.")
 
-    def _validate_heating_rate(self, beta_col: str) -> float | None:
-        """Validate and convert heating rate column to float."""
-        try:
-            beta_value = float(beta_col)
-            if beta_value <= 0:
-                logger.warning(f"Invalid heating rate {beta_value}: must be positive, skipping")
-                console.log(f"\nInvalid heating rate {beta_value}: must be positive. Skipping this column.\n")
-                return None
-            return beta_value
-        except (ValueError, TypeError):
-            logger.warning(f"Invalid heating rate column '{beta_col}': cannot convert to float, skipping")
-            console.log(f"\nInvalid heating rate column '{beta_col}': not a valid number. Skipping.\n")
-            return None
-
-    def _create_ode_function(
-        self,
-        reactions: list,
-        species_list: list,
-        num_species: int,
-        num_reactions: int,
-        logA: np.ndarray,
-        Ea: np.ndarray,
-        beta_value: float,
-    ):
-        contributions = np.ones(len(logA))
-        core_params = self._create_core_compatible_params(logA, Ea, contributions)
-
-        def ode_func_adapter(T_val, X):
-            return ode_function(
-                T_val,
-                X,
-                beta_value,  # Pass β directly (K/min)
-                core_params,
-                species_list,
-                reactions,
-                num_species,
-                num_reactions,
-                R=8.314,
-            )
-
-        return ode_func_adapter
-
     def _simulate_reaction_model(self, experimental_data: pd.DataFrame, reaction_scheme: dict):
-        """Simulate reaction model using core functions (refactored to use existing logic)."""
-        if experimental_data.empty or not reaction_scheme:
-            if experimental_data.empty:
-                console.log("\nCannot simulate model: No experimental data available.\n")
-            if not reaction_scheme:
-                console.log("\nCannot simulate model: No reaction scheme defined.\n")
+        """
+        Simulate reaction model using model_based_objective_function directly.
+
+        This function uses the exact same function as ModelBasedTargetFunction.__call__
+        to ensure consistent MSE calculation and avoid code duplication.
+        """
+        if not self._validate_simulation_inputs(experimental_data, reaction_scheme):
             return pd.DataFrame()
 
-        # Prepare simulation parameters (existing code)
         sim_params = self._prepare_simulation_parameters(experimental_data, reaction_scheme)
         if not sim_params:
             console.log("\nFailed to prepare simulation parameters. Check reaction scheme configuration.\n")
             return pd.DataFrame()
 
-        # NEW: Adapt parameters for core functions INSIDE GUI
+        # Create parameters array in the format expected by model_based_objective_function
         core_params = self._create_core_compatible_params(
             sim_params["logA"], sim_params["Ea"], sim_params["contributions"]
         )
 
-        # Use core functions with adapted parameters
-        simulation_results = {"temperature": sim_params["T"]}
+        # Use model_based_objective_function directly to calculate MSE
+        total_mse = self._calculate_mse_using_core_function(experimental_data, sim_params, core_params)
 
-        for beta_col in sim_params["beta_columns"]:
-            beta_value = self._validate_heating_rate(beta_col)
-            if beta_value is None:
-                continue
+        # Output MSE to console
+        console.log(f"\nModel simulation MSE: {total_mse:.6f}\n")
 
-            try:
-                # Direct use of core function integrate_ode_for_beta
-                mse_result = integrate_ode_for_beta(
-                    beta_value,  # Pass β directly (K/min)
-                    sim_params["contributions"],
-                    core_params,  # Adapted parameters
-                    sim_params["species_list"],
-                    sim_params["reactions"],
-                    sim_params["num_species"],
-                    sim_params["num_reactions"],
-                    sim_params["T_K"],
-                    experimental_data[beta_col].values,
-                    R=8.314,
-                )
-
-                # Core returns MSE on failure (1e12), we need the actual mass values
-                # So we need to re-implement the integration part to get mass values
-                if isinstance(mse_result, (int, float)) and mse_result >= 1e12:
-                    logger.error(f"Core ODE integration failed for β = {beta_value}, using experimental data")
-                    console.log(
-                        f"\nModel simulation failed for heating rate {beta_value} K/min. "
-                        f"Using experimental data as fallback.\n"
-                    )
-                    simulation_results[beta_col] = experimental_data[beta_col].values
-                else:
-                    # We need to get the actual simulated mass, not MSE
-                    # This requires calling the core ODE function directly
-                    model_mass = self._get_mass_from_core_ode(
-                        beta_value, sim_params, core_params, experimental_data[beta_col].values
-                    )
-                    simulation_results[beta_col] = model_mass
-
-            except Exception as e:
-                logger.error(f"Simulation failed for heating rate {beta_value}: {e}")
-                console.log(
-                    f"\nUnexpected error during model simulation for {beta_value} K/min: {str(e)}\n"
-                    f"Using experimental data as fallback.\n"
-                )
-                simulation_results[beta_col] = experimental_data[beta_col].values
+        # Generate simulation data for visualization
+        simulation_results = self._generate_simulation_curves(experimental_data, sim_params, core_params)
 
         return pd.DataFrame(simulation_results)
+
+    def _calculate_mse_using_core_function(
+        self, experimental_data: pd.DataFrame, sim_params: dict, core_params: np.ndarray
+    ) -> float:
+        """Calculate MSE using the same logic as ModelBasedTargetFunction."""
+        try:
+            # Extract data exactly as done in ModelBasedTargetFunction
+            species_list = sim_params["species_list"]
+            reactions = sim_params["reactions"]
+            num_species = sim_params["num_species"]
+            num_reactions = sim_params["num_reactions"]
+            exp_temperature = sim_params["T_K"]  # Temperature in Kelvin
+
+            # Extract betas and experimental masses exactly as in ModelBasedTargetFunction
+            betas = [float(col) for col in experimental_data.columns if col.lower() != "temperature"]
+            all_exp_masses = self._extract_experimental_masses(experimental_data, betas)
+
+            # Create dummy stop_event for simulation (no stopping needed in UI)
+            from threading import Event
+
+            stop_event = Event()
+
+            # Call model_based_objective_function directly - same logic as ModelBasedTargetFunction.__call__
+            total_mse = model_based_objective_function(
+                core_params,
+                species_list,
+                reactions,
+                num_species,
+                num_reactions,
+                betas,
+                all_exp_masses,
+                exp_temperature,
+                R=8.314,
+                stop_event=stop_event,
+            )
+
+            return total_mse
+
+        except Exception as e:
+            logger.error(f"MSE calculation error: {e}")
+            console.log(f"\nError calculating MSE: {str(e)}\n")
+            return float("inf")
+
+    def _generate_simulation_curves(
+        self, experimental_data: pd.DataFrame, sim_params: dict, core_params: np.ndarray
+    ) -> dict:
+        """Generate simulation curves for each heating rate for visualization."""
+        simulation_results = {"temperature": sim_params["T"]}
+
+        betas = [float(col) for col in experimental_data.columns if col.lower() != "temperature"]
+        all_exp_masses = self._extract_experimental_masses(experimental_data, betas)
+
+        for beta, exp_mass in zip(betas, all_exp_masses):
+            try:
+                model_mass = self._get_mass_from_core_ode(beta, sim_params, core_params, exp_mass)
+                simulation_results[str(beta)] = model_mass
+            except Exception as e:
+                logger.error(f"Simulation curve generation error for β={beta}: {e}")
+                simulation_results[str(beta)] = exp_mass  # Fallback to experimental data
+
+        return simulation_results
+
+    def _validate_simulation_inputs(self, experimental_data: pd.DataFrame, reaction_scheme: dict) -> bool:
+        """Validate inputs for simulation."""
+        if experimental_data.empty:
+            console.log("\nCannot simulate model: No experimental data available.\n")
+            return False
+        if not reaction_scheme:
+            console.log("\nCannot simulate model: No reaction scheme defined.\n")
+            return False
+        return True
+
+    def _extract_experimental_masses(self, experimental_data: pd.DataFrame, betas: list) -> list:
+        """Extract experimental masses for each heating rate."""
+        all_exp_masses = []
+        for beta in betas:
+            col_name = str(beta)
+            if col_name not in experimental_data.columns:
+                col_name = str(int(beta))
+            if col_name not in experimental_data.columns:
+                logger.error(f"Experimental data does not contain column for beta value {beta}")
+                continue
+            exp_mass = experimental_data[col_name].to_numpy()
+            all_exp_masses.append(exp_mass)
+        return all_exp_masses
 
     def _prepare_simulation_parameters(self, experimental_data: pd.DataFrame, reaction_scheme: dict) -> dict:
         """Prepare parameters for reaction simulation."""
