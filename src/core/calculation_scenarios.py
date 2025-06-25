@@ -388,3 +388,11 @@ SCENARIO_REGISTRY = {
     "deconvolution": DeconvolutionScenario,
     "model_based_calculation": ModelBasedScenario,
 }
+
+
+def get_core_params_format_info() -> dict:
+    """Return information about expected parameter format for core functions."""
+    return {
+        "params_order": ["logA", "Ea", "model_indices", "contributions"],
+        "expected_length_per_reaction": 4,
+    }

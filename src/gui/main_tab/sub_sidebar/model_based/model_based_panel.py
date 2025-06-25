@@ -9,15 +9,16 @@ from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMessageBox, QVBoxLayout, QWidget
 from scipy.integrate import solve_ivp
 
-from src.core.app_settings import NUC_MODELS_LIST, NUC_MODELS_TABLE, OperationType
+from src.core.app_settings import NUC_MODELS_LIST, OperationType
+from src.core.calculation_scenarios import integrate_ode_for_beta, ode_function
 from src.core.logger_config import logger
-
-from .adjustment_controls import AdjustingSettingsBox
-from .calculation_controls import ModelCalcButtons, RangeAndCalculateWidget
-from .calculation_settings_dialogs import CalculationSettingsDialog
-from .config import MODEL_BASED_CONFIG
-from .models_scheme import ModelsScheme
-from .parameter_table import ReactionDefaults, ReactionTable
+from src.core.logger_console import LoggerConsole as console
+from src.gui.main_tab.sub_sidebar.model_based.adjustment_controls import AdjustingSettingsBox
+from src.gui.main_tab.sub_sidebar.model_based.calculation_controls import ModelCalcButtons, RangeAndCalculateWidget
+from src.gui.main_tab.sub_sidebar.model_based.calculation_settings_dialogs import CalculationSettingsDialog
+from src.gui.main_tab.sub_sidebar.model_based.config import MODEL_BASED_CONFIG
+from src.gui.main_tab.sub_sidebar.model_based.models_scheme import ModelsScheme
+from src.gui.main_tab.sub_sidebar.model_based.parameter_table import ReactionDefaults, ReactionTable
 
 
 class ModelBasedTab(QWidget):
@@ -382,52 +383,13 @@ class ModelBasedTab(QWidget):
             beta_value = float(beta_col)
             if beta_value <= 0:
                 logger.warning(f"Invalid heating rate {beta_value}: must be positive, skipping")
+                console.log(f"\nInvalid heating rate {beta_value}: must be positive. Skipping this column.\n")
                 return None
             return beta_value
         except (ValueError, TypeError):
             logger.warning(f"Invalid heating rate column '{beta_col}': cannot convert to float, skipping")
+            console.log(f"\nInvalid heating rate column '{beta_col}': not a valid number. Skipping.\n")
             return None
-
-    def _get_reaction_rate(
-        self,
-        reaction: dict,
-        reaction_index: int,
-        conc: np.ndarray,
-        species_list: list,
-        logA: np.ndarray,
-        Ea: np.ndarray,
-        T_val: float,
-        beta_SI: float,
-    ) -> tuple[int, int, float]:
-        """Calculate reaction rate for a single reaction."""
-        src = reaction.get("from")
-        tgt = reaction.get("to")
-
-        if src not in species_list or tgt not in species_list:
-            return -1, -1, 0.0
-
-        src_index = species_list.index(src)
-        tgt_index = species_list.index(tgt)
-        e_value = conc[src_index]
-        reaction_type = reaction.get("reaction_type", "F2")
-
-        # Safe model access with error handling
-        if reaction_type in NUC_MODELS_TABLE:
-            model = NUC_MODELS_TABLE.get(reaction_type)
-            if model and "differential_form" in model:
-                f_e = model["differential_form"](e_value)
-            else:
-                f_e = 1.0
-        else:
-            f_e = 1.0
-
-        # Arrhenius equation
-        R = 8.314
-        k_i = (10 ** logA[reaction_index]) * np.exp(-Ea[reaction_index] * 1000 / (R * T_val))
-        k_i /= beta_SI
-        rate = k_i * f_e
-
-        return src_index, tgt_index, rate
 
     def _create_ode_function(
         self,
@@ -439,67 +401,45 @@ class ModelBasedTab(QWidget):
         Ea: np.ndarray,
         beta_value: float,
     ):
-        """Create ODE function for reaction system."""
+        contributions = np.ones(len(logA))
+        core_params = self._create_core_compatible_params(logA, Ea, contributions)
 
-        def ode_func(T_val, X):
-            dXdt = np.zeros(num_species + num_reactions)
-            conc = X[:num_species]
-            beta_SI = beta_value / 60.0
+        def ode_func_adapter(T_val, X):
+            return ode_function(
+                T_val,
+                X,
+                beta_value,  # Pass β directly (K/min)
+                core_params,
+                species_list,
+                reactions,
+                num_species,
+                num_reactions,
+                R=8.314,
+            )
 
-            for i, reaction in enumerate(reactions):
-                src_index, tgt_index, rate = self._get_reaction_rate(
-                    reaction, i, conc, species_list, logA, Ea, T_val, beta_SI
-                )
+        return ode_func_adapter
 
-                if src_index >= 0 and tgt_index >= 0:  # Valid reaction
-                    dXdt[src_index] -= rate
-                    dXdt[tgt_index] += rate
-                    dXdt[num_species + i] = rate
+    def _simulate_reaction_model(self, experimental_data: pd.DataFrame, reaction_scheme: dict):
+        """Simulate reaction model using core functions (refactored to use existing logic)."""
+        if experimental_data.empty or not reaction_scheme:
+            if experimental_data.empty:
+                console.log("\nCannot simulate model: No experimental data available.\n")
+            if not reaction_scheme:
+                console.log("\nCannot simulate model: No reaction scheme defined.\n")
+            return pd.DataFrame()
 
-            return dXdt
+        # Prepare simulation parameters (existing code)
+        sim_params = self._prepare_simulation_parameters(experimental_data, reaction_scheme)
+        if not sim_params:
+            console.log("\nFailed to prepare simulation parameters. Check reaction scheme configuration.\n")
+            return pd.DataFrame()
 
-        return ode_func
+        # NEW: Adapt parameters for core functions INSIDE GUI
+        core_params = self._create_core_compatible_params(
+            sim_params["logA"], sim_params["Ea"], sim_params["contributions"]
+        )
 
-    def _simulate_single_heating_rate(
-        self,
-        experimental_data: pd.DataFrame,
-        beta_col: str,
-        beta_value: float,
-        reactions: list,
-        species_list: list,
-        num_species: int,
-        num_reactions: int,
-        logA: np.ndarray,
-        Ea: np.ndarray,
-        contributions: np.ndarray,
-        T_K: np.ndarray,
-    ) -> np.ndarray:
-        """Simulate reaction for a single heating rate."""
-        ode_func = self._create_ode_function(reactions, species_list, num_species, num_reactions, logA, Ea, beta_value)
-
-        X0 = np.zeros(num_species + num_reactions)
-        if num_species > 0:
-            X0[0] = 1.0
-
-        try:
-            sol = solve_ivp(ode_func, [T_K[0], T_K[-1]], X0, t_eval=T_K, method="RK45")
-            if not sol.success:
-                logger.error(f"ODE failed for β = {beta_value}.")
-                return experimental_data[beta_col].values
-
-            rates_int = sol.y[num_species : num_species + num_reactions, :]
-            int_sum = np.sum(contributions[:, np.newaxis] * rates_int, axis=0)
-            exp_mass = experimental_data[beta_col].values
-            M0 = exp_mass[0]
-            Mfin = exp_mass[-1]
-            return M0 - (M0 - Mfin) * int_sum
-
-        except Exception as e:
-            logger.warning(f"Simulation failed for heating rate {beta_value}: {e}")
-            return experimental_data[beta_col].values
-
-    def _run_heating_rate_simulations(self, experimental_data: pd.DataFrame, sim_params: dict) -> pd.DataFrame:
-        """Run simulations for each heating rate."""
+        # Use core functions with adapted parameters
         simulation_results = {"temperature": sim_params["T"]}
 
         for beta_col in sim_params["beta_columns"]:
@@ -507,35 +447,47 @@ class ModelBasedTab(QWidget):
             if beta_value is None:
                 continue
 
-            model_mass = self._simulate_single_heating_rate(
-                experimental_data,
-                beta_col,
-                beta_value,
-                sim_params["reactions"],
-                sim_params["species_list"],
-                sim_params["num_species"],
-                sim_params["num_reactions"],
-                sim_params["logA"],
-                sim_params["Ea"],
-                sim_params["contributions"],
-                sim_params["T_K"],
-            )
-            simulation_results[beta_col] = model_mass
+            try:
+                # Direct use of core function integrate_ode_for_beta
+                mse_result = integrate_ode_for_beta(
+                    beta_value,  # Pass β directly (K/min)
+                    sim_params["contributions"],
+                    core_params,  # Adapted parameters
+                    sim_params["species_list"],
+                    sim_params["reactions"],
+                    sim_params["num_species"],
+                    sim_params["num_reactions"],
+                    sim_params["T_K"],
+                    experimental_data[beta_col].values,
+                    R=8.314,
+                )
+
+                # Core returns MSE on failure (1e12), we need the actual mass values
+                # So we need to re-implement the integration part to get mass values
+                if isinstance(mse_result, (int, float)) and mse_result >= 1e12:
+                    logger.error(f"Core ODE integration failed for β = {beta_value}, using experimental data")
+                    console.log(
+                        f"\nModel simulation failed for heating rate {beta_value} K/min. "
+                        f"Using experimental data as fallback.\n"
+                    )
+                    simulation_results[beta_col] = experimental_data[beta_col].values
+                else:
+                    # We need to get the actual simulated mass, not MSE
+                    # This requires calling the core ODE function directly
+                    model_mass = self._get_mass_from_core_ode(
+                        beta_value, sim_params, core_params, experimental_data[beta_col].values
+                    )
+                    simulation_results[beta_col] = model_mass
+
+            except Exception as e:
+                logger.error(f"Simulation failed for heating rate {beta_value}: {e}")
+                console.log(
+                    f"\nUnexpected error during model simulation for {beta_value} K/min: {str(e)}\n"
+                    f"Using experimental data as fallback.\n"
+                )
+                simulation_results[beta_col] = experimental_data[beta_col].values
 
         return pd.DataFrame(simulation_results)
-
-    def _simulate_reaction_model(self, experimental_data: pd.DataFrame, reaction_scheme: dict):
-        """Simulate reaction model using ODE integration (corrected implementation)."""
-        if experimental_data.empty or not reaction_scheme:
-            return pd.DataFrame()
-
-        # Prepare simulation parameters
-        sim_params = self._prepare_simulation_parameters(experimental_data, reaction_scheme)
-        if not sim_params:
-            return pd.DataFrame()
-
-        # Run simulation for each heating rate
-        return self._run_heating_rate_simulations(experimental_data, sim_params)
 
     def _prepare_simulation_parameters(self, experimental_data: pd.DataFrame, reaction_scheme: dict) -> dict:
         """Prepare parameters for reaction simulation."""
@@ -565,3 +517,56 @@ class ModelBasedTab(QWidget):
             "Ea": Ea,
             "contributions": contributions,
         }
+
+    def _create_core_compatible_params(self, logA: np.ndarray, Ea: np.ndarray, contributions: np.ndarray) -> np.ndarray:
+        num_reactions = len(logA)
+        model_indices = np.zeros(num_reactions)  # GUI uses fixed models
+        return np.concatenate([logA, Ea, model_indices, contributions])
+
+    def _get_mass_from_core_ode(
+        self, beta_value: float, sim_params: dict, core_params: np.ndarray, exp_mass: np.ndarray
+    ) -> np.ndarray:
+        try:
+            y0 = np.zeros(sim_params["num_species"] + sim_params["num_reactions"])
+            if sim_params["num_species"] > 0:
+                y0[0] = 1.0
+
+            def ode_wrapper(T, y):
+                return ode_function(
+                    T,
+                    y,
+                    beta_value,  # Pass β directly (K/min)
+                    core_params,
+                    sim_params["species_list"],
+                    sim_params["reactions"],
+                    sim_params["num_species"],
+                    sim_params["num_reactions"],
+                    R=8.314,
+                )
+
+            T_K = sim_params["T_K"]
+            sol = solve_ivp(ode_wrapper, [T_K[0], T_K[-1]], y0, t_eval=T_K, method="RK45")
+
+            if not sol.success:
+                logger.error(f"Core ODE solution failed for β = {beta_value}")
+                console.log(
+                    f"\nODE integration failed for heating rate {beta_value} K/min. " f"Check reaction parameters.\n"
+                )
+                return exp_mass
+
+            # Extract rates and calculate mass
+            rates_int = sol.y[sim_params["num_species"] : sim_params["num_species"] + sim_params["num_reactions"], :]
+            int_sum = np.sum(sim_params["contributions"][:, np.newaxis] * rates_int, axis=0)
+            M0 = exp_mass[0]
+            Mfin = exp_mass[-1]
+            model_mass = M0 - (M0 - Mfin) * int_sum
+
+            return model_mass
+
+        except Exception as e:
+            logger.error(f"Core ODE mass calculation failed for β = {beta_value}: {e}")
+            console.log(
+                f"\nMass calculation from ODE failed for {beta_value} K/min: {str(e)}\n"
+                f"Check reaction scheme and parameters.\n"
+            )
+            return exp_mass
