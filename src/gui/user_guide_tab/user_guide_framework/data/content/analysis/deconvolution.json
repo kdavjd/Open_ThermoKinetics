@@ -1,0 +1,425 @@
+{
+  "section_id": "deconvolution",
+  "version": "1.0",
+  "metadata": {
+    "title": {
+      "ru": "Деконволюция пиков",
+      "en": "Peak Deconvolution"
+    },
+    "description": {
+      "ru": "Разделение сложных пиков на отдельные реакции для анализа многостадийных процессов",
+      "en": "Separation of complex peaks into individual reactions for multi-step process analysis"
+    },
+    "difficulty": "intermediate",
+    "estimated_time": "15 минут",
+    "tags": [
+      "deconvolution",
+      "peaks",
+      "reactions",
+      "optimization"
+    ]
+  },
+  "content": {
+    "ru": [
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "Деконволюция пиков"
+      },
+      {
+        "type": "paragraph",
+        "text": "Деконволюция позволяет разделить сложные пики на отдельные реакции для анализа многостадийных процессов. Программа поддерживает три типа функций: Gaussian, ADS и Fraser-Suzuki."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Переход в режим деконволюции"
+      },
+      {
+        "type": "paragraph",
+        "text": "Для начала деконволюции:"
+      },
+      {
+        "type": "list",
+        "list_type": "ordered",
+        "items": [
+          "Загрузите и предобработайте данные",
+          "При необходимости преобразуйте в формат dα/dT кнопкой 'to da/dT'",
+          "Нажмите кнопку 'deconvolution' в панели предобработки",
+          "Интерфейс переключится в режим деконволюции"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Добавление реакций"
+      },
+      {
+        "type": "paragraph",
+        "text": "В панели деконволюции управляйте реакциями через таблицу реакций:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Кнопка 'Add Reaction' добавляет новую реакцию",
+          "Кнопка 'Remove Reaction' удаляет выбранную реакцию",
+          "Выпадающий список позволяет выбрать активную реакцию",
+          "Каждая реакция имеет уникальное имя (reaction_0, reaction_1, ...)"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Типы функций"
+      },
+      {
+        "type": "paragraph",
+        "text": "Программа поддерживает три типа функций для описания пиков:"
+      },
+      {
+        "type": "heading",
+        "level": 3,
+        "text": "Gaussian (Гауссиан)"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Симметричная форма пика",
+          "Параметры: h (высота), z (позиция), w (ширина)",
+          "Подходит для простых, хорошо разделенных пиков"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 3,
+        "text": "ADS (Asymmetric Double Sigmoidal)"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Асимметричная форма пика",
+          "Параметры: h, z, w, ads1, ads2 (параметры асимметрии)",
+          "Лучше описывает реальные термоаналитические пики",
+          "Рекомендуется для большинства случаев"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 3,
+        "text": "Fraser-Suzuki"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Модифицированная гауссиана с асимметрией",
+          "Параметры: h, z, w, fs (параметр асимметрии)",
+          "Хорошо подходит для ДСК данных"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Настройка параметров"
+      },
+      {
+        "type": "paragraph",
+        "text": "Параметры реакций настраиваются в таблице коэффициентов:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "h (высота) - максимальное значение пика",
+          "z (позиция) - температура максимума пика",
+          "w (ширина) - ширина пика на полувысоте",
+          "ads1, ads2 - параметры асимметрии для ADS",
+          "fs - параметр асимметрии для Fraser-Suzuki"
+        ]
+      },
+      {
+        "type": "note",
+        "note_type": "tip",
+        "text": "Начинайте с приблизительных значений параметров, затем используйте интерактивные якоря и оптимизацию для точной настройки."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Интерактивные якоря"
+      },
+      {
+        "type": "paragraph",
+        "text": "На графике отображаются интерактивные якоря для быстрой настройки:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Вертикальные линии показывают позиции пиков (z)",
+          "Горизонтальные линии показывают высоты пиков (h)",
+          "Перетаскивание якорей мышью изменяет параметры в реальном времени",
+          "Изменения сразу отражаются в таблице коэффициентов"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Запуск оптимизации"
+      },
+      {
+        "type": "paragraph",
+        "text": "Автоматическая оптимизация улучшает подгонку параметров:"
+      },
+      {
+        "type": "list",
+        "list_type": "ordered",
+        "items": [
+          "Установите начальные приближения и границы параметров",
+          "Нажмите кнопку 'Start' для начала оптимизации",
+          "Наблюдайте за прогрессом в консоли вывода",
+          "Оптимизация автоматически остановится при достижении сходимости"
+        ]
+      },
+      {
+        "type": "note",
+        "note_type": "info",
+        "text": "Программа использует алгоритм differential evolution для глобальной оптимизации параметров."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Импорт и экспорт"
+      },
+      {
+        "type": "paragraph",
+        "text": "Сохранение и загрузка конфигураций реакций:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Кнопка 'Export' сохраняет текущие конфигурации в JSON файл",
+          "Кнопка 'Import' загружает ранее сохраненные конфигурации",
+          "Можно переносить настройки между разными файлами"
+        ]
+      },
+      {
+        "type": "note",
+        "note_type": "success",
+        "text": "Успешная деконволюция создает основу для последующего кинетического анализа методами Model-Fit, Model-Free и Model-Based."
+      },
+      {
+        "type": "code_block",
+        "language": "yaml",
+        "title": "Пример конфигурации реакции",
+        "text": "# Пример параметров деконволюции\nreaction_0:\n  function: 'ads'\n  coeffs:\n    h: 0.005392786487485471    # Высота пика\n    z: 296.1846660127549       # Позиция пика (°C)\n    w: 47.058071904740814      # Ширина пика\n    ads1: 26.12901788390612    # ADS параметр 1\n    ads2: 1.916749283812285    # ADS параметр 2"
+      }
+    ],
+    "en": [
+      {
+        "type": "heading",
+        "level": 1,
+        "text": "Peak Deconvolution"
+      },
+      {
+        "type": "paragraph",
+        "text": "Deconvolution allows separation of complex peaks into individual reactions for multi-step process analysis. The program supports three function types: Gaussian, ADS, and Fraser-Suzuki."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Entering Deconvolution Mode"
+      },
+      {
+        "type": "paragraph",
+        "text": "To begin deconvolution:"
+      },
+      {
+        "type": "list",
+        "list_type": "ordered",
+        "items": [
+          "Load and preprocess data",
+          "If necessary, convert to dα/dT format using 'to da/dT' button",
+          "Click 'deconvolution' button in preprocessing panel",
+          "Interface will switch to deconvolution mode"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Adding Reactions"
+      },
+      {
+        "type": "paragraph",
+        "text": "In the deconvolution panel, manage reactions through the reactions table:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "'Add Reaction' button adds new reaction",
+          "'Remove Reaction' button removes selected reaction",
+          "Dropdown list allows selecting active reaction",
+          "Each reaction has unique name (reaction_0, reaction_1, ...)"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Function Types"
+      },
+      {
+        "type": "paragraph",
+        "text": "The program supports three function types for peak description:"
+      },
+      {
+        "type": "heading",
+        "level": 3,
+        "text": "Gaussian"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Symmetric peak shape",
+          "Parameters: h (height), z (position), w (width)",
+          "Suitable for simple, well-separated peaks"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 3,
+        "text": "ADS (Asymmetric Double Sigmoidal)"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Asymmetric peak shape",
+          "Parameters: h, z, w, ads1, ads2 (asymmetry parameters)",
+          "Better describes real thermoanalytical peaks",
+          "Recommended for most cases"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 3,
+        "text": "Fraser-Suzuki"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Modified Gaussian with asymmetry",
+          "Parameters: h, z, w, fs (asymmetry parameter)",
+          "Well suited for DSC data"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Parameter Configuration"
+      },
+      {
+        "type": "paragraph",
+        "text": "Reaction parameters are configured in the coefficients table:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "h (height) - peak maximum value",
+          "z (position) - temperature of peak maximum",
+          "w (width) - peak width at half-maximum",
+          "ads1, ads2 - asymmetry parameters for ADS",
+          "fs - asymmetry parameter for Fraser-Suzuki"
+        ]
+      },
+      {
+        "type": "note",
+        "note_type": "tip",
+        "text": "Start with approximate parameter values, then use interactive anchors and optimization for fine tuning."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Interactive Anchors"
+      },
+      {
+        "type": "paragraph",
+        "text": "Interactive anchors are displayed on the plot for quick adjustment:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "Vertical lines show peak positions (z)",
+          "Horizontal lines show peak heights (h)",
+          "Dragging anchors with mouse changes parameters in real-time",
+          "Changes are immediately reflected in coefficients table"
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Running Optimization"
+      },
+      {
+        "type": "paragraph",
+        "text": "Automatic optimization improves parameter fitting:"
+      },
+      {
+        "type": "list",
+        "list_type": "ordered",
+        "items": [
+          "Set initial approximations and parameter bounds",
+          "Click 'Start' button to begin optimization",
+          "Monitor progress in output console",
+          "Optimization will automatically stop upon convergence"
+        ]
+      },
+      {
+        "type": "note",
+        "note_type": "info",
+        "text": "The program uses differential evolution algorithm for global parameter optimization."
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Import and Export"
+      },
+      {
+        "type": "paragraph",
+        "text": "Saving and loading reaction configurations:"
+      },
+      {
+        "type": "list",
+        "list_type": "unordered",
+        "items": [
+          "'Export' button saves current configurations to JSON file",
+          "'Import' button loads previously saved configurations",
+          "Settings can be transferred between different files"
+        ]
+      },
+      {
+        "type": "note",
+        "note_type": "success",
+        "text": "Successful deconvolution creates the foundation for subsequent kinetic analysis using Model-Fit, Model-Free, and Model-Based methods."
+      },
+      {
+        "type": "code_block",
+        "language": "yaml",
+        "title": "Example reaction configuration",
+        "text": "# Example deconvolution parameters\nreaction_0:\n  function: 'ads'\n  coeffs:\n    h: 0.005392786487485471    # Peak height\n    z: 296.1846660127549       # Peak position (°C)\n    w: 47.058071904740814      # Peak width\n    ads1: 26.12901788390612    # ADS parameter 1\n    ads2: 1.916749283812285    # ADS parameter 2"
+      }
+    ]
+  },
+  "related_sections": [
+    "data_preprocessing",
+    "model_fit",
+    "model_free"
+  ]
+}

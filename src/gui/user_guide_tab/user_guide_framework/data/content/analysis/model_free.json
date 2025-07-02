@@ -1,0 +1,650 @@
+{
+    "section_id": "model_free",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Model-Free анализ",
+            "en": "Model-Free Analysis"
+        },
+        "description": {
+            "ru": "Изоконверсионный анализ энергии активации методами Friedman, KAS и Starink",
+            "en": "Isoconversional activation energy analysis using Friedman, KAS and Starink methods"
+        },
+        "difficulty": "intermediate",
+        "estimated_time": "15 минут",
+        "tags": [
+            "model_free",
+            "isoconversional",
+            "friedman",
+            "kas",
+            "starink"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Model-Free (изоконверсионный) анализ"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Free анализ позволяет определить зависимость энергии активации от степени конверсии без предположений о механизме реакции. Метод особенно полезен для сложных многостадийных процессов."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Предварительные требования"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для Model-Free анализа необходимы данные с несколькими скоростями нагрева:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Создать серию экспериментов с разными скоростями нагрева",
+                    "Выполнить деконволюцию для каждого файла в серии",
+                    "Загрузить результаты деконволюции в серию через раздел 'series'"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "Рекомендуется минимум 3 скорости нагрева для надежных результатов. Типичные значения: 3, 5, 10 K/min."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Доступ к Model-Free анализу"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для перехода к Model-Free анализу:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Убедитесь, что серия создана и содержит результаты деконволюции",
+                    "В боковой панели разверните раздел 'calculation'",
+                    "Кликните на пункт 'model free'",
+                    "Откроется панель Model-Free анализа"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Доступные методы"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Linear approximation"
+            },
+            {
+                "type": "paragraph",
+                "text": "Комбинированный метод, включающий три изоконверсионных подхода:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Friedman - дифференциальный изоконверсионный метод",
+                    "KAS (Kissinger-Akahira-Sunose) - интегральный метод",
+                    "Starink - модифицированный интегральный метод"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Friedman"
+            },
+            {
+                "type": "paragraph",
+                "text": "Только дифференциальный изоконверсионный метод:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Использует производную dα/dT",
+                    "Наиболее точный для хорошо разрешенных данных",
+                    "Чувствителен к шуму в экспериментальных данных"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Настройка параметров анализа"
+            },
+            {
+                "type": "paragraph",
+                "text": "В панели Model-Free настройте следующие параметры:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "α_min - минимальная степень конверсии (обычно 0.005)",
+                    "α_max - максимальная степень конверсии (обычно 0.995)",
+                    "Ea min, kJ - нижняя граница энергии активации (10 кДж/моль)",
+                    "Ea max, kJ - верхняя граница энергии активации (2000 кДж/моль)",
+                    "Ea mean, kJ - средняя энергия активации (для master plot)"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Диапазон α должен покрывать область, где все скорости нагрева имеют достаточно данных."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Выполнение расчета"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для запуска Model-Free анализа:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Выберите метод анализа ('linear approximation' или 'Friedman')",
+                    "Установите параметры анализа",
+                    "Выберите реакцию для анализа в выпадающем списке",
+                    "Нажмите кнопку 'calculate'",
+                    "Дождитесь завершения расчета"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Интерпретация результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Результаты отображаются в таблице:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "method - используемый изоконверсионный метод",
+                    "Ea - средняя энергия активации для метода (кДж/моль)",
+                    "std - стандартное отклонение энергии активации"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Анализ зависимости Ea(α)"
+            },
+            {
+                "type": "paragraph",
+                "text": "Главный результат Model-Free анализа - зависимость энергии активации от степени конверсии:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Постоянная Ea(α) - простая одностадийная реакция",
+                    "Возрастающая Ea(α) - процесс ускоряется или конкурирующие реакции",
+                    "Убывающая Ea(α) - процесс замедляется или диффузионные ограничения",
+                    "Сложная зависимость - многостадийный механизм"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Master Plot анализ"
+            },
+            {
+                "type": "paragraph",
+                "text": "Дополнительный инструмент для идентификации механизма:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Установите среднее значение Ea в поле 'Ea mean, kJ'",
+                    "Выберите тип графика: y(α), g(α), или z(α)",
+                    "Постройте master plot для сравнения с теоретическими кривыми",
+                    "Определите наиболее подходящую модель реакции"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Визуализация результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для графического анализа:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Выберите реакцию в выпадающем списке",
+                    "При необходимости выберите скорость нагрева (β)",
+                    "Нажмите кнопку 'plot'",
+                    "Анализируйте зависимость Ea от α на графике"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Настройки расчета"
+            },
+            {
+                "type": "paragraph",
+                "text": "Дополнительные настройки через кнопку 'settings':"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Количество точек для расчета α",
+                    "Параметры численного дифференцирования",
+                    "Критерии фильтрации результатов",
+                    "Настройки аппроксимации"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Критерии качества"
+            },
+            {
+                "type": "paragraph",
+                "text": "Оценка надежности Model-Free анализа:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Низкое стандартное отклонение Ea (< 10-20% от среднего)",
+                    "Согласованность результатов разных методов",
+                    "Плавная зависимость Ea(α) без резких скачков",
+                    "Физически разумные значения энергии активации"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Сравнение с Model-Fit"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Free vs Model-Fit анализ:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Model-Free не требует предположений о механизме",
+                    "Model-Free показывает изменение Ea в ходе реакции",
+                    "Model-Fit дает единое значение Ea для всей реакции",
+                    "Используйте оба метода для полного понимания кинетики"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Экспорт результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Сохранение результатов Model-Free анализа:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Скопируйте данные из таблицы результатов",
+                    "Сохраните графики зависимости Ea(α)",
+                    "Экспортируйте данные через консоль",
+                    "Включите результаты в отчет по проекту"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Типичные проблемы"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Большой разброс Ea - улучшите качество деконволюции",
+                    "Нереалистичные значения - проверьте диапазон α",
+                    "Резкие скачки Ea(α) - сгладьте данные или измените диапазон",
+                    "Различия между методами - проанализируйте качество данных"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "success",
+                "text": "Model-Free анализ предоставляет уникальную информацию о сложности кинетического процесса и может выявить многостадийность, невидимую в других методах."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Model-Free (Isoconversional) Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Free analysis allows determination of activation energy dependence on conversion degree without assumptions about reaction mechanism. The method is particularly useful for complex multi-step processes."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Prerequisites"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Free analysis requires data with multiple heating rates:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Create experimental series with different heating rates",
+                    "Perform deconvolution for each file in the series",
+                    "Load deconvolution results into series via 'series' section"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "Minimum 3 heating rates are recommended for reliable results. Typical values: 3, 5, 10 K/min."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Accessing Model-Free Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "To proceed to Model-Free analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Ensure series is created and contains deconvolution results",
+                    "In sidebar, expand 'calculation' section",
+                    "Click on 'model free' item",
+                    "Model-Free analysis panel will open"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Available Methods"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Linear approximation"
+            },
+            {
+                "type": "paragraph",
+                "text": "Combined method including three isoconversional approaches:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Friedman - differential isoconversional method",
+                    "KAS (Kissinger-Akahira-Sunose) - integral method",
+                    "Starink - modified integral method"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Friedman"
+            },
+            {
+                "type": "paragraph",
+                "text": "Differential isoconversional method only:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Uses dα/dT derivative",
+                    "Most accurate for well-resolved data",
+                    "Sensitive to noise in experimental data"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Analysis Parameter Configuration"
+            },
+            {
+                "type": "paragraph",
+                "text": "In Model-Free panel, configure the following parameters:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "α_min - minimum conversion degree (usually 0.005)",
+                    "α_max - maximum conversion degree (usually 0.995)",
+                    "Ea min, kJ - lower activation energy bound (10 kJ/mol)",
+                    "Ea max, kJ - upper activation energy bound (2000 kJ/mol)",
+                    "Ea mean, kJ - average activation energy (for master plot)"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "α range should cover area where all heating rates have sufficient data."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Running Calculation"
+            },
+            {
+                "type": "paragraph",
+                "text": "To start Model-Free analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Select analysis method ('linear approximation' or 'Friedman')",
+                    "Set analysis parameters",
+                    "Select reaction for analysis in dropdown",
+                    "Click 'calculate' button",
+                    "Wait for calculation completion"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Interpretation"
+            },
+            {
+                "type": "paragraph",
+                "text": "Results are displayed in table:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "method - used isoconversional method",
+                    "Ea - average activation energy for method (kJ/mol)",
+                    "std - activation energy standard deviation"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Ea(α) Dependence Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "Main result of Model-Free analysis - activation energy dependence on conversion degree:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Constant Ea(α) - simple single-step reaction",
+                    "Increasing Ea(α) - process acceleration or competing reactions",
+                    "Decreasing Ea(α) - process deceleration or diffusion limitations",
+                    "Complex dependence - multi-step mechanism"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Master Plot Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "Additional tool for mechanism identification:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Set average Ea value in 'Ea mean, kJ' field",
+                    "Select plot type: y(α), g(α), or z(α)",
+                    "Build master plot for comparison with theoretical curves",
+                    "Identify most suitable reaction model"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Visualization"
+            },
+            {
+                "type": "paragraph",
+                "text": "For graphical analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Select reaction in dropdown",
+                    "If necessary, select heating rate (β)",
+                    "Click 'plot' button",
+                    "Analyze Ea vs α dependence on plot"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Calculation Settings"
+            },
+            {
+                "type": "paragraph",
+                "text": "Additional settings via 'settings' button:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Number of points for α calculation",
+                    "Numerical differentiation parameters",
+                    "Result filtering criteria",
+                    "Approximation settings"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Quality Criteria"
+            },
+            {
+                "type": "paragraph",
+                "text": "Assessing Model-Free analysis reliability:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Low Ea standard deviation (< 10-20% of average)",
+                    "Consistency of results from different methods",
+                    "Smooth Ea(α) dependence without sharp jumps",
+                    "Physically reasonable activation energy values"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Comparison with Model-Fit"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Free vs Model-Fit analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Model-Free requires no mechanism assumptions",
+                    "Model-Free shows Ea changes during reaction",
+                    "Model-Fit gives single Ea value for entire reaction",
+                    "Use both methods for complete kinetics understanding"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Export"
+            },
+            {
+                "type": "paragraph",
+                "text": "Saving Model-Free analysis results:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Copy data from results table",
+                    "Save Ea(α) dependence plots",
+                    "Export data via console",
+                    "Include results in project report"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Common Issues"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Large Ea scatter - improve deconvolution quality",
+                    "Unrealistic values - check α range",
+                    "Sharp Ea(α) jumps - smooth data or change range",
+                    "Method differences - analyze data quality"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "success",
+                "text": "Model-Free analysis provides unique information about kinetic process complexity and can reveal multi-step nature invisible in other methods."
+            }
+        ]
+    },
+    "related_sections": [
+        "deconvolution",
+        "model_fit",
+        "series_analysis"
+    ]
+}

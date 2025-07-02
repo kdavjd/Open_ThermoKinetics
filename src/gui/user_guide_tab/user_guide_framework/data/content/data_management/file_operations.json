@@ -1,0 +1,413 @@
+{
+    "section_id": "file_operations",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Операции с файлами",
+            "en": "File Operations"
+        },
+        "description": {
+            "ru": "Управление файлами данных: удаление, переименование и организация",
+            "en": "Data file management: deletion, renaming and organization"
+        },
+        "difficulty": "beginner",
+        "estimated_time": "8 минут",
+        "tags": [
+            "file_management",
+            "delete",
+            "organize",
+            "navigation"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Операции с файлами данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "После загрузки экспериментальных данных вы можете выполнять различные операции для организации и управления файлами в проекте."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Навигация по файлам"
+            },
+            {
+                "type": "paragraph",
+                "text": "Все загруженные файлы отображаются в дереве навигации под разделом 'experiments':"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Кликните на имя файла для его выбора",
+                    "Активный файл выделяется жирным шрифтом",
+                    "Данные активного файла отображаются на графике",
+                    "Панели анализа работают с выбранным файлом"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Удаление файлов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для удаления ненужных файлов из проекта:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Выберите файл, который хотите удалить",
+                    "Кликните на пункт 'delete selected' в разделе 'experiments'",
+                    "Подтвердите удаление в диалоговом окне",
+                    "Файл будет удален из проекта (но не с диска)"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Удаление файла из проекта не удаляет его с диска компьютера. Удаляется только ссылка на файл в текущем сеансе работы."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Работа с несколькими файлами"
+            },
+            {
+                "type": "paragraph",
+                "text": "В программе можно одновременно работать с несколькими файлами:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Загрузите все необходимые файлы через 'add file data'",
+                    "Переключайтесь между файлами кликом на их названия",
+                    "Каждый файл сохраняет свои настройки предобработки",
+                    "Результаты анализа сохраняются отдельно для каждого файла"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Сохранение состояния проекта"
+            },
+            {
+                "type": "paragraph",
+                "text": "Программа автоматически сохраняет:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Список загруженных файлов",
+                    "Настройки предобработки для каждого файла",
+                    "Конфигурации реакций для деконволюции",
+                    "Результаты расчетов и анализа"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Импорт и экспорт конфигураций"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для обмена настройками между проектами используйте функции импорта/экспорта:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Кнопка 'Export' в панели деконволюции сохраняет конфигурации реакций",
+                    "Кнопка 'Import' загружает ранее сохраненные конфигурации",
+                    "Файлы конфигураций имеют формат JSON",
+                    "Можно переносить настройки между разными экспериментами"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Организация данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "Рекомендации по организации файлов в проекте:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Используйте понятные имена файлов с указанием условий эксперимента",
+                    "Группируйте связанные эксперименты (например, разные скорости нагрева)",
+                    "Сохраняйте конфигурации реакций для повторного использования",
+                    "Регулярно экспортируйте важные результаты"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Работа с сериями экспериментов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для анализа данных с разными скоростями нагрева:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Загрузите все файлы серии (например, 3, 5, 10 K/min)",
+                    "Выполните деконволюцию для каждого файла",
+                    "Используйте раздел 'series' для создания серии экспериментов",
+                    "Загрузите результаты деконволюции в серию для model-free анализа"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Очистка проекта"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для начала нового проекта:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Удалите все ненужные файлы через 'delete selected'",
+                    "Очистите серии в разделе 'series' → 'delete series'",
+                    "Загрузите новые файлы данных",
+                    "Начните анализ с предобработки"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Резервное копирование"
+            },
+            {
+                "type": "paragraph",
+                "text": "Хотя программа автоматически сохраняет настройки, рекомендуется:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Регулярно экспортировать конфигурации реакций",
+                    "Сохранять снимки экрана с важными результатами",
+                    "Копировать числовые результаты из консоли",
+                    "Вести записи об условиях экспериментов"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Используйте описательные имена при экспорте конфигураций, например: 'NH4Cl_3reactions_optimized.json'"
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Data File Operations"
+            },
+            {
+                "type": "paragraph",
+                "text": "After loading experimental data, you can perform various operations to organize and manage files in the project."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "File Navigation"
+            },
+            {
+                "type": "paragraph",
+                "text": "All loaded files are displayed in the navigation tree under 'experiments' section:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Click on file name to select it",
+                    "Active file is highlighted in bold",
+                    "Active file data is displayed on the plot",
+                    "Analysis panels work with selected file"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "File Deletion"
+            },
+            {
+                "type": "paragraph",
+                "text": "To remove unnecessary files from the project:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Select the file you want to delete",
+                    "Click 'delete selected' in 'experiments' section",
+                    "Confirm deletion in dialog box",
+                    "File will be removed from project (but not from disk)"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Deleting file from project doesn't delete it from computer disk. Only the reference to file in current session is removed."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Working with Multiple Files"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program allows working with multiple files simultaneously:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Load all necessary files via 'add file data'",
+                    "Switch between files by clicking their names",
+                    "Each file retains its preprocessing settings",
+                    "Analysis results are saved separately for each file"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Project State Saving"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program automatically saves:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "List of loaded files",
+                    "Preprocessing settings for each file",
+                    "Reaction configurations for deconvolution",
+                    "Calculation and analysis results"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Configuration Import/Export"
+            },
+            {
+                "type": "paragraph",
+                "text": "To exchange settings between projects, use import/export functions:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "'Export' button in deconvolution panel saves reaction configurations",
+                    "'Import' button loads previously saved configurations",
+                    "Configuration files are in JSON format",
+                    "Settings can be transferred between different experiments"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Data Organization"
+            },
+            {
+                "type": "paragraph",
+                "text": "Recommendations for organizing files in project:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Use descriptive file names indicating experimental conditions",
+                    "Group related experiments (e.g., different heating rates)",
+                    "Save reaction configurations for reuse",
+                    "Regularly export important results"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Working with Experimental Series"
+            },
+            {
+                "type": "paragraph",
+                "text": "For analyzing data with different heating rates:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Load all series files (e.g., 3, 5, 10 K/min)",
+                    "Perform deconvolution for each file",
+                    "Use 'series' section to create experimental series",
+                    "Load deconvolution results into series for model-free analysis"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Project Cleanup"
+            },
+            {
+                "type": "paragraph",
+                "text": "To start a new project:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Remove all unnecessary files via 'delete selected'",
+                    "Clear series in 'series' section → 'delete series'",
+                    "Load new data files",
+                    "Start analysis with preprocessing"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Backup"
+            },
+            {
+                "type": "paragraph",
+                "text": "Although the program automatically saves settings, it's recommended to:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Regularly export reaction configurations",
+                    "Save screenshots of important results",
+                    "Copy numerical results from console",
+                    "Keep records of experimental conditions"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Use descriptive names when exporting configurations, e.g.: 'NH4Cl_3reactions_optimized.json'"
+            }
+        ]
+    },
+    "related_sections": [
+        "file_loading",
+        "data_preprocessing",
+        "series_analysis"
+    ]
+}

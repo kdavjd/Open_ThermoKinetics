@@ -20,9 +20,18 @@ COMPONENTS_MIN_WIDTH = (
 
 
 class MainTab(QWidget):
+    """
+    Main tab widget implementing 4-panel responsive layout for thermal analysis GUI.
+
+    Central component managing sidebar navigation, sub-sidebar panels, plot canvas,
+    and console with proportional resizing and dynamic visibility control.
+    Coordinates signal routing between GUI components and core logic modules.
+    """
+
     to_main_window_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
+        """Initialize main tab with 4-panel splitter layout and signal connections."""
         QWidget.__init__(self, parent)
 
         self.layout = QVBoxLayout(self)
@@ -52,7 +61,8 @@ class MainTab(QWidget):
         self.sidebar.sub_side_bar_needed.connect(self.toggle_sub_sidebar)
         self.sidebar.console_show_signal.connect(self.toggle_console_visibility)
         self.sub_sidebar.experiment_sub_bar.action_buttons_block.cancel_changes_clicked.connect(self.to_main_window)
-        self.sub_sidebar.experiment_sub_bar.action_buttons_block.derivative_clicked.connect(self.to_main_window)
+        self.sub_sidebar.experiment_sub_bar.action_buttons_block.DTG_clicked.connect(self.to_main_window)
+        self.sub_sidebar.experiment_sub_bar.action_buttons_block.conversion_clicked.connect(self.to_main_window)
         self.sub_sidebar.experiment_sub_bar.action_buttons_block.deconvolution_clicked.connect(self.toggle_sub_sidebar)
         self.sub_sidebar.deconvolution_sub_bar.reactions_table.reaction_added.connect(self.to_main_window)
         self.sub_sidebar.deconvolution_sub_bar.reactions_table.reaction_removed.connect(self.to_main_window)
@@ -83,6 +93,7 @@ class MainTab(QWidget):
         self.sub_sidebar.model_free_sub_bar.plot_model_free_signal.connect(self.to_main_window)
 
     def initialize_sizes(self):
+        """Calculate and apply proportional panel sizes based on total width."""
         total_width = self.width()
 
         sidebar_ratio = MIN_WIDTH_SIDEBAR / COMPONENTS_MIN_WIDTH
@@ -96,10 +107,17 @@ class MainTab(QWidget):
         self.splitter.setSizes([sidebar_width, sub_sidebar_width, canvas_width, console_width])
 
     def showEvent(self, event):
+        """Handle widget show event by initializing panel sizes."""
         super().showEvent(event)
         self.initialize_sizes()
 
     def toggle_sub_sidebar(self, content_type):
+        """
+        Toggle sub-sidebar visibility and update content based on analysis type.
+
+        Args:
+            content_type: Analysis panel type or None to hide
+        """
         logger.debug(f"totoggle_sub_sidebar: {content_type=}")
         if content_type:
             canvas_connects = True if content_type == SideBarNames.DECONVOLUTION.value else False
@@ -115,15 +133,18 @@ class MainTab(QWidget):
         self.initialize_sizes()
 
     def toggle_console_visibility(self, visible):
+        """Toggle console widget visibility and recalculate layout sizes."""
         self.console_widget.setVisible(visible)
         self.initialize_sizes()
 
     def select_series(self, series_name):
+        """Emit series selection signal if series exists."""
         if series_name in self.sidebar.get_series_names():
             self.to_main_window_signal.emit({"operation": OperationType.SELECT_SERIES, "series_name": series_name})
 
     @pyqtSlot(str)
     def select_series_reaction(self, reaction_name):
+        """Select specific reaction within active series for visualization."""
         series_name = self.sidebar.active_series_item.text() if self.sidebar.active_series_item else None
         params = {
             "operation": OperationType.SELECT_SERIES,
@@ -134,6 +155,12 @@ class MainTab(QWidget):
 
     @pyqtSlot(dict)
     def to_main_window(self, params: dict):
+        """
+        Route operation signals to main window with active file/series context.
+
+        Args:
+            params: Operation parameters dict to be enhanced with context
+        """
         file_name = self.sidebar.active_file_item.text() if self.sidebar.active_file_item else "no_file"
         series_name = self.sidebar.active_series_item.text() if self.sidebar.active_series_item else None
         params["file_name"] = file_name
@@ -143,6 +170,12 @@ class MainTab(QWidget):
 
     @pyqtSlot(list)
     def update_anchors_slot(self, params_list: list):
+        """
+        Handle interactive anchor updates from plot canvas.
+
+        Args:
+            params_list: List of parameter update dictionaries from draggable anchors
+        """
         for i, params in enumerate(params_list):
             params["path_keys"].insert(
                 0,
@@ -154,6 +187,12 @@ class MainTab(QWidget):
         self.to_main_window(params)
 
     def update_reactions_table(self, data: dict):
+        """
+        Update reactions table UI with loaded reaction configuration data.
+
+        Args:
+            data: Dict mapping reaction names to reaction info with function types
+        """
         active_file_name = self.sidebar.active_file_item.text() if self.sidebar.active_file_item else None
         if not active_file_name:
             logger.error("There is no active file to update the UI.")
@@ -171,4 +210,5 @@ class MainTab(QWidget):
         logger.debug("The UI has been successfully updated with loaded reactions.")
 
     def response_slot(self, params: dict):
+        """Handle response signals with debug logging."""
         logger.debug(f"response_slot handle {params}")

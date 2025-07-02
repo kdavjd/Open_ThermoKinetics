@@ -1,0 +1,491 @@
+{
+    "section_id": "export_import",
+    "version": "1.0.0",
+    "metadata": {
+        "title": "Export and Import",
+        "description": "Complete guide to data exchange, configuration sharing, and results export",
+        "difficulty": "intermediate",
+        "estimated_time": "10-15 minutes",
+        "tags": [
+            "export",
+            "import",
+            "data-exchange",
+            "configuration",
+            "results",
+            "csv",
+            "json"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Экспорт и импорт данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "Программа поддерживает полный цикл экспорта/импорта данных, конфигураций и результатов для обмена между проектами и исследователями."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Импорт экспериментальных данных"
+            },
+            {
+                "type": "paragraph",
+                "text": "Поддерживаемые форматы входных данных:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "CSV файлы с разделителями (запятая, точка с запятой, табуляция)",
+                    "Колонки: Температура, Масса/Сигнал ТГ, Производная (опционально)",
+                    "Автоматическое определение разделителей",
+                    "Обработка различных десятичных разделителей"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "Temperature,Signal,Derivative\n25.0,100.0,0.0\n30.0,99.5,-0.1\n35.0,98.8,-0.15\n..."
+            },
+            {
+                "type": "note",
+                "text": "Файлы должны содержать минимум 2 колонки: температуру и сигнал. Третья колонка с производной загружается автоматически при наличии."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Экспорт конфигураций реакций"
+            },
+            {
+                "type": "paragraph",
+                "text": "Сохранение настроек деконволюции в JSON формате:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Параметры всех реакций (коэффициенты, границы)",
+                    "Типы функций (gauss, ads, fraser)",
+                    "Настройки оптимизации",
+                    "Метаданные файла"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"file_name.csv\": {\n    \"reaction_0\": {\n      \"function\": \"ads\",\n      \"coeffs\": {\n        \"h\": 0.005392,\n        \"z\": 296.184,\n        \"w\": 47.058,\n        \"ads1\": 26.129,\n        \"ads2\": 1.916\n      },\n      \"upper_bound_coeffs\": {...},\n      \"lower_bound_coeffs\": {...}\n    }\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Импорт конфигураций реакций"
+            },
+            {
+                "type": "paragraph",
+                "text": "Загрузка сохраненных настроек деконволюции:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Выберите файл конфигурации (JSON)",
+                    "Автоматическое восстановление параметров реакций",
+                    "Проверка совместимости с текущими данными",
+                    "Валидация параметров и границ"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "При импорте конфигурации автоматически создаются соответствующие реакции с корректными типами функций и параметрами."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Экспорт результатов анализа"
+            },
+            {
+                "type": "paragraph",
+                "text": "Сохранение результатов расчетов в различных форматах:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "CSV файлы с кинетическими параметрами",
+                    "Графики в форматах PNG, SVG, PDF",
+                    "Экспорт данных model-free анализа",
+                    "Результаты оптимизации с метриками качества"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Model-Fit результаты"
+            },
+            {
+                "type": "paragraph",
+                "text": "Экспортируемые параметры для каждой реакции:"
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "Reaction,Method,Ea (kJ/mol),log_A,n,R²,RMSE,MSE\nreaction_0,direct-diff,120.5,8.2,1.0,0.995,0.002,4e-6\nreaction_1,Coats-Redfern,95.3,6.8,0.67,0.988,0.005,2.5e-5"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Model-Free результаты"
+            },
+            {
+                "type": "paragraph",
+                "text": "Данные изоконверсионного анализа:"
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "Conversion,Friedman_Ea,KAS_Ea,Starink_Ea\n0.1,118.2,120.5,119.8\n0.2,121.3,123.1,122.4\n0.3,125.7,127.2,126.5\n..."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Экспорт серий"
+            },
+            {
+                "type": "paragraph",
+                "text": "Сохранение данных многоскоростного анализа:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Экспериментальные данные для всех скоростей нагрева",
+                    "Схемы реакций с кинетическими параметрами",
+                    "Результаты model-based оптимизации",
+                    "Сравнительные результаты разных методов"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"series_name\": {\n    \"experimental_data\": \"DataFrame with all heating rates\",\n    \"reaction_scheme\": {\n      \"components\": [...],\n      \"reactions\": [...]\n    },\n    \"model_fit_results\": {...},\n    \"model_free_results\": {...}\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Импорт серий"
+            },
+            {
+                "type": "paragraph",
+                "text": "Загрузка сохраненных данных серийного анализа:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Выберите JSON файл с данными серии",
+                    "Автоматическое восстановление экспериментальных данных",
+                    "Загрузка схем реакций и результатов",
+                    "Валидация целостности данных"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Форматы экспорта графиков"
+            },
+            {
+                "type": "paragraph",
+                "text": "Поддерживаемые форматы для сохранения визуализаций:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "PNG - растровый формат для презентаций",
+                    "SVG - векторный формат для редактирования",
+                    "PDF - векторный формат для публикаций",
+                    "EPS - PostScript для типографского качества"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Рекомендуется использовать векторные форматы (SVG, PDF) для научных публикаций из-за высокого качества масштабирования."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Автоматическое сохранение"
+            },
+            {
+                "type": "paragraph",
+                "text": "Система автоматически сохраняет:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Конфигурации расчетов при каждом изменении",
+                    "Результаты анализа в JSON формате",
+                    "Историю операций с данными",
+                    "Кэшированные результаты оптимизации"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Рекомендации по обмену данными"
+            },
+            {
+                "type": "paragraph",
+                "text": "Лучшие практики для обмена данными между исследователями:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Экспортируйте конфигурации вместе с исходными данными",
+                    "Включайте метаданные (условия эксперимента, дату, автора)",
+                    "Используйте описательные имена файлов",
+                    "Проверяйте импортированные данные перед анализом"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "При передаче проекта другому исследователю рекомендуется экспортировать как исходные данные, так и конфигурации анализа для полного воспроизведения результатов."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Export and Import"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program supports complete data exchange cycle including import/export of data, configurations, and results for sharing between projects and researchers."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Importing Experimental Data"
+            },
+            {
+                "type": "paragraph",
+                "text": "Supported input data formats:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "CSV files with delimiters (comma, semicolon, tab)",
+                    "Columns: Temperature, Mass/TG Signal, Derivative (optional)",
+                    "Automatic delimiter detection",
+                    "Processing of different decimal separators"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "Temperature,Signal,Derivative\n25.0,100.0,0.0\n30.0,99.5,-0.1\n35.0,98.8,-0.15\n..."
+            },
+            {
+                "type": "note",
+                "text": "Files must contain at least 2 columns: temperature and signal. Third column with derivative is loaded automatically when present."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Exporting Reaction Configurations"
+            },
+            {
+                "type": "paragraph",
+                "text": "Saving deconvolution settings in JSON format:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Parameters of all reactions (coefficients, bounds)",
+                    "Function types (gauss, ads, fraser)",
+                    "Optimization settings",
+                    "File metadata"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"file_name.csv\": {\n    \"reaction_0\": {\n      \"function\": \"ads\",\n      \"coeffs\": {\n        \"h\": 0.005392,\n        \"z\": 296.184,\n        \"w\": 47.058,\n        \"ads1\": 26.129,\n        \"ads2\": 1.916\n      },\n      \"upper_bound_coeffs\": {...},\n      \"lower_bound_coeffs\": {...}\n    }\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Importing Reaction Configurations"
+            },
+            {
+                "type": "paragraph",
+                "text": "Loading saved deconvolution settings:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Select configuration file (JSON)",
+                    "Automatic restoration of reaction parameters",
+                    "Compatibility check with current data",
+                    "Parameter and bounds validation"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "When importing configurations, corresponding reactions are automatically created with correct function types and parameters."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Exporting Analysis Results"
+            },
+            {
+                "type": "paragraph",
+                "text": "Saving calculation results in various formats:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "CSV files with kinetic parameters",
+                    "Plots in PNG, SVG, PDF formats",
+                    "Model-free analysis data export",
+                    "Optimization results with quality metrics"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Model-Fit Results"
+            },
+            {
+                "type": "paragraph",
+                "text": "Exported parameters for each reaction:"
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "Reaction,Method,Ea (kJ/mol),log_A,n,R²,RMSE,MSE\nreaction_0,direct-diff,120.5,8.2,1.0,0.995,0.002,4e-6\nreaction_1,Coats-Redfern,95.3,6.8,0.67,0.988,0.005,2.5e-5"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Model-Free Results"
+            },
+            {
+                "type": "paragraph",
+                "text": "Isoconversional analysis data:"
+            },
+            {
+                "type": "code",
+                "language": "csv",
+                "text": "Conversion,Friedman_Ea,KAS_Ea,Starink_Ea\n0.1,118.2,120.5,119.8\n0.2,121.3,123.1,122.4\n0.3,125.7,127.2,126.5\n..."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Exporting Series"
+            },
+            {
+                "type": "paragraph",
+                "text": "Saving multi-rate analysis data:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Experimental data for all heating rates",
+                    "Reaction schemes with kinetic parameters",
+                    "Model-based optimization results",
+                    "Comparative results from different methods"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"series_name\": {\n    \"experimental_data\": \"DataFrame with all heating rates\",\n    \"reaction_scheme\": {\n      \"components\": [...],\n      \"reactions\": [...]\n    },\n    \"model_fit_results\": {...},\n    \"model_free_results\": {...}\n  }\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Importing Series"
+            },
+            {
+                "type": "paragraph",
+                "text": "Loading saved series analysis data:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Select JSON file with series data",
+                    "Automatic restoration of experimental data",
+                    "Loading of reaction schemes and results",
+                    "Data integrity validation"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Plot Export Formats"
+            },
+            {
+                "type": "paragraph",
+                "text": "Supported formats for saving visualizations:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "PNG - raster format for presentations",
+                    "SVG - vector format for editing",
+                    "PDF - vector format for publications",
+                    "EPS - PostScript for typographic quality"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Vector formats (SVG, PDF) are recommended for scientific publications due to high-quality scaling."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Automatic Saving"
+            },
+            {
+                "type": "paragraph",
+                "text": "The system automatically saves:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Calculation configurations on every change",
+                    "Analysis results in JSON format",
+                    "Data operation history",
+                    "Cached optimization results"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Data Exchange Recommendations"
+            },
+            {
+                "type": "paragraph",
+                "text": "Best practices for data exchange between researchers:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Export configurations together with source data",
+                    "Include metadata (experimental conditions, date, author)",
+                    "Use descriptive file names",
+                    "Verify imported data before analysis"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "When transferring a project to another researcher, it's recommended to export both source data and analysis configurations for complete result reproduction."
+            }
+        ]
+    },
+    "related_sections": [
+        "data_management/file_loading",
+        "analysis/deconvolution",
+        "advanced/series_analysis",
+        "introduction/quick_start"
+    ]
+}

@@ -1,0 +1,257 @@
+{
+    "section_id": "installation",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Установка и настройка",
+            "en": "Installation & Setup"
+        },
+        "description": {
+            "ru": "Пошаговое руководство по установке и первоначальной настройке программы",
+            "en": "Step-by-step guide for program installation and initial setup"
+        },
+        "difficulty": "beginner",
+        "estimated_time": "10 минут",
+        "tags": [
+            "installation",
+            "setup",
+            "requirements"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Установка и настройка Open ThermoKinetics"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Системные требования"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для корректной работы программы необходимо:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Операционная система: Windows 10/11, macOS 10.14+, или Linux",
+                    "Python 3.12 или выше",
+                    "Минимум 4 ГБ оперативной памяти",
+                    "500 МБ свободного места на диске",
+                    "Монитор с разрешением не менее 1280x720"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Установка с использованием Poetry"
+            },
+            {
+                "type": "paragraph",
+                "text": "Программа использует Poetry для управления зависимостями. Выполните следующие шаги:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Убедитесь, что Python 3.12+ установлен в системе",
+                    "Установите Poetry, если он еще не установлен",
+                    "Клонируйте репозиторий проекта",
+                    "Перейдите в директорию проекта",
+                    "Выполните команду: poetry install",
+                    "Активируйте виртуальное окружение: poetry shell"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "powershell",
+                "code": "# Установка Poetry (если не установлен)\nInvoke-RestMethod -Uri https://install.python-poetry.org | python -\n\n# Клонирование репозитория\ngit clone https://github.com/your-repo/solid-state_kinetics\ncd solid-state_kinetics\n\n# Установка зависимостей\npoetry install\n\n# Активация окружения\npoetry shell"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Запуск программы"
+            },
+            {
+                "type": "paragraph",
+                "text": "После установки всех зависимостей запустите программу командой:"
+            },
+            {
+                "type": "code",
+                "language": "powershell",
+                "code": "poetry run ssk-gui"
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Точка входа 'ssk-gui' настроена в файле pyproject.toml и является рекомендуемым способом запуска приложения."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Первоначальная настройка"
+            },
+            {
+                "type": "paragraph",
+                "text": "При первом запуске программы рекомендуется:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Проверить отображение интерфейса",
+                    "Ознакомиться с расположением основных панелей",
+                    "Протестировать загрузку тестового файла данных",
+                    "Настроить предпочтения отображения консоли"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Возможные проблемы"
+            },
+            {
+                "type": "paragraph",
+                "text": "Если возникают проблемы при установке или запуске:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Убедитесь, что версия Python соответствует требованиям",
+                    "Проверьте корректность установки Poetry",
+                    "При ошибках зависимостей выполните: poetry update",
+                    "В случае проблем с GUI проверьте установку PyQt6"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "На некоторых системах Linux может потребоваться дополнительная установка системных пакетов для корректной работы PyQt6."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Open ThermoKinetics Installation & Setup"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "System Requirements"
+            },
+            {
+                "type": "paragraph",
+                "text": "For proper program operation, you need:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Operating System: Windows 10/11, macOS 10.14+, or Linux",
+                    "Python 3.12 or higher",
+                    "Minimum 4 GB RAM",
+                    "500 MB free disk space",
+                    "Monitor with resolution at least 1280x720"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Installation using Poetry"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program uses Poetry for dependency management. Follow these steps:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Ensure Python 3.12+ is installed on your system",
+                    "Install Poetry if not already installed",
+                    "Clone the project repository",
+                    "Navigate to the project directory",
+                    "Run command: poetry install",
+                    "Activate virtual environment: poetry shell"
+                ]
+            },
+            {
+                "type": "code",
+                "language": "powershell",
+                "code": "# Install Poetry (if not installed)\nInvoke-RestMethod -Uri https://install.python-poetry.org | python -\n\n# Clone repository\ngit clone https://github.com/your-repo/solid-state_kinetics\ncd solid-state_kinetics\n\n# Install dependencies\npoetry install\n\n# Activate environment\npoetry shell"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Running the Program"
+            },
+            {
+                "type": "paragraph",
+                "text": "After installing all dependencies, run the program with:"
+            },
+            {
+                "type": "code",
+                "language": "powershell",
+                "code": "poetry run ssk-gui"
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Entry point 'ssk-gui' is configured in pyproject.toml and is the recommended way to launch the application."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Initial Setup"
+            },
+            {
+                "type": "paragraph",
+                "text": "On first program launch, it is recommended to:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Check interface display",
+                    "Familiarize yourself with main panel locations",
+                    "Test loading a sample data file",
+                    "Configure console display preferences"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Troubleshooting"
+            },
+            {
+                "type": "paragraph",
+                "text": "If you encounter installation or launch issues:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Ensure Python version meets requirements",
+                    "Verify correct Poetry installation",
+                    "For dependency errors, run: poetry update",
+                    "For GUI issues, check PyQt6 installation"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "On some Linux systems, additional system packages may be required for proper PyQt6 operation."
+            }
+        ]
+    },
+    "related_sections": [
+        "overview",
+        "quick_start"
+    ]
+}

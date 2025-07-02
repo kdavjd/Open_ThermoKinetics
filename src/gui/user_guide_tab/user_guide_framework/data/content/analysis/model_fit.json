@@ -1,0 +1,563 @@
+{
+    "section_id": "model_fit",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Model-Fit анализ",
+            "en": "Model-Fit Analysis"
+        },
+        "description": {
+            "ru": "Определение кинетических параметров методами direct-diff и Coats-Redfern",
+            "en": "Kinetic parameter determination using direct-diff and Coats-Redfern methods"
+        },
+        "difficulty": "intermediate",
+        "estimated_time": "12 минут",
+        "tags": [
+            "model_fit",
+            "kinetics",
+            "activation_energy",
+            "coats_redfern"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Model-Fit анализ кинетических параметров"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Fit анализ позволяет определить кинетические параметры (энергию активации и предэкспоненциальный фактор) для отдельных реакций, полученных после деконволюции."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Предварительные требования"
+            },
+            {
+                "type": "paragraph",
+                "text": "Перед началом Model-Fit анализа необходимо:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Загрузить и предобработать экспериментальные данные",
+                    "Выполнить деконволюцию для выделения отдельных реакций",
+                    "Убедиться, что результаты деконволюции удовлетворительны"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Доступ к Model-Fit анализу"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для перехода к Model-Fit анализу:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "В боковой панели навигации разверните раздел 'calculation'",
+                    "Кликните на пункт 'model fit'",
+                    "Откроется панель Model-Fit анализа"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Доступные методы"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Direct-diff (Прямой дифференциальный)"
+            },
+            {
+                "type": "paragraph",
+                "text": "Метод основан на прямом дифференцировании уравнения скорости:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Использует производную dα/dT для расчета кинетических параметров",
+                    "Подходит для данных с хорошим соотношением сигнал/шум",
+                    "Быстрый и простой в применении",
+                    "Менее чувствителен к модели реакции"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Coats-Redfern"
+            },
+            {
+                "type": "paragraph",
+                "text": "Интегральный метод анализа:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Основан на интеграле уравнения скорости",
+                    "Требует предположения о модели реакции (F1, F2, A2, R3, D1)",
+                    "Более точен для данных с низким соотношением сигнал/шум",
+                    "Позволяет оценить механизм реакции"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Настройка параметров анализа"
+            },
+            {
+                "type": "paragraph",
+                "text": "В панели Model-Fit настройте следующие параметры:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "α_min - минимальная степень конверсии (обычно 0.005)",
+                    "α_max - максимальная степень конверсии (обычно 0.995)",
+                    "valid proportion - доля валидных точек (рекомендуется 0.8)",
+                    "heating rate - скорость нагрева (автоматически из данных)"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Диапазон степени конверсии должен охватывать основную часть пика, исключая области с низким сигналом."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Выполнение расчета"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для запуска Model-Fit анализа:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Выберите метод анализа в выпадающем списке",
+                    "Установите параметры анализа",
+                    "Нажмите кнопку 'calculate'",
+                    "Дождитесь завершения расчета"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Интерпретация результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Результаты отображаются в таблице с колонками:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Model - модель реакции (для метода Coats-Redfern)",
+                    "R²_score - коэффициент детерминации (качество подгонки)",
+                    "Ea - энергия активации (кДж/моль)",
+                    "A - предэкспоненциальный фактор (с⁻¹)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Критерии качества"
+            },
+            {
+                "type": "paragraph",
+                "text": "Оценка надежности результатов:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "R² > 0.95 - хорошее качество подгонки",
+                    "R² > 0.99 - отличное качество подгонки",
+                    "Ea в диапазоне 50-500 кДж/моль - типичные значения",
+                    "log(A) в диапазоне 5-25 - разумные значения"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Визуализация результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Для графического анализа результатов:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Выберите модель в выпадающем списке 'plot model'",
+                    "Нажмите кнопку 'plot'",
+                    "На графике отобразятся экспериментальные и расчетные данные",
+                    "Оцените качество подгонки визуально"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Настройки расчета"
+            },
+            {
+                "type": "paragraph",
+                "text": "Дополнительные настройки доступны через кнопку 'settings':"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Параметры численного интегрирования",
+                    "Критерии фильтрации результатов",
+                    "Настройки аппроксимации",
+                    "Параметры обработки данных"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Анализ нескольких реакций"
+            },
+            {
+                "type": "paragraph",
+                "text": "Если деконволюция выявила несколько реакций:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Выполните Model-Fit анализ для каждой реакции отдельно",
+                    "Сравните полученные кинетические параметры",
+                    "Проанализируйте различия в механизмах реакций",
+                    "Оцените влияние температуры на скорости реакций"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Экспорт результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Результаты Model-Fit анализа можно сохранить:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Скопируйте данные из таблицы результатов",
+                    "Сохраните графики через кнопку 'plot'",
+                    "Экспортируйте в составе отчета по проекту",
+                    "Используйте консоль для копирования численных значений"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Типичные проблемы и решения"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Низкий R² - проверьте качество деконволюции и диапазон α",
+                    "Нереалистичные значения Ea - пересмотрите модель реакции",
+                    "Отсутствие результатов - увеличьте valid proportion",
+                    "Нестабильные результаты - улучшите предобработку данных"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Model-Fit анализ предполагает, что каждая реакция следует единому механизму на всем протяжении. Для сложных механизмов рассмотрите Model-Free анализ."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Model-Fit Kinetic Parameter Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Fit analysis allows determination of kinetic parameters (activation energy and pre-exponential factor) for individual reactions obtained after deconvolution."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Prerequisites"
+            },
+            {
+                "type": "paragraph",
+                "text": "Before starting Model-Fit analysis, you need to:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Load and preprocess experimental data",
+                    "Perform deconvolution to isolate individual reactions",
+                    "Ensure deconvolution results are satisfactory"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Accessing Model-Fit Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "To proceed to Model-Fit analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "In navigation sidebar, expand 'calculation' section",
+                    "Click on 'model fit' item",
+                    "Model-Fit analysis panel will open"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Available Methods"
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Direct-diff (Direct Differential)"
+            },
+            {
+                "type": "paragraph",
+                "text": "Method based on direct differentiation of rate equation:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Uses dα/dT derivative for kinetic parameter calculation",
+                    "Suitable for data with good signal-to-noise ratio",
+                    "Fast and simple to apply",
+                    "Less sensitive to reaction model"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 3,
+                "text": "Coats-Redfern"
+            },
+            {
+                "type": "paragraph",
+                "text": "Integral analysis method:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Based on integral of rate equation",
+                    "Requires assumption about reaction model (F1, F2, A2, R3, D1)",
+                    "More accurate for data with low signal-to-noise ratio",
+                    "Allows assessment of reaction mechanism"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Analysis Parameter Configuration"
+            },
+            {
+                "type": "paragraph",
+                "text": "In Model-Fit panel, configure the following parameters:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "α_min - minimum conversion degree (usually 0.005)",
+                    "α_max - maximum conversion degree (usually 0.995)",
+                    "valid proportion - fraction of valid points (recommended 0.8)",
+                    "heating rate - heating rate (automatically from data)"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "tip",
+                "text": "Conversion degree range should cover the main part of the peak, excluding low signal areas."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Running Calculation"
+            },
+            {
+                "type": "paragraph",
+                "text": "To start Model-Fit analysis:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Select analysis method from dropdown",
+                    "Set analysis parameters",
+                    "Click 'calculate' button",
+                    "Wait for calculation completion"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Interpretation"
+            },
+            {
+                "type": "paragraph",
+                "text": "Results are displayed in table with columns:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Model - reaction model (for Coats-Redfern method)",
+                    "R²_score - coefficient of determination (fit quality)",
+                    "Ea - activation energy (kJ/mol)",
+                    "A - pre-exponential factor (s⁻¹)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Quality Criteria"
+            },
+            {
+                "type": "paragraph",
+                "text": "Assessing result reliability:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "R² > 0.95 - good fit quality",
+                    "R² > 0.99 - excellent fit quality",
+                    "Ea in range 50-500 kJ/mol - typical values",
+                    "log(A) in range 5-25 - reasonable values"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Visualization"
+            },
+            {
+                "type": "paragraph",
+                "text": "For graphical analysis of results:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Select model in 'plot model' dropdown",
+                    "Click 'plot' button",
+                    "Experimental and calculated data will be displayed on plot",
+                    "Assess fit quality visually"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Calculation Settings"
+            },
+            {
+                "type": "paragraph",
+                "text": "Additional settings available via 'settings' button:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Numerical integration parameters",
+                    "Result filtering criteria",
+                    "Approximation settings",
+                    "Data processing parameters"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Multiple Reaction Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "If deconvolution revealed multiple reactions:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Perform Model-Fit analysis for each reaction separately",
+                    "Compare obtained kinetic parameters",
+                    "Analyze differences in reaction mechanisms",
+                    "Assess temperature influence on reaction rates"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Export"
+            },
+            {
+                "type": "paragraph",
+                "text": "Model-Fit analysis results can be saved:"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Copy data from results table",
+                    "Save plots via 'plot' button",
+                    "Export as part of project report",
+                    "Use console to copy numerical values"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Common Issues and Solutions"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Low R² - check deconvolution quality and α range",
+                    "Unrealistic Ea values - reconsider reaction model",
+                    "No results - increase valid proportion",
+                    "Unstable results - improve data preprocessing"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "warning",
+                "text": "Model-Fit analysis assumes each reaction follows a single mechanism throughout. For complex mechanisms, consider Model-Free analysis."
+            }
+        ]
+    },
+    "related_sections": [
+        "deconvolution",
+        "model_free",
+        "model_based"
+    ]
+}
