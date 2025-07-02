@@ -1,0 +1,148 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "default_language": "ru",
+    "title": {
+      "ru": "Руководство пользователя Open ThermoKinetics",
+      "en": "Open ThermoKinetics User Guide"
+    }
+  },
+  "settings": {
+    "theme": "default",
+    "auto_save": true,
+    "search_enabled": true
+  },
+  "structure": {
+    "introduction": {
+      "title": {
+        "ru": "Введение",
+        "en": "Introduction"
+      },
+      "icon": "info-circle",
+      "children": {
+        "overview": {
+          "title": {
+            "ru": "Обзор программы",
+            "en": "Program Overview"
+          },
+          "content_file": "introduction/overview.json"
+        },
+        "installation": {
+          "title": {
+            "ru": "Установка и настройка",
+            "en": "Installation & Setup"
+          },
+          "content_file": "introduction/installation.json"
+        },
+        "quick_start": {
+          "title": {
+            "ru": "Быстрый старт",
+            "en": "Quick Start"
+          },
+          "content_file": "introduction/quick_start.json"
+        }
+      }
+    },
+    "data_management": {
+      "title": {
+        "ru": "Управление данными",
+        "en": "Data Management"
+      },
+      "icon": "folder",
+      "children": {
+        "file_loading": {
+          "title": {
+            "ru": "Загрузка файлов",
+            "en": "File Loading"
+          },
+          "content_file": "data_management/file_loading.json"
+        },
+        "data_preprocessing": {
+          "title": {
+            "ru": "Предобработка данных",
+            "en": "Data Preprocessing"
+          },
+          "content_file": "data_management/data_preprocessing.json"
+        },
+        "file_operations": {
+          "title": {
+            "ru": "Операции с файлами",
+            "en": "File Operations"
+          },
+          "content_file": "data_management/file_operations.json"
+        }
+      }
+    },
+    "analysis": {
+      "title": {
+        "ru": "Анализ данных",
+        "en": "Data Analysis"
+      },
+      "icon": "chart-line",
+      "children": {
+        "deconvolution": {
+          "title": {
+            "ru": "Деконволюция пиков",
+            "en": "Peak Deconvolution"
+          },
+          "content_file": "analysis/deconvolution.json"
+        },
+        "model_fit": {
+          "title": {
+            "ru": "Model-Fit анализ",
+            "en": "Model-Fit Analysis"
+          },
+          "content_file": "analysis/model_fit.json"
+        },
+        "model_free": {
+          "title": {
+            "ru": "Model-Free анализ",
+            "en": "Model-Free Analysis"
+          },
+          "content_file": "analysis/model_free.json"
+        },
+        "model_based": {
+          "title": {
+            "ru": "Model-Based анализ",
+            "en": "Model-Based Analysis"
+          },
+          "content_file": "analysis/model_based.json"
+        }
+      }
+    },
+    "advanced": {
+      "title": {
+        "ru": "Продвинутые функции",
+        "en": "Advanced Features"
+      },
+      "icon": "cogs",
+      "children": {
+        "series_analysis": {
+          "title": {
+            "ru": "Анализ серий",
+            "en": "Series Analysis"
+          },
+          "content_file": "advanced/series_analysis.json"
+        },
+        "export_import": {
+          "title": {
+            "ru": "Экспорт и импорт",
+            "en": "Export & Import"
+          },
+          "content_file": "advanced/export_import.json"
+        },
+        "troubleshooting": {
+          "title": {
+            "ru": "Решение проблем",
+            "en": "Troubleshooting"
+          },
+          "content_file": "advanced/troubleshooting.json"
+        }
+      }
+    }
+  }
+}

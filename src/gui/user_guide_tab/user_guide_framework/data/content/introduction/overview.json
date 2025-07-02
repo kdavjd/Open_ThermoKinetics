@@ -1,0 +1,183 @@
+{
+    "section_id": "overview",
+    "version": "1.0",
+    "metadata": {
+        "title": {
+            "ru": "Обзор программы",
+            "en": "Program Overview"
+        },
+        "description": {
+            "ru": "Общий обзор возможностей программы Open ThermoKinetics",
+            "en": "General overview of Open ThermoKinetics program capabilities"
+        },
+        "difficulty": "beginner",
+        "estimated_time": "5 минут",
+        "tags": [
+            "overview",
+            "introduction",
+            "basics"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Open ThermoKinetics - Обзор программы"
+            },
+            {
+                "type": "paragraph",
+                "text": "Open ThermoKinetics - это мощная программа для анализа кинетики твердофазных реакций, разработанная для исследователей и студентов в области термоанализа."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Основные возможности"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Анализ термогравиметрических (ТГА) данных",
+                    "Анализ дифференциальной сканирующей калориметрии (ДСК)",
+                    "Деконволюция сложных пиков на составляющие реакции",
+                    "Model-fit анализ для определения кинетических параметров",
+                    "Model-free (изоконверсионный) анализ",
+                    "Model-based анализ многостадийных реакций",
+                    "Обработка серий экспериментов с разными скоростями нагрева",
+                    "Экспорт результатов в различных форматах"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Архитектура программы"
+            },
+            {
+                "type": "paragraph",
+                "text": "Программа состоит из нескольких основных компонентов:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Основное окно (Main Tab) - интерфейс для работы с данными",
+                    "Руководство пользователя (User Guide) - интерактивная справка",
+                    "Система навигации - дерево проектов и экспериментов",
+                    "Панели анализа - специализированные интерфейсы для разных методов",
+                    "Интерактивные графики - визуализация данных с возможностью редактирования",
+                    "Консоль вывода - отображение результатов расчетов"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Типичный рабочий процесс"
+            },
+            {
+                "type": "paragraph",
+                "text": "Стандартный анализ в Open ThermoKinetics включает следующие этапы:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Загрузка экспериментальных данных (CSV файлы)",
+                    "Предобработка данных (сглаживание, вычитание фона)",
+                    "Деконволюция пиков для выделения отдельных реакций",
+                    "Выбор метода анализа (Model-fit, Model-free, Model-based)",
+                    "Настройка параметров расчета",
+                    "Выполнение расчетов и анализ результатов",
+                    "Экспорт результатов"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "Программа поддерживает как простые одностадийные реакции, так и сложные многостадийные системы с параллельными и последовательными процессами."
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Open ThermoKinetics - Program Overview"
+            },
+            {
+                "type": "paragraph",
+                "text": "Open ThermoKinetics is a powerful program for analyzing kinetics of solid-state reactions, designed for researchers and students in the field of thermal analysis."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Key Features"
+            },
+            {
+                "type": "list",
+                "list_type": "unordered",
+                "items": [
+                    "Thermogravimetric analysis (TGA) data processing",
+                    "Differential scanning calorimetry (DSC) data analysis",
+                    "Deconvolution of complex peaks into constituent reactions",
+                    "Model-fit analysis for kinetic parameter determination",
+                    "Model-free (isoconversional) analysis",
+                    "Model-based analysis of multi-step reactions",
+                    "Processing of experimental series with different heating rates",
+                    "Export results in various formats"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Program Architecture"
+            },
+            {
+                "type": "paragraph",
+                "text": "The program consists of several main components:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Main window (Main Tab) - interface for data processing",
+                    "User Guide - interactive help system",
+                    "Navigation system - project and experiment tree",
+                    "Analysis panels - specialized interfaces for different methods",
+                    "Interactive plots - data visualization with editing capabilities",
+                    "Output console - calculation results display"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Typical Workflow"
+            },
+            {
+                "type": "paragraph",
+                "text": "Standard analysis in Open ThermoKinetics includes the following steps:"
+            },
+            {
+                "type": "list",
+                "list_type": "ordered",
+                "items": [
+                    "Loading experimental data (CSV files)",
+                    "Data preprocessing (smoothing, baseline subtraction)",
+                    "Peak deconvolution to identify separate reactions",
+                    "Selection of analysis method (Model-fit, Model-free, Model-based)",
+                    "Configuration of calculation parameters",
+                    "Execution of calculations and results analysis",
+                    "Export of results"
+                ]
+            },
+            {
+                "type": "note",
+                "note_type": "info",
+                "text": "The program supports both simple single-step reactions and complex multi-step systems with parallel and sequential processes."
+            }
+        ]
+    },
+    "related_sections": [
+        "quick_start",
+        "installation"
+    ]
+}

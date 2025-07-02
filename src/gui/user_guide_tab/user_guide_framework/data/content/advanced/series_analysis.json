@@ -1,0 +1,311 @@
+{
+    "section_id": "series_analysis",
+    "version": "1.0.0",
+    "metadata": {
+        "title": "Series Analysis",
+        "description": "Comprehensive guide to multi-rate kinetic analysis using experimental series",
+        "difficulty": "advanced",
+        "estimated_time": "20-25 minutes",
+        "tags": [
+            "series",
+            "multi-rate",
+            "kinetics",
+            "heating-rates",
+            "experimental",
+            "optimization"
+        ]
+    },
+    "content": {
+        "ru": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Анализ серий экспериментов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Анализ серий представляет собой мощный метод кинетического анализа, использующий данные экспериментов при различных скоростях нагрева для определения надежных кинетических параметров."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Создание серии экспериментов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Серия объединяет результаты деконволюции нескольких файлов с различными скоростями нагрева:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Загрузите файлы с разными скоростями нагрева (например, 3, 5, 10 K/min)",
+                    "Выполните деконволюцию для каждого файла",
+                    "В разделе 'series' выберите 'add new series'",
+                    "Укажите файлы и соответствующие скорости нагрева",
+                    "Задайте массовые коэффициенты для нормализации"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Структура данных серии"
+            },
+            {
+                "type": "paragraph",
+                "text": "Серия содержит несколько типов данных:"
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"experimental_data\": \"DataFrame 489×4 с температурой и данными для скоростей\",\n  \"experimental_masses\": [1, 1, 1],\n  \"reaction_scheme\": {\n    \"components\": [{\"id\": \"A\"}, {\"id\": \"B\"}, {\"id\": \"C\"}],\n    \"reactions\": [\n      {\n        \"from\": \"A\", \"to\": \"B\",\n        \"reaction_type\": \"F2\",\n        \"Ea\": 120, \"log_A\": 8, \"contribution\": 0.5\n      }\n    ]\n  },\n  \"deconvolution_results\": {\"3\": {...}, \"5\": {...}, \"10\": {...}},\n  \"model_fit_results\": {...},\n  \"model_free_results\": {...}\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Схемы реакций"
+            },
+            {
+                "type": "paragraph",
+                "text": "Поддерживаются различные типы реакционных схем:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Последовательные: A→B→C→D",
+                    "С ветвлением: A→B→C→(D,E)",
+                    "Параллельные: A→(B,C,D)",
+                    "Комбинированные схемы"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Каждая реакция может иметь различный кинетический механизм (F1/3, F2, F3, A2, R3, D1)"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Model-Free анализ серий"
+            },
+            {
+                "type": "paragraph",
+                "text": "Изоконверсионные методы для определения энергии активации в зависимости от степени конверсии:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Метод Фридмана (дифференциальный)",
+                    "Метод KAS (Kissinger-Akahira-Sunose)",
+                    "Метод Старинка (Starink)",
+                    "Линейная аппроксимация"
+                ]
+            },
+            {
+                "type": "paragraph",
+                "text": "Результаты представляются в виде DataFrames с зависимостью Ea от степени конверсии (100 точек от 0.005 до 0.995)."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Model-Fit анализ серий"
+            },
+            {
+                "type": "paragraph",
+                "text": "Определение кинетических параметров для каждой реакции:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "direct-diff: прямая дифференциальная обработка",
+                    "Coats-Redfern: интегральный метод",
+                    "Определение Ea, log_A, n для каждой стадии",
+                    "Статистические метрики (R², RMSE, MSE)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Оптимизация параметров"
+            },
+            {
+                "type": "paragraph",
+                "text": "Настройки оптимизации для серийного анализа:"
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "\"calculation_settings\": {\n  \"method\": \"differential_evolution\",\n  \"method_parameters\": {\n    \"strategy\": \"best1bin\",\n    \"maxiter\": 200,\n    \"popsize\": 2,\n    \"workers\": 4,\n    \"polish\": false\n  }\n}"
+            },
+            {
+                "type": "note",
+                "text": "Глобальная оптимизация differential_evolution обеспечивает надежное определение параметров для сложных многостадийных схем"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Интерпретация результатов"
+            },
+            {
+                "type": "paragraph",
+                "text": "Анализ качества подгонки и физической обоснованности:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Сравнение экспериментальных и расчетных кривых",
+                    "Анализ остатков и статистических метрик",
+                    "Проверка физической разумности параметров Ea и A",
+                    "Сравнение результатов model-free и model-fit методов"
+                ]
+            }
+        ],
+        "en": [
+            {
+                "type": "heading",
+                "level": 1,
+                "text": "Series Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "Series analysis is a powerful kinetic analysis method that uses data from experiments at different heating rates to determine reliable kinetic parameters."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Creating Experimental Series"
+            },
+            {
+                "type": "paragraph",
+                "text": "A series combines deconvolution results from multiple files with different heating rates:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Load files with different heating rates (e.g., 3, 5, 10 K/min)",
+                    "Perform deconvolution for each file",
+                    "In 'series' section, select 'add new series'",
+                    "Specify files and corresponding heating rates",
+                    "Set mass coefficients for normalization"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Series Data Structure"
+            },
+            {
+                "type": "paragraph",
+                "text": "A series contains several types of data:"
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "{\n  \"experimental_data\": \"DataFrame 489×4 with temperature and rate data\",\n  \"experimental_masses\": [1, 1, 1],\n  \"reaction_scheme\": {\n    \"components\": [{\"id\": \"A\"}, {\"id\": \"B\"}, {\"id\": \"C\"}],\n    \"reactions\": [\n      {\n        \"from\": \"A\", \"to\": \"B\",\n        \"reaction_type\": \"F2\",\n        \"Ea\": 120, \"log_A\": 8, \"contribution\": 0.5\n      }\n    ]\n  },\n  \"deconvolution_results\": {\"3\": {...}, \"5\": {...}, \"10\": {...}},\n  \"model_fit_results\": {...},\n  \"model_free_results\": {...}\n}"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Reaction Schemes"
+            },
+            {
+                "type": "paragraph",
+                "text": "Various types of reaction schemes are supported:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Sequential: A→B→C→D",
+                    "With branching: A→B→C→(D,E)",
+                    "Parallel: A→(B,C,D)",
+                    "Combined schemes"
+                ]
+            },
+            {
+                "type": "note",
+                "text": "Each reaction can have different kinetic mechanisms (F1/3, F2, F3, A2, R3, D1)"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Model-Free Series Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "Isoconversional methods for determining activation energy as a function of conversion degree:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Friedman method (differential)",
+                    "KAS method (Kissinger-Akahira-Sunose)",
+                    "Starink method",
+                    "Linear approximation"
+                ]
+            },
+            {
+                "type": "paragraph",
+                "text": "Results are presented as DataFrames with Ea vs. conversion degree (100 points from 0.005 to 0.995)."
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Model-Fit Series Analysis"
+            },
+            {
+                "type": "paragraph",
+                "text": "Determination of kinetic parameters for each reaction:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "direct-diff: direct differential processing",
+                    "Coats-Redfern: integral method",
+                    "Determination of Ea, log_A, n for each stage",
+                    "Statistical metrics (R², RMSE, MSE)"
+                ]
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Parameter Optimization"
+            },
+            {
+                "type": "paragraph",
+                "text": "Optimization settings for series analysis:"
+            },
+            {
+                "type": "code",
+                "language": "json",
+                "text": "\"calculation_settings\": {\n  \"method\": \"differential_evolution\",\n  \"method_parameters\": {\n    \"strategy\": \"best1bin\",\n    \"maxiter\": 200,\n    \"popsize\": 2,\n    \"workers\": 4,\n    \"polish\": false\n  }\n}"
+            },
+            {
+                "type": "note",
+                "text": "Global optimization with differential_evolution ensures reliable parameter determination for complex multi-stage schemes"
+            },
+            {
+                "type": "heading",
+                "level": 2,
+                "text": "Results Interpretation"
+            },
+            {
+                "type": "paragraph",
+                "text": "Analysis of fit quality and physical validity:"
+            },
+            {
+                "type": "list",
+                "items": [
+                    "Comparison of experimental and calculated curves",
+                    "Analysis of residuals and statistical metrics",
+                    "Verification of physical reasonableness of Ea and A parameters",
+                    "Comparison of model-free and model-fit results"
+                ]
+            }
+        ]
+    },
+    "related_sections": [
+        "data_management/file_loading",
+        "analysis/deconvolution",
+        "analysis/model_fit",
+        "analysis/model_free",
+        "analysis/model_based"
+    ]
+}

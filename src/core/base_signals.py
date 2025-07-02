@@ -7,12 +7,11 @@ from src.core.logger_config import logger
 
 
 class BaseSignals(QObject):
-    """A dispatcher that routes requests and responses between components.
+    """Central dispatcher for component communication via Qt signals.
 
-    This class defines a simple mechanism for connecting components (actors)
-    through signals. Each component can register itself with the dispatcher,
-    specifying methods for handling requests and responses. Requests and
-    responses are emitted as Qt signals.
+    Routes requests and responses between registered components using a
+    publisher-subscriber pattern. Each component registers request/response
+    handlers for loose coupling and centralized message routing.
     """
 
     request_signal = pyqtSignal(dict)
@@ -30,21 +29,19 @@ class BaseSignals(QObject):
         process_request_method: Callable[[dict], None],
         process_response_method: Callable[[dict], None],
     ) -> None:
-        """
+        """Register component with request and response handlers.
+
         Args:
-            component_name (str): The name of the component.
-            process_request_method (Callable[[dict], None]): A method for handling requests.
-            process_response_method (Callable[[dict], None]): A method for handling responses.
+            component_name: Unique component identifier
+            process_request_method: Handler for incoming requests
+            process_response_method: Handler for incoming responses
         """
         self.components[component_name] = (process_request_method, process_response_method)
         logger.debug(f"Component '{component_name}' registered with dispatcher.")
 
     @pyqtSlot(dict)
     def dispatch_request(self, params: dict) -> None:
-        """Dispatch a request to the appropriate component.
-        Args:
-            params (dict): The parameters of the request, must include 'target' to identify the component.
-        """
+        """Route request to target component."""
         target = params.get("target")
         if target in self.components:
             process_request_method, _ = self.components[target]
@@ -54,10 +51,7 @@ class BaseSignals(QObject):
 
     @pyqtSlot(dict)
     def dispatch_response(self, params: dict) -> None:
-        """Dispatch a response to the appropriate component.
-        Args:
-            params (dict): The parameters of the response, must include 'target' to identify the component.
-        """
+        """Route response to target component."""
         target = params.get("target")
         if target in self.components:
             _, process_response_method = self.components[target]
@@ -67,11 +61,11 @@ class BaseSignals(QObject):
 
 
 class BaseSlots(QObject):
-    """A base class providing a request/response mechanism via signals and an event loop.
+    """Base class for request/response communication via Qt signals.
 
-    This class serves as a basic abstraction for sending requests to other
-    registered components and waiting for responses. It uses QEventLoop to
-    block until a response is received or until a timeout occurs.
+    Provides synchronous request/response operations over Qt's asynchronous
+    signal system using QEventLoop blocking. Components inherit this class
+    to participate in centralized message routing.
     """
 
     def __init__(self, actor_name: str, signals: BaseSignals):
@@ -85,20 +79,25 @@ class BaseSlots(QObject):
         self.signals.register_component(self.actor_name, self.process_request, self.process_response)
 
     def connect_to_dispatcher(self) -> None:
+        """Connect component to signal dispatcher."""
         self.signals.request_signal.connect(self.process_request)
         self.signals.response_signal.connect(self.process_response)
         logger.debug(f"{self.actor_name} connected to signals.")
 
     def handle_request_cycle(self, target: str, operation: str, **kwargs) -> Any:
-        """Create a request, send it, and wait for the response.
+        """Send request and wait for response synchronously.
+
+        Creates request, emits signal, blocks on QEventLoop until response
+        received or timeout occurs. Used throughout codebase for component
+        communication.
 
         Args:
-            target (str): The target system for the request.
-            operation (str): The operation to be performed.
-            **kwargs: Additional parameters for the request.
+            target: Target component name
+            operation: Operation type from OperationType enum
+            **kwargs: Additional request parameters
 
         Returns:
-            Any: The response data if successful, otherwise None.
+            Response data or None if timeout/error
         """
         request_id = self.create_and_emit_request(target, operation, **kwargs)
         response_data = self.handle_response_data(request_id, operation)
@@ -109,16 +108,7 @@ class BaseSlots(QObject):
             return None
 
     def create_and_emit_request(self, target: str, operation: str, **kwargs) -> str:
-        """Create and emit a request signal.
-
-        Args:
-            target (str): The target system for the request.
-            operation (str): The operation to be performed.
-            **kwargs: Additional parameters for the request.
-
-        Returns:
-            str: The unique request ID for this request.
-        """
+        """Create request with unique ID and emit signal."""
         request_id = str(uuid.uuid4())
         self.pending_requests[request_id] = {"received": False, "data": None}
         request = {
@@ -133,16 +123,11 @@ class BaseSlots(QObject):
         return request_id
 
     def process_request(self, params: dict) -> None:
-        """Process an incoming request.
-
-        This method should be overridden in subclasses to provide specific request handling logic.
-
-        Args:
-            params (dict): The request parameters.
-        """
+        """Process incoming request. Override in subclasses."""
         pass
 
     def process_response(self, params: dict) -> None:
+        """Process incoming response and unblock waiting event loop."""
         """Process an incoming response.
 
         Args:
@@ -162,14 +147,17 @@ class BaseSlots(QObject):
             logger.error(f"{self.actor_name}_response_slot: unknown operation='{operation}' UUID: {request_id}")
 
     def wait_for_response(self, request_id: str, timeout: int = 1000) -> Optional[dict]:
-        """Wait for a response to a specific request.
+        """Block on QEventLoop until response received or timeout.
+
+        Critical synchronization method that converts async Qt signals to
+        synchronous operations throughout the application.
 
         Args:
-            request_id (str): The ID of the request.
-            timeout (int, optional): The time to wait in milliseconds. Defaults to 1000.
+            request_id: Unique request identifier
+            timeout: Maximum wait time in milliseconds
 
         Returns:
-            Optional[dict]: The response data if received in time, otherwise None.
+            Response data dict or None if timeout
         """
         if request_id not in self.pending_requests:
             self.pending_requests[request_id] = {"received": False, "data": None}
@@ -200,15 +188,7 @@ class BaseSlots(QObject):
         return self.pending_requests.pop(request_id)["data"]
 
     def handle_response_data(self, request_id: str, operation: str) -> Any:
-        """Handle the response data for a given request ID.
-
-        Args:
-            request_id (str): The request ID associated with the response.
-            operation (str): The requested operation.
-
-        Returns:
-            Any: The response data if available, otherwise None.
-        """
+        """Extract response data from completed request."""
         response_data = self.wait_for_response(request_id)
         if response_data is not None:
             return response_data.pop("data", None)

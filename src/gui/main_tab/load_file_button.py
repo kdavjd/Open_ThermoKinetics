@@ -2,16 +2,7 @@ import csv
 import os
 
 from PyQt6.QtCore import QSize, pyqtSignal
-from PyQt6.QtWidgets import (
-    QDialog,
-    QDialogButtonBox,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QDialog, QDialogButtonBox, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QVBoxLayout, QWidget
 
 from src.core.logger_config import logger
 
@@ -29,6 +20,7 @@ class LoadButton(QWidget):
     file_extensions = "CSV files (*.csv);;Text files (*.txt)"
 
     def open_file_dialog(self):
+        """Open file selection dialog and proceed to pre-load configuration if file selected."""
         try:
             home_dir = os.getenv("HOME", "")
             file_path, _ = QFileDialog.getOpenFileName(self, "Open File", home_dir, self.file_extensions)

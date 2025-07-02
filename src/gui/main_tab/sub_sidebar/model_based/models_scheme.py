@@ -20,6 +20,8 @@ from src.core.logger_config import logger
 
 
 class DiagramConfig:
+    """Configuration constants for reaction scheme diagram visualization."""
+
     NODE_WIDTH = 30
     NODE_HEIGHT = 20
     ARROW_INSET = 3
@@ -32,7 +34,14 @@ class DiagramConfig:
 
 
 class ReactionGraphicsRect(QGraphicsRectItem):
+    """
+    Graphics item representing a reaction component in the scheme diagram.
+
+    Handles mouse interactions for context menus and component operations.
+    """
+
     def __init__(self, reaction_node, rect, parent=None):
+        """Initialize graphics rect for reaction component visualization."""
         super().__init__(rect, parent)
         self.reaction_node = reaction_node
         self.setAcceptHoverEvents(True)
@@ -59,7 +68,14 @@ class ReactionGraphicsRect(QGraphicsRectItem):
 
 
 class ReactionNode:
+    """
+    Data model for reaction component in scheme diagram.
+
+    Represents a single component (A, B, C, etc.) with position and visual elements.
+    """
+
     def __init__(self, scene, letter, x, y, parent_widget):
+        """Initialize reaction node with scene position and reference to parent widget."""
         self.letter = letter
         self.x = x
         self.y = y
@@ -95,7 +111,14 @@ class ReactionNode:
 
 
 class ReactionArrow:
+    """
+    Visual connector between reaction components in scheme diagram.
+
+    Draws arrows to represent reaction pathways from parent to child components.
+    """
+
     def __init__(self, scene, parent_node, child_node):
+        """Initialize arrow connecting parent and child reaction nodes."""
         self.scene = scene
         self.parent_node = parent_node
         self.child_node = child_node
@@ -270,9 +293,18 @@ class ReactionArrow:
 
 
 class ModelsScheme(QWidget):
+    """
+    Interactive visual editor for multi-step reaction schemes.
+
+    Provides drag-and-drop interface for building reaction pathways (A→B→C→D/E)
+    with support for sequential and branching topologies. Emits scheme changes
+    for kinetic parameter optimization in model-based analysis.
+    """
+
     scheme_change_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
+        """Initialize reaction scheme editor with graphics scene and initial A component."""
         super().__init__(parent)
         logger.debug("ModelsScheme: __init__ start")
         self.layout = QVBoxLayout(self)
