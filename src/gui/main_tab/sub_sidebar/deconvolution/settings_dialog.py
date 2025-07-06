@@ -217,6 +217,33 @@ class CalculationSettingsDialog(QDialog):
             self.method_parameters_layout.addWidget(field, row, 1)
             row += 1
 
+    def _create_optuna_parameters(self):
+        """Create parameter input fields for Optuna method."""
+        self.optuna_parameters = {}
+
+        # Try to get initial values from previous settings
+        initial_params = {}
+        if self.initial_deconvolution_settings and self.initial_deconvolution_settings.get("method") == "optuna":
+            initial_params = self.initial_deconvolution_settings.get("method_parameters", {})
+
+        # n_trials
+        label_trials = QLabel("n_trials")
+        label_trials.setToolTip("Number of Optuna trials (integer >= 1)")
+        field_trials = QLineEdit(str(initial_params.get("n_trials", 100)))
+        self.optuna_parameters["n_trials"] = field_trials
+        self.method_parameters_layout.addWidget(label_trials, 0, 0)
+        self.method_parameters_layout.addWidget(field_trials, 0, 1)
+
+        # direction
+        label_direction = QLabel("direction")
+        label_direction.setToolTip("Optimization direction: minimize or maximize")
+        field_direction = QComboBox()
+        field_direction.addItems(["minimize", "maximize"])
+        field_direction.setCurrentText(str(initial_params.get("direction", "minimize")))
+        self.optuna_parameters["direction"] = field_direction
+        self.method_parameters_layout.addWidget(label_direction, 1, 0)
+        self.method_parameters_layout.addWidget(field_direction, 1, 1)
+
     def _get_tooltip_for_parameter(self, param_name: str) -> str:
         """Get tooltip text for a parameter."""
         tooltips = {
