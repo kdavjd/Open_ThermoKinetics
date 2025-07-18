@@ -1,5 +1,7 @@
 from multiprocessing import Manager
 from typing import Callable, Dict
+import threading
+from functools import wraps
 
 import numpy as np
 from scipy.constants import R
@@ -10,6 +12,36 @@ from src.core.app_settings import NUC_MODELS_TABLE, PARAMETER_BOUNDS
 from src.core.curve_fitting import CurveFitting as cft
 from src.core.logger_config import logger
 
+
+class TimeoutError(Exception):
+    """Custom timeout exception for integration functions."""
+    pass
+
+
+def integration_timeout(timeout_ms):
+    """
+    Decorator to limit execution time of integration functions.
+
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            result = [None]  # Use list to allow modification in nested function
+
+            def target():
+                result[0] = func(*args, **kwargs)
+
+            thread = threading.Thread(target=target, daemon=True)
+            thread.start()
+            thread.join(timeout_ms / 1000.0)  # Convert ms to seconds
+
+            if thread.is_alive():
+                raise TimeoutError(f"Integration timeout after {timeout_ms}ms")
+
+            return result[0]
+
+        return wrapper
+    return decorator
 
 class BaseCalculationScenario:
     """Base class for defining optimization scenarios."""
@@ -175,6 +207,7 @@ def ode_function(T, y, beta, params, species_list, reactions, num_species, num_r
     return dYdt
 
 
+@integration_timeout(50.0)
 def integrate_ode_for_beta(
     beta, contributions, params, species_list, reactions, num_species, num_reactions, exp_temperature, exp_mass, R
 ):
@@ -215,19 +248,22 @@ def model_based_objective_function(
         if stop_event.is_set():
             return float("inf")
 
-        mse_i = integrate_ode_for_beta(
-            beta,
-            contributions,
-            params,
-            species_list,
-            reactions,
-            num_species,
-            num_reactions,
-            exp_temperature,
-            exp_mass,
-            R,
-        )
-        total_mse += mse_i
+        try:
+            mse_i = integrate_ode_for_beta(
+                beta,
+                contributions,
+                params,
+                species_list,
+                reactions,
+                num_species,
+                num_reactions,
+                exp_temperature,
+                exp_mass,
+                R,
+            )
+            total_mse += mse_i
+        except TimeoutError:
+            return 1e12
     return total_mse
 
 
