@@ -220,7 +220,7 @@ def integrate_ode_for_beta(
 
     sol = solve_ivp(ode_wrapper, [exp_temperature[0], exp_temperature[-1]], y0, t_eval=exp_temperature, method="RK45")
     if not sol.success:
-        return 1e12
+        return 1e4
     rates_int = sol.y[num_species : num_species + num_reactions, :]
     M0 = exp_mass[0]
     Mfin = exp_mass[-1]
@@ -263,7 +263,7 @@ def model_based_objective_function(
             )
             total_mse += mse_i
         except TimeoutError:
-            return 1e12
+            return 1e4
     return total_mse
 
 

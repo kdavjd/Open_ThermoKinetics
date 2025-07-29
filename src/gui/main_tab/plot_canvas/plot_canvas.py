@@ -181,6 +181,10 @@ class PlotCanvas(QWidget, PlotInteractionMixin, PlotStylingMixin):
         self.figure.tight_layout()
         logger.debug("MSE history plot updated")
 
+    def is_mse_mode(self) -> bool:
+        """Check if the canvas is currently displaying MSE data."""
+        return self.axes.get_title() == "MSE over time"
+
     @pyqtSlot(tuple, list)
     def plot_reaction(self, keys, values):
         """Slot to plot reaction data with automatic line property determination."""

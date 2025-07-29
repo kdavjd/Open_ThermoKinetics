@@ -674,6 +674,10 @@ class MainWindow(QMainWindow):
 
         logger.debug(f"Simulation columns: {list(simulation_df.columns)}")
 
+        if self.main_tab.plot_canvas.is_mse_mode():
+            logger.debug("Canvas is in MSE mode, skipping simulation plot to avoid overwriting MSE data")
+            return
+
         for col in simulation_df.columns:
             if col == "temperature":
                 continue
