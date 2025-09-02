@@ -1,6 +1,8 @@
 from multiprocessing import Manager
 from typing import Callable, Optional
 
+import numpy as np
+import optuna
 from core.base_signals import BaseSlots
 from core.calculation_results_strategies import BestResultStrategy, DeconvolutionStrategy, ModelBasedCalculationStrategy
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
@@ -150,6 +152,57 @@ class Calculations(BaseSlots):
             bounds=bounds,
             **kwargs,
         )
+
+    def start_optuna_optimization(self, bounds, target_function, **kwargs):
+        """Initialize and start Optuna optimization with live MSE updates."""
+        if optuna is None:
+            logger.error("Optuna is not installed. Please install optuna to use this optimization method.")
+            console.log("Optuna is not installed. Please install optuna to use this optimization method.")
+            return
+        self.mse_history = []
+        self.best_mse = float("inf")
+        logger.debug("Starting new Optuna optimization - cleared MSE history")
+
+        n_trials = kwargs.get("n_trials", 100)
+        direction = kwargs.get("direction", "minimize")
+
+        # Получаем актуальные переменные и комбинации для деконволюции
+        best_combination = self.calc_params.get("best_combination")
+        reaction_variables = self.calc_params.get("reaction_variables")
+
+        def optuna_objective(trial):
+            params = []
+            for i, (lb, ub) in enumerate(bounds):
+                params.append(trial.suggest_float(f"x{i}", lb, ub))
+            value = target_function(np.array(params))
+            return value
+
+        def optuna_callback(study, trial):
+            if study.best_trial == trial:
+                best_params = [trial.params[f"x{i}"] for i in range(len(bounds))]
+                result = {"best_mse": trial.value, "params": best_params}
+                if self.result_strategy == self.deconvolution_strategy:
+                    result["best_combination"] = best_combination
+                    result["reaction_variables"] = reaction_variables
+                self.handle_new_best_result(result)
+
+        def run_study():
+            # print("[DIAG] run_study started")
+            try:
+                study = optuna.create_study(direction=direction)
+                study.optimize(optuna_objective, n_trials=n_trials, callbacks=[optuna_callback])
+                best_params = [study.best_params[f"x{i}"] for i in range(len(bounds))]
+                result = {"best_mse": study.best_value, "params": best_params}
+                if self.result_strategy == self.deconvolution_strategy:
+                    result["best_combination"] = best_combination
+                    result["reaction_variables"] = reaction_variables
+                self.handle_new_best_result(result)
+                return {"x": best_params, "fun": study.best_value}
+            except Exception:
+                # print(f"[DIAG] Exception in run_study: {e}")
+                raise
+
+        self.start_calculation_thread(run_study)
 
     @pyqtSlot(object)
     def _calculation_finished(self, result):

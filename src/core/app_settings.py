@@ -181,8 +181,9 @@ class DeconvolutionDifferentialEvolutionConfig(DifferentialEvolutionConfig):
 @dataclass(frozen=True)
 class ModelBasedDifferentialEvolutionConfig(DifferentialEvolutionConfig):
     workers: int = 6
-    maxiter: int = 500
-    popsize: int = 24
+    maxiter: int = 1000              # Increased from 750 - more iterations for challenging optimization landscapes
+    popsize: int = 50
+    mutation: tuple = (0.4, 1.2)     # Adjusted from (0.3, 1.5) - better balance for avoiding local minima
     disp: bool = True
     polish: bool = False
     updating: str = "immediate"
