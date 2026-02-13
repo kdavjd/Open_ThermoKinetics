@@ -1,71 +1,70 @@
 # pyproject.toml
 # url: https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
-# url: https://python-poetry.org/docs/pyproject/
 
-[tool.poetry]
+[project]
 name = "solid-state-kinetics"
 version = "0.1.0"
 description = "calculating kinetic models of chemical solid-state reactions"
-authors = ["kdavjd <105581554+kdavjd@users.noreply.github.com>"]
+authors = [{ name = "kdavjd", email = "105581554+kdavjd@users.noreply.github.com" }]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "*", from = "src" }]
+requires-python = ">=3.13"
+dependencies = [
+    "pyqt6>=6.9.0",
+    "matplotlib>=3.10.0",
+    "pandas>=2.2.0",
+    "numpy>=2.2.0",
+    "scienceplots>=2.1.1",
+    "chardet>=5.2.0",
+    "scipy>=1.15.0",
+    "pyinstaller>=6.12.0",
+    "joblib>=1.4.0",
+    "optuna>=4.2.0",
+]
 
-[tool.poetry.scripts]
-ssk-gui = "gui.__main__:main"
+[project.scripts]
+ssk-gui = "src.gui.__main__:main"
 
-[tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-pyqt6 = "^6.6.1"
-matplotlib = "3.8.3"
-pandas = "^2.2.1"
-numpy = "^1.26.4"
-scienceplots = "^2.1.1"
-chardet = "^5.2.0"
-scipy = "^1.13.1"
-pyinstaller = "^6.7.0"
-joblib = "^1.4.2"
-optuna = "^4.1.0"
-numba = "^0.61.0"
+[dependency-groups]
+dev = [
+    "pre-commit>=3.6.2",
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "pytest-qt>=4.4.0",
+    "pytest-mock>=3.12.0",
+    "mypy>=1.15.0",
+    "ruff>=0.9.0",
+    "black>=25.1.0",
+    "ipykernel>=6.29.5",
+]
 
-[tool.poetry.dev-dependencies]
-pre-commit = "^3.6.2"
-pytest = "^8.0.2"
-pytest-cov = "^5.0.0"
-pytest-qt = "^4.4.0"
-pytest-mock = "^3.12.0"
-mypy = "^1.8.0"
-ruff = "^0.5.1"
-black = "^24.8.0"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry.group.dev.dependencies]
-ipykernel = "^6.29.5"
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# === Tool configs ===
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 120
 
-
-# Включаем максимальное количество проверок.
 lint.select = [
     "E",  # Ошибки стиля (PEP 8)
     "W",  # Предупреждения (PEP 8)
     "F",  # Ошибки (например, Flake8)
     "C",  # Сложность кода (например, цикломатическая сложность)
-    #"N", Проверка именования (например, переменные, функции)
     "I",  # Сортировка импортов (isort)
     "Q",  # Quirks (редкие ошибки)
-    #"UP", Совместимость с новыми версиями Python
     "A",  # Аннотации типов
     "M",  # Паттерны метрик
-    #"T",  Типизация
-    #"R",Проверки для неудачных конструкций
-    #"U",  Устаревшие конструкции
 ]
 
 fix = true
 
-lint.external = ["black"] 
+lint.external = ["black"]
 
 exclude = [
     ".git",
@@ -74,25 +73,18 @@ exclude = [
     "dist",
     "venv",
     ".venv",
+    "docs",
 ]
 
-# Проверка цикломатической сложности.
 lint.extend-select = ["C901"]
 
 [tool.black]
 line-length = 120
 
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-# https://mypy.readthedocs.io/en/stable/config_file.html#example-pyproject-toml
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 cache_dir = "/tmp/pytest-cache"
 
-# https://docs.pytest.org/en/latest/reference/customize.html
 [tool.pytest.ini_options]
 cache_dir = "/tmp/pytest-cache"
 addopts = "--verbose --exitfirst --cov=src --cov-report=term-missing --cov-fail-under=0"
@@ -102,8 +94,3 @@ qt_api = "pyqt6"
 log_cli = 1
 log_cli_level = "DEBUG"
 log_cli_format = "[%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
-
-# Specify a score threshold under which the program will exit with error.
-# fail-under = 9
-
-# extension-pkg-whitelist = ["PyQt6"]

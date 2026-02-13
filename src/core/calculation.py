@@ -3,12 +3,16 @@ from typing import Callable, Optional
 
 import numpy as np
 import optuna
-from core.base_signals import BaseSlots
-from core.calculation_results_strategies import BestResultStrategy, DeconvolutionStrategy, ModelBasedCalculationStrategy
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from scipy.optimize import OptimizeResult, differential_evolution
 
 from src.core.app_settings import OperationType
+from src.core.base_signals import BaseSlots
+from src.core.calculation_results_strategies import (
+    BestResultStrategy,
+    DeconvolutionStrategy,
+    ModelBasedCalculationStrategy,
+)
 from src.core.calculation_scenarios import SCENARIO_REGISTRY, make_de_callback
 from src.core.calculation_thread import CalculationThread
 from src.core.logger_config import logger

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import scienceplots  # noqa pylint: disable=unused-import
-from core.logger_config import logger
+
+from src.core.logger_config import logger
 
 plt.style.use(["science", "no-latex", "nature", "grid"])
 

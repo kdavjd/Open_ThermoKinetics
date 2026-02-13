@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - Python 3.13 + uv Migration
+- [pyproject.toml](../pyproject.toml): Migrated from Poetry to uv (PEP 621)
+  - Python 3.13 requirement
+  - Updated all dependencies to latest versions
+  - NumPy 2.x compatibility
+  - Removed Numba dependency
+
+- [src/core/app_settings.py](../src/core/app_settings.py): Removed @njit decorators
+  - 81 functions converted from Numba to pure NumPy
+  - Maintained numerical accuracy
+
+- [.python-version](../.python-version): Added Python version file for uv
+
+- [uv.lock](../uv.lock): New lockfile format replacing poetry.lock
+
+### Changed - Python 3.13 + uv Migration
+- [pyproject.toml](../pyproject.toml): PEP 621 format with [project] section
+- [.pre-commit-config.yaml](../.pre-commit-config.yaml): Updated to use `uv run` instead of `poetry run`
+- [src/core/*.py](../src/core/): Fixed imports to use `src.core` prefix for src-layout
+- [src/gui/main_tab/plot_canvas/anchor_group.py](../src/gui/main_tab/plot_canvas/anchor_group.py): Fixed imports
+
+### Removed - Python 3.13 + uv Migration
+- `poetry.lock`: Replaced by uv.lock
+- `numba` dependency: No longer compatible with Python 3.13
+- `[tool.poetry.*]` sections from pyproject.toml
+
 ### Added - Test Coverage Migration
 - [tests/](../tests/): Comprehensive test suite with 533 tests
   - pytest + pytest-qt + pytest-cov + pytest-mock infrastructure

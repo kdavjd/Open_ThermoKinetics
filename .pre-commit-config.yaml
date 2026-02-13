@@ -1,44 +1,21 @@
 # .pre-commit-config.yaml
 # https://pre-commit.com/#new-hooks
-# https://python-poetry.org/docs/pre-commit-hooks/
 
 default_language_version:
-  python: python3.12
+  python: python3.13
 repos:
   - repo: local
     hooks:
       - id: ruff
         name: ruff
-        entry: poetry run ruff check
+        entry: uv run ruff check
         language: python
         types: [python]
         args: ["--fix"]
         pass_filenames: false
       - id: ruff-format
         name: ruff-format
-        entry: poetry run ruff format
+        entry: uv run ruff format
         language: python
         types: [python]
         args: []
-
-  # - repo: local
-  #   hooks:
-  #     - id: pytest
-  #       name: pytest
-  #       entry: poetry run pytest tests/
-  #       language: system
-  #       types: [python]
-  #       args: []
-
-  # - repo: local
-  #   hooks:
-  #     - id: mypy
-  #       name: mypy
-  #       description: ""
-  #       entry: poetry run mypy
-  #       language: python
-  #       "types_or": [python, pyi]
-  #       args: ["--ignore-missing-imports", "--scripts-are-modules"]
-  #       require_serial: true
-  #       additional_dependencies: []
-  #       minimum_pre_commit_version: "2.9.2"
