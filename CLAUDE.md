@@ -195,5 +195,6 @@ UI Update (pyqtSlot)
 | -------------- | -------------------------------------------------- | ---------------------------------------- |
 | Архитектура    | [`.ai/ARCHITECTURE.md`](.ai/ARCHITECTURE.md)       | Архитектура проекта, модули, паттерны    |
 | UI Архитектура | [`.ai/UI_ARCHITECTURE.md`](.ai/UI_ARCHITECTURE.md) | Структура GUI, виджеты, сигналы          |
+| Модели данных  | [`.ai/DATA_MODELS.md`](.ai/DATA_MODELS.md)         | Структуры данных и их взаимосвязи        |
 | ТЗ             | [`.ai/specs/`](.ai/specs/)                         | Технические задания на фичи              |
 | CHANGELOG      | [`.ai/CHANGELOG.md`](.ai/CHANGELOG.md)             | История изменений                        |

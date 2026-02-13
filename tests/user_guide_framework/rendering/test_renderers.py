@@ -8,10 +8,10 @@ from pathlib import Path
 import pytest
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from src.gui.user_guide_framework.core.theme_manager import ThemeManager
-from src.gui.user_guide_framework.rendering.renderers.code_renderer import CodeRenderer
-from src.gui.user_guide_framework.rendering.renderers.list_renderer import ListRenderer
-from src.gui.user_guide_framework.rendering.renderers.text_renderer import TextRenderer
+from src.gui.user_guide_tab.user_guide_framework.core.theme_manager import ThemeManager
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.code_renderer import CodeRenderer
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.list_renderer import ListRenderer
+from src.gui.user_guide_tab.user_guide_framework.rendering.renderers.text_renderer import TextRenderer
 
 
 @pytest.fixture
@@ -27,7 +27,15 @@ def app():
 def theme_manager():
     """Создание ThemeManager для тестов."""
     # Создаем простой mock theme manager
-    themes_dir = Path(__file__).parent.parent.parent.parent / "src" / "gui" / "user_guide_framework" / "data" / "themes"
+    themes_dir = (
+        Path(__file__).parent.parent.parent.parent
+        / "src"
+        / "gui"
+        / "user_guide_tab"
+        / "user_guide_framework"
+        / "data"
+        / "themes"
+    )
     return ThemeManager(themes_dir)
 
 
@@ -214,10 +222,17 @@ class TestRendererErrors:
         """
         from pathlib import Path
 
-        from src.gui.user_guide_framework.core.content_manager import ContentManager
+        from src.gui.user_guide_tab.user_guide_framework.core.content_manager import ContentManager
 
         # Путь к тестовым данным
-        data_dir = Path(__file__).parent.parent.parent.parent / "src" / "gui" / "user_guide_framework" / "data"
+        data_dir = (
+            Path(__file__).parent.parent.parent.parent
+            / "src"
+            / "gui"
+            / "user_guide_tab"
+            / "user_guide_framework"
+            / "data"
+        )
 
         if data_dir.exists():
             try:

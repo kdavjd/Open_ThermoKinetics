@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - Test Coverage Migration
+- [tests/](../tests/): Comprehensive test suite with 533 tests
+  - pytest + pytest-qt + pytest-cov + pytest-mock infrastructure
+  - Core module coverage: key modules ≥80% (curve_fitting 100%, file_operations 100%, model_free 95%, base_signals 94%, model_fit 92%)
+  - GUI module coverage: 56% overall
+  - Test fixtures with real experimental data (CSV, JSON presets)
+
+- [tests/core/](../tests/core/): Core module tests (P0-P3)
+  - `test_curve_fitting.py`: Gaussian, Fraser-Suzuki, asymmetric double sigmoid
+  - `test_file_data.py`: CSV loading, encoding, decimal separator
+  - `test_file_operations.py`: File I/O operations
+  - `test_model_fit_calculation.py`: Model-fitting algorithms
+  - `test_model_free_calculation.py`: Friedman, Kissinger, Vyazovkin methods
+  - `test_calculation_data.py`: Reaction parameter structures
+  - `test_series_data.py`: Multi-heating-rate experiment management
+  - `test_app_settings.py`: Configuration, models, bounds
+  - `test_calculation.py`: Optimization orchestration
+  - `test_base_signals.py`: Signal-slot communication
+  - `test_calculation_scenarios.py`: Calculation scenarios
+  - `test_calculation_data_operations.py`: High-level data operations
+  - `test_calculation_results_strategies.py`: Result processing strategies
+  - `test_calculation_thread.py`: Threaded calculation execution
+  - `test_state_logger.py`: Log aggregation and state tracking
+
+- [tests/gui/](../tests/gui/): GUI module tests
+  - `test_main_window.py`: Main window, tab switching
+  - `test_main_tab.py`: 4-panel layout manager
+  - `test_sidebar.py`: Navigation tree, file structure
+  - `test_plot_canvas.py`: Matplotlib canvas
+  - `test_anchor_group.py`: Interactive draggable anchors
+  - `test_plot_styling.py`: Plot style configuration
+  - `test_sub_side_hub.py`: Panel switching hub
+  - `panels/test_experiment_panel.py`: Experiment operations panel
+  - `panels/test_deconvolution_panel.py`: Peak deconvolution panel
+  - `panels/test_model_fit_panel.py`: Model-fitting panel
+  - `panels/test_model_free_panel.py`: Model-free analysis panel
+
 ### Added - Claude Configuration Refactor
 - [CLAUDE.md](../CLAUDE.md): Complete rewrite for PyQt6 desktop application architecture
   - Signal-slot communication patterns (BaseSignals/BaseSlots)
