@@ -1,7 +1,7 @@
-from multiprocessing import Manager
-from typing import Callable, Dict
 import threading
 from functools import wraps
+from multiprocessing import Manager
+from typing import Callable, Dict
 
 import numpy as np
 from scipy.constants import R
@@ -13,8 +13,9 @@ from src.core.curve_fitting import CurveFitting as cft
 from src.core.logger_config import logger
 
 
-class TimeoutError(Exception):
+class TimeoutError(Exception):  # noqa: A001
     """Custom timeout exception for integration functions."""
+
     pass
 
 
@@ -23,6 +24,7 @@ def integration_timeout(timeout_ms):
     Decorator to limit execution time of integration functions.
 
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -41,7 +43,9 @@ def integration_timeout(timeout_ms):
             return result[0]
 
         return wrapper
+
     return decorator
+
 
 class BaseCalculationScenario:
     """Base class for defining optimization scenarios."""
