@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - Model-Based Notebook Enhancement
+- [docs/ru/3_model_based.ipynb](../docs/ru/3_model_based.ipynb): Interactive Jupyter notebook for model-based method
+  - Theoretical sections with LaTeX formulas (concentration vs conversion, Arrhenius, ODE systems, BDF method, optimization)
+  - Data loading from NH4_parse_TGA.csv with reaction scheme A→B→C→D
+  - ODE integration with BDF solver and 50ms timeout decorator
+  - Differential evolution optimization with performance metrics
+  - Visualization: model vs experiment, concentrations, residuals
+  - Performance profiling: execution time, memory, iteration count
+
 ### Changed - Model-Based Module Extraction
 - [src/core/model_based_calculation.py](../src/core/model_based_calculation.py): New module extracted from calculation_scenarios.py
   - Model-based ODE integration with `ode_function()`, `integrate_ode_for_beta()`
