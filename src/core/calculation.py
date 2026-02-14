@@ -13,10 +13,11 @@ from src.core.calculation_results_strategies import (
     DeconvolutionStrategy,
     ModelBasedCalculationStrategy,
 )
-from src.core.calculation_scenarios import SCENARIO_REGISTRY, make_de_callback
+from src.core.calculation_scenarios import SCENARIO_REGISTRY
 from src.core.calculation_thread import CalculationThread
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
+from src.core.model_based_calculation import make_de_callback
 
 
 class Calculations(BaseSlots):

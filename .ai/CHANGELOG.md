@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed - Model-Based Module Extraction
+- [src/core/model_based_calculation.py](../src/core/model_based_calculation.py): New module extracted from calculation_scenarios.py
+  - Model-based ODE integration with `ode_function()`, `integrate_ode_for_beta()`
+  - Optimization components: `model_based_objective_function()`, `constraint_fun()`
+  - Chain extraction: `extract_chains()` for reaction scheme parsing
+  - `ModelBasedScenario` class with `ModelBasedTargetFunction`
+  - `make_de_callback()` for differential evolution callbacks
+  - `TimeoutError` and `integration_timeout()` decorator
+  - Mathematical foundation documentation for ODE system
+
+- [src/core/calculation_scenarios.py](../src/core/calculation_scenarios.py): Reduced from ~460 to ~120 lines
+  - Retained `BaseCalculationScenario`, `DeconvolutionScenario`, `SCENARIO_REGISTRY`
+  - Model-based components now imported from model_based_calculation.py
+
+- [src/core/calculation.py](../src/core/calculation.py): Updated imports
+- [src/gui/main_tab/sub_sidebar/model_based/model_based_panel.py](../src/gui/main_tab/sub_sidebar/model_based/model_based_panel.py): Updated imports
+- [tests/core/test_calculation_scenarios.py](../tests/core/test_calculation_scenarios.py): Updated imports for model-based components
+- [.ai/ARCHITECTURE.md](../..ai/ARCHITECTURE.md): Added model_based_calculation.py to module structure
+
 ### Added - Python 3.13 + uv Migration
 - [pyproject.toml](../pyproject.toml): Migrated from Poetry to uv (PEP 621)
   - Python 3.13 requirement

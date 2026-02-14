@@ -10,6 +10,8 @@ from src.core.calculation_scenarios import (
     SCENARIO_REGISTRY,
     BaseCalculationScenario,
     DeconvolutionScenario,
+)
+from src.core.model_based_calculation import (
     ModelBasedScenario,
     constraint_fun,
     extract_chains,

@@ -10,9 +10,9 @@ from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMessageBox, QVBoxLa
 from scipy.integrate import solve_ivp
 
 from src.core.app_settings import NUC_MODELS_LIST, PARAMETER_BOUNDS, OperationType
-from src.core.calculation_scenarios import model_based_objective_function, ode_function
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
+from src.core.model_based_calculation import model_based_objective_function, ode_function
 from src.gui.main_tab.sub_sidebar.model_based.adjustment_controls import AdjustingSettingsBox
 from src.gui.main_tab.sub_sidebar.model_based.calculation_controls import ModelCalcButtons, RangeAndCalculateWidget
 from src.gui.main_tab.sub_sidebar.model_based.calculation_settings_dialogs import CalculationSettingsDialog
@@ -173,7 +173,7 @@ class ModelBasedTab(QWidget):
         current_index = self.reactions_combo.currentIndex()
         if reaction_index == current_index:
             logger.debug(
-                f"ModelBasedTab.update_best_values: " f"Updating Value fields for current reaction {reaction_index}"
+                f"ModelBasedTab.update_best_values: Updating Value fields for current reaction {reaction_index}"
             )
 
             self.reaction_table.update_value_with_best(self._best_values_cache[reaction_index])
@@ -244,7 +244,7 @@ class ModelBasedTab(QWidget):
             # Apply cached best values if available
             if index in self._best_values_cache:
                 logger.debug(
-                    f"ModelBasedTab._on_reactions_combo_changed: " f"Applying cached best values for reaction {index}"
+                    f"ModelBasedTab._on_reactions_combo_changed: Applying cached best values for reaction {index}"
                 )
                 self.reaction_table.update_value_with_best(self._best_values_cache[index])
 
@@ -550,12 +550,12 @@ class ModelBasedTab(QWidget):
                 )
 
             T_K = sim_params["T_K"]
-            sol = solve_ivp(ode_wrapper, [T_K[0], T_K[-1]], y0, t_eval=T_K, method="RK45")
+            sol = solve_ivp(ode_wrapper, [T_K[0], T_K[-1]], y0, t_eval=T_K, method="BDF")
 
             if not sol.success:
                 logger.error(f"Core ODE solution failed for β = {beta_value}")
                 console.log(
-                    f"\nODE integration failed for heating rate {beta_value} K/min. " f"Check reaction parameters.\n"
+                    f"\nODE integration failed for heating rate {beta_value} K/min. Check reaction parameters.\n"
                 )
                 return exp_mass
 

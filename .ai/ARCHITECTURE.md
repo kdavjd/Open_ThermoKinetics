@@ -35,7 +35,8 @@ src/
     ├── base_signals.py           # Центральный диспетчер сигналов
     ├── app_settings.py           # Конфигурация и модели
     ├── calculation.py            # Оркестрация оптимизации
-    ├── calculation_scenarios.py  # Сценарии расчётов
+    ├── calculation_scenarios.py  # Сценарии расчётов (Strategy Pattern)
+    ├── model_based_calculation.py # Model-based ODE оптимизация
     ├── file_data.py              # Данные файлов
     ├── calculation_data.py       # Параметры реакций
     ├── series_data.py            # Серии экспериментов
@@ -206,7 +207,7 @@ def run_calculation_scenario(self, params: dict):
 
 ### Сценарии расчётов (Strategy Pattern)
 
-**Файл:** [src/core/calculation_scenarios.py:50-460](src/core/calculation_scenarios.py#L50-L460)
+**Файл:** [src/core/calculation_scenarios.py:13-118](src/core/calculation_scenarios.py#L13-L118)
 
 ```python
 SCENARIO_REGISTRY = {
@@ -247,7 +248,9 @@ def get_target_function(self, **kwargs) -> Callable:
         return best_mse
 ```
 
-#### ModelBasedScenario
+### Model-Based Calculation
+
+**Файл:** [src/core/model_based_calculation.py](src/core/model_based_calculation.py)
 
 ODE интеграция со схемами реакций и оптимизация через differential_evolution:
 
@@ -264,6 +267,13 @@ def get_target_function(self, **kwargs) -> callable:
         ...
     )
 ```
+
+Ключевые компоненты:
+- `ModelBasedScenario` — стратегия оптимизации для model-based расчётов
+- `ModelBasedTargetFunction` — callable целевая функция с shared state
+- `ode_function()` — система ODE для кинетики реакций
+- `integrate_ode_for_beta()` — интеграция ODE для одного β
+- `make_de_callback()` — callback для differential_evolution
 
 ### Математические функции
 

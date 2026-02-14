@@ -75,7 +75,7 @@ class DeconvolutionResultsLoadDialog(QDialog):
     def add_file_input(self):
         file_input = QPushButton(f"select file {self.file_count}", self)
         heating_rate_input = QLineEdit(self)
-        heating_rate_input.setPlaceholderText("heating rate:")
+        heating_rate_input.setPlaceholderText(self.config.dialog.heating_rate_placeholder)
 
         file_input.clicked.connect(lambda: self.select_file(file_input))
 
