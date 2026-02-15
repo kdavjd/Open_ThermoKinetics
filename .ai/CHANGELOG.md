@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - Model-Based Performance Optimization
+- [docs/ru/3_model_based.ipynb](../docs/ru/3_model_based.ipynb): Performance optimization prototype
+  - Baseline profiling (97ms ODE, 102s for 5 DE iterations)
+  - Numba JIT compilation of ode_function (10-50x speedup)
+  - Solution caching with warm-start (30%+ cache hit rate)
+  - DE parallelization with workers=-1
+  - Final benchmark and validation
+
+- [docs/ru/pygmo_udp.py](../docs/ru/pygmo_udp.py): PyGMO UDP class for island model optimization
+  - Numba-JIT compiled ODE functions
+  - Picklable for multiprocessing in PyGMO
+
+- [.github/copilot-instructions.md](../.github/copilot-instructions.md): Synchronized with CLAUDE.md workflow
+
+### Changed - Model-Based Performance Optimization
+- [pyproject.toml](../pyproject.toml): Added numba, cma, cmaes dependencies
+
 ### Added - Model-Based Notebook Enhancement
 - [docs/ru/3_model_based.ipynb](../docs/ru/3_model_based.ipynb): Interactive Jupyter notebook for model-based method
   - Theoretical sections with LaTeX formulas (concentration vs conversion, Arrhenius, ODE systems, BDF method, optimization)
