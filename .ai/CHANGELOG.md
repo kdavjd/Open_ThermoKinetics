@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - PyGMO Research Notebook
+- [docs/ru/4_pygmo_optimization.ipynb](../docs/ru/4_pygmo_optimization.ipynb): Исследовательский ноутбук для PyGMO оптимизации
+  - Этап 1: Установка PyGMO, загрузка данных, warm-up Numba JIT
+  - Этап 2: Baseline сравнение SciPy DE vs PyGMO single-island (de, de1220, sade)
+  - Этап 3: Расширенное сравнение 7 алгоритмов (de, de1220, sade, cmaes, pso, sea, bee_colony)
+  - Этап 4: Archipelago с mp_island — multiprocessing параллелизация, топологии миграции (ring, fully_connected)
+  - Этап 5: Тюнинг solver — BDF/LSODA/Radau с разными tolerance, 9 конфигураций
+
+- [docs/ru/pygmo_udp.py](../docs/ru/pygmo_udp.py): Обновлён вспомогательный модуль
+  - LSODA solver по умолчанию (12x быстрее BDF для данной задачи)
+  - Threading timeout 50мс для зависающих ODE интеграций
+  - ModelBasedUDP класс для PyGMO island model
+
 ### Added - Model-Based Performance Optimization
 - [docs/ru/3_model_based.ipynb](../docs/ru/3_model_based.ipynb): Performance optimization prototype
   - Baseline profiling (97ms ODE, 102s for 5 DE iterations)
