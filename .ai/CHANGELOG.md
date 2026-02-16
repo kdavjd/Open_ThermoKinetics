@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - PyGMO Feasibility Analysis
+- [.ai/PARALLEL_OPTIMIZATION_FEASIBILITY.md](../.ai/PARALLEL_OPTIMIZATION_FEASIBILITY.md): Feasibility-документ по параллельной оптимизации
+  - Раздел 1: Анализ совместимости PyGMO (Python 3.13, pip, PyInstaller, Windows)
+  - Раздел 2: Спецификация GUI-параметров для Model-Based расчётов
+  - Раздел 3: Cost/Benefit матрица и рекомендации
+  - Вердикт: PyGMO НЕ пригоден для прямой интеграции (pip-incompatible)
+
+- [docs/ru/pygmo_udp.py](../docs/ru/pygmo_udp.py): SciPyObjective класс для picklable оптимизации
+  - Wrapper для SciPy differential_evolution с multiprocessing поддержкой
+  - Picklable альтернатива для PyGMO mp_island (pip-совместимая)
+
+- [docs/ru/3_model_based.ipynb](../docs/ru/3_model_based.ipynb): Рефакторинг ноутбука
+  - Упрощена структура, убран дублирующий код
+  - Обновлены benchmarks с LSODA solver
+
+- [.ai/specs/feature-pygmo-feasibility.md](../.ai/specs/feature-pygmo-feasibility.md): ТЗ feasibility-анализа
+
 ### Added - PyGMO Research Notebook
 - [docs/ru/4_pygmo_optimization.ipynb](../docs/ru/4_pygmo_optimization.ipynb): Исследовательский ноутбук для PyGMO оптимизации
   - Этап 1: Установка PyGMO, загрузка данных, warm-up Numba JIT

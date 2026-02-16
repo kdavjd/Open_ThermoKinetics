@@ -201,6 +201,72 @@ def compute_ode_mse(
     return float(np.mean((model_mass - exp_mass) ** 2))
 
 
+class SciPyObjective:
+    """
+    Picklable callable for scipy.optimize.differential_evolution(workers=-1).
+
+    On Windows, multiprocessing uses 'spawn' — worker processes re-import the module.
+    Functions defined in Jupyter notebook cells (__main__) can't be imported by workers,
+    causing a deadlock. This class lives in a proper .py module, so workers can pickle/unpickle it.
+
+    Usage:
+        obj = SciPyObjective(betas, exp_temperature, all_exp_masses, ...)
+        result = differential_evolution(obj, bounds=..., workers=-1)
+    """
+
+    def __init__(
+        self,
+        betas,
+        exp_temperature,
+        all_exp_masses,
+        src_indices,
+        tgt_indices,
+        num_species,
+        num_reactions,
+        solver_method="LSODA",
+        solver_rtol=1e-2,
+        solver_atol=1e-4,
+        timeout_ms=INTEGRATION_TIMEOUT_MS,
+    ):
+        self._betas = list(betas)
+        self._exp_temperature = np.array(exp_temperature, dtype=np.float64)
+        self._all_exp_masses = [np.array(m, dtype=np.float64) for m in all_exp_masses]
+        self._src_indices = np.array(src_indices, dtype=np.int64)
+        self._tgt_indices = np.array(tgt_indices, dtype=np.int64)
+        self._num_species = int(num_species)
+        self._num_reactions = int(num_reactions)
+        self._solver_method = solver_method
+        self._solver_rtol = solver_rtol
+        self._solver_atol = solver_atol
+        self._timeout_ms = timeout_ms
+
+    def __call__(self, x):
+        """Evaluate total MSE. Returns scalar (compatible with scipy DE)."""
+        params = np.array(x, dtype=np.float64)
+        nr = self._num_reactions
+        # Round model indices to nearest integer
+        for i in range(nr):
+            params[2 * nr + i] = round(params[2 * nr + i])
+
+        total_mse = 0.0
+        for i, beta in enumerate(self._betas):
+            total_mse += compute_ode_mse(
+                beta,
+                params,
+                self._exp_temperature,
+                self._all_exp_masses[i],
+                self._src_indices,
+                self._tgt_indices,
+                self._num_species,
+                self._num_reactions,
+                self._solver_method,
+                self._solver_rtol,
+                self._solver_atol,
+                self._timeout_ms,
+            )
+        return total_mse
+
+
 class ModelBasedUDP:
     """
     PyGMO User Defined Problem (UDP) for model-based kinetic optimization.
