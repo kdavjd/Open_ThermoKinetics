@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - Optimized Model-Based Calculation
+- [src/core/kinetic_models_numba.py](../src/core/kinetic_models_numba.py): Numba-совместимые кинетические модели
+  - 39 моделей реакций с `@njit(cache=True, fastmath=True)`
+  - `model_f_e(model_idx, e)` для ODE интеграции
+  - `ode_function_numba()` — JIT-компилированная ODE функция
+  - `compute_ode_mse()` с deadline-based inline timeout
+  - `SciPyObjective` — picklable класс для parallel DE optimization
+  - Enabled models management API
+
+- [src/core/model_based_calculation.py](../src/core/model_based_calculation.py): Refactored model-based API
+  - Упрощён callback для differential_evolution
+  - Интеграция с SciPyObjective
+
+- [tests/test_kinetic_models_numba.py](../tests/test_kinetic_models_numba.py): Unit tests для Numba модулей
+- [tests/test_model_based_calculation.py](../tests/test_model_based_calculation.py): Обновлённые тесты
+
+- [.ai/ARCHITECTURE.md](../.ai/ARCHITECTURE.md): Документация kinetic_models_numba модуля
+
+### Changed - Optimized Model-Based Calculation
+- [src/gui/main_tab/sub_sidebar/model_based/model_based_panel.py](../src/gui/main_tab/sub_sidebar/model_based/model_based_panel.py): Интеграция с новым API
+- [src/core/calculation.py](../src/core/calculation.py): Обновлён для parallel DE optimization
+
+### Removed - Optimized Model-Based Calculation
+- `ModelBasedTargetFunction` class — заменён на SciPyObjective
+- `integration_timeout` decorator — заменён на deadline-based timeout
+- `ode_function` Python version — заменена на ode_function_numba
+- `model_based_objective_function` — интегрирована в SciPyObjective
+
 ### Added - PyGMO Feasibility Analysis
 - [.ai/PARALLEL_OPTIMIZATION_FEASIBILITY.md](../.ai/PARALLEL_OPTIMIZATION_FEASIBILITY.md): Feasibility-документ по параллельной оптимизации
   - Раздел 1: Анализ совместимости PyGMO (Python 3.13, pip, PyInstaller, Windows)

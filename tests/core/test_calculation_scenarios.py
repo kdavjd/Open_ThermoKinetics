@@ -13,7 +13,6 @@ from src.core.calculation_scenarios import (
 )
 from src.core.model_based_calculation import (
     ModelBasedScenario,
-    constraint_fun,
     extract_chains,
     get_core_params_format_info,
     make_de_callback,
@@ -265,64 +264,40 @@ class TestExtractChains:
         assert chains[0] == [0]
 
 
-class TestConstraintFun:
-    """Tests for constraint_fun function."""
-
-    def test_constraint_fun_single_chain(self):
-        """constraint_fun should compute sum constraint for chain."""
-        # For 2 reactions, X layout: [logA*2, Ea*2, model_idx*2, contribution*2]
-        # So contributions are at indices 6, 7 (3*2=6 to 4*2=8)
-        X = np.array([1.0, 2.0, 100.0, 150.0, 0.0, 1.0, 0.5, 0.5])
-        chains = [[0, 1]]  # chain uses both reactions
-        num_reactions = 2
-
-        result = constraint_fun(X, chains, num_reactions)
-
-        # Sum of contributions [0.5, 0.5] should equal 1.0
-        assert len(result) == 1
-        assert result[0] == pytest.approx(0.0, rel=1e-8)
-
-    def test_constraint_fun_invalid_sum(self):
-        """constraint_fun should return non-zero for invalid sum."""
-        X = np.array([1.0, 2.0, 100.0, 150.0, 0.0, 1.0, 0.3, 0.3])  # sum = 0.6 != 1.0
-        chains = [[0, 1]]
-        num_reactions = 2
-
-        result = constraint_fun(X, chains, num_reactions)
-
-        assert result[0] != pytest.approx(0.0)
-
-
 class TestMakeDeCallback:
     """Tests for make_de_callback function."""
 
     def test_callback_returns_false_normally(self, mock_signals):
         """Callback should return False when stop_event not set."""
+        from multiprocessing import Manager
+
+        manager = Manager()
         mock_calcs = MagicMock()
         mock_calcs.stop_event.is_set.return_value = False
         mock_calcs.new_best_result = MagicMock()
 
-        target_obj = MagicMock()
-        target_obj.best_mse.value = 0.01
-        target_obj.best_params = [1.0, 2.0]
+        # Create a mock objective that returns MSE values
+        objective = MagicMock(return_value=0.01)
 
-        callback = make_de_callback(target_obj, mock_calcs)
-        result = callback([1.0, 2.0], 0.5)
+        callback = make_de_callback(objective, mock_calcs, manager)
+        # Callback receives population (xk) as 2D array and convergence
+        result = callback(np.array([[1.0, 2.0], [3.0, 4.0]]), 0.5)
 
         assert result is False
 
     def test_callback_returns_true_when_stopped(self, mock_signals):
         """Callback should return True when stop_event is set."""
+        from multiprocessing import Manager
+
+        manager = Manager()
         mock_calcs = MagicMock()
         mock_calcs.stop_event.is_set.return_value = True
         mock_calcs.new_best_result = MagicMock()
 
-        target_obj = MagicMock()
-        target_obj.best_mse.value = 0.01
-        target_obj.best_params = [1.0, 2.0]
+        objective = MagicMock(return_value=0.01)
 
-        callback = make_de_callback(target_obj, mock_calcs)
-        result = callback([1.0, 2.0], 0.5)
+        callback = make_de_callback(objective, mock_calcs, manager)
+        result = callback(np.array([[1.0, 2.0]]), 0.5)
 
         assert result is True
 

@@ -3,6 +3,14 @@ docs/drafts
 docs/literature
 .vscode/
 .ruff_cache/
+
+# Claude Code personal settings (contains API tokens)
+.claude/settings.json
+claude-a
+claude-a.ps1
+claude-z
+claude-z.ps1
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -155,3 +163,7 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Claude profile templates (contains tokens)
+.claude/settings.anthropic.json
+.claude/settings.zai.json

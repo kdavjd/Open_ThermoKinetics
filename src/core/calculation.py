@@ -130,7 +130,11 @@ class Calculations(BaseSlots):
 
                 if scenario_key == "model_based_calculation":
                     calc_params["constraints"] = scenario_instance.get_constraints()
-                    calc_params["callback"] = make_de_callback(target_function, self)
+                    # Use updating='deferred' for parallel optimization (workers != 1)
+                    workers = calc_params.get("workers", 1)
+                    if workers != 1:
+                        calc_params["updating"] = "deferred"
+                    calc_params["callback"] = make_de_callback(target_function, self, self.manager)
 
                 logger.debug("Differential evolution parameters before execution:")
                 for key, value in calc_params.items():

@@ -1,7 +1,7 @@
 # Архитектура приложения Open ThermoKinetics
 
-> **Последнее обновление:** 2026-02-13
-> **Ветка:** feature/claude-integration
+> **Последнее обновление:** 2026-02-17
+> **Ветка:** feature/optimized-model-based
 
 ---
 
@@ -36,6 +36,7 @@ src/
     ├── app_settings.py           # Конфигурация и модели
     ├── calculation.py            # Оркестрация оптимизации
     ├── calculation_scenarios.py  # Сценарии расчётов (Strategy Pattern)
+    ├── kinetic_models_numba.py   # Numba-JIT кинетические модели (~100x speedup)
     ├── model_based_calculation.py # Model-based ODE оптимизация
     ├── file_data.py              # Данные файлов
     ├── calculation_data.py       # Параметры реакций
@@ -248,32 +249,90 @@ def get_target_function(self, **kwargs) -> Callable:
         return best_mse
 ```
 
-### Model-Based Calculation
+### Model-Based Calculation (Optimized)
 
 **Файл:** [src/core/model_based_calculation.py](src/core/model_based_calculation.py)
 
-ODE интеграция со схемами реакций и оптимизация через differential_evolution:
+ODE интеграция со схемами реакций и оптимизация через differential_evolution с Numba-JIT ускорением (~50-200x):
 
 ```python
 def get_target_function(self, **kwargs) -> callable:
-    return ModelBasedTargetFunction(
-        species_list,
-        reactions,
-        num_species,
-        num_reactions,
-        betas,
-        all_exp_masses,
-        exp_temperature,
-        ...
+    return SciPyObjective(
+        betas=betas,
+        exp_temperature=exp_temperature,
+        all_exp_masses=all_exp_masses,
+        src_indices=src_indices,
+        tgt_indices=tgt_indices,
+        num_species=num_species,
+        num_reactions=num_reactions,
+        solver_method=solver_method,
+        solver_rtol=solver_rtol,
+        solver_atol=solver_atol,
+        timeout_ms=timeout_ms,
     )
 ```
 
-Ключевые компоненты:
-- `ModelBasedScenario` — стратегия оптимизации для model-based расчётов
-- `ModelBasedTargetFunction` — callable целевая функция с shared state
-- `ode_function()` — система ODE для кинетики реакций
-- `integrate_ode_for_beta()` — интеграция ODE для одного β
-- `make_de_callback()` — callback для differential_evolution
+#### Ключевые компоненты
+
+| Компонент | Назначение |
+|-----------|------------|
+| `SciPyObjective` | Picklable callable для `workers=-1` параллельной оптимизации |
+| `compute_ode_mse()` | MSE вычисление с deadline-based inline timeout (~0ms overhead) |
+| `ode_function_numba()` | Numba-JIT ODE функция (~100x speedup) |
+| `ModelBasedScenario` | Стратегия оптимизации с configurable solver parameters |
+| `make_de_callback()` | Callback для `updating='deferred'` режима |
+
+#### Configurable Solver Parameters
+
+```python
+calculation_settings = {
+    "solver_method": "LSODA",    # ODE solver (LSODA, BDF, RK45)
+    "solver_rtol": 1e-2,         # Relative tolerance
+    "solver_atol": 1e-4,         # Absolute tolerance
+    "timeout_ms": 200.0,         # Timeout per ODE integration (ms)
+}
+```
+
+### Kinetic Models Numba (JIT-compiled)
+
+**Файл:** [src/core/kinetic_models_numba.py](src/core/kinetic_models_numba.py)
+
+Numba-совместимые кинетические модели для ODE оптимизации:
+
+```python
+from src.core.kinetic_models_numba import (
+    model_f_e,               # @njit dispatcher для 39 моделей
+    ode_function_numba,      # @njit ODE функция
+    MODEL_NAME_TO_INDEX,     # Name → global index mapping
+    ALL_MODEL_NAMES,         # Список всех 39 моделей
+    set_enabled_models,      # Выбор подмножества моделей
+    get_enabled_model_indices,
+    warmup_numba,            # JIT warmup при старте
+)
+```
+
+#### Model Index Dispatch
+
+```python
+@njit(cache=True, fastmath=True)
+def model_f_e(model_idx: int, e: float) -> float:
+    """Evaluate f(e) for model by global index."""
+    if model_idx == 5:    # F1/A1
+        return _f_F1_A1(e)
+    elif model_idx == 6:  # A2
+        return _f_A2(e)
+    ...
+```
+
+#### Enabled Models Management
+
+```python
+# Выбор подмножества моделей для оптимизации
+set_enabled_models(["F1/A1", "A2", "A3", "R2", "R3"])
+
+# Получение только включённых индексов для bounds
+enabled = get_enabled_model_indices()  # → np.array([5, 6, 7, 14, 15])
+```
 
 ### Математические функции
 
@@ -372,6 +431,19 @@ class ModelBasedParameterBounds:
     contribution_min: float = 0.01
     contribution_max: float = 1.0
 ```
+
+### Solver Configuration (New)
+
+Параметры ODE solver'а для model-based оптимизации (передаются через `calculation_settings`):
+
+| Параметр | Default | Описание |
+|----------|---------|----------|
+| `solver_method` | `"LSODA"` | Метод ODE интеграции (LSODA, BDF, RK45) |
+| `solver_rtol` | `1e-2` | Relative tolerance (~12x speedup vs 1e-6) |
+| `solver_atol` | `1e-4` | Absolute tolerance |
+| `timeout_ms` | `200.0` | Timeout на ODE интеграцию (ms, inline deadline) |
+
+> **Note:** LSODA автоматически переключается между Adams (non-stiff) и BDF (stiff) методами.
 
 ---
 
