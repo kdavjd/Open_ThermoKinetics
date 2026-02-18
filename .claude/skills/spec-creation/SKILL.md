@@ -30,7 +30,7 @@ exit:
     - .ai/specs/{branch-type}-{slug}.md
   branch: feature/* | bugfix/*
   commit: "docs: add spec for {feature-name}"
-  
+
 next_skill: spec-implementer  # ОБЯЗАТЕЛЬНО
 ```
 

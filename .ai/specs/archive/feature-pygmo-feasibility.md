@@ -122,7 +122,7 @@ User → GUI → Calculations.run_calculation_scenario()
 
 **Задачи:**
 - [ ] Проверить наличие PyGMO wheels для Python 3.13 на conda-forge и PyPI
-- [ ] Исследовать совместимость PyGMO (pagmo2 C++ backend) с PyInstaller 
+- [ ] Исследовать совместимость PyGMO (pagmo2 C++ backend) с PyInstaller
 - [ ] Оценить размер бинарника (pygmo shared libs: libpagmo, libboost, libtbb)
 - [ ] Проверить `mp_island` поведение в frozen exe (pickle + multiprocessing spawn на Windows)
 - [ ] Исследовать возможность гибридного deploy: основное приложение pip + отдельный conda-процесс для вычислений

@@ -1,36 +1,36 @@
-#EXPORTTYPE:                 ;DATA COMPARE                                           
-#FILE:                       ;27.07.23_NH4Cl_��_5kmin_30-500�.ngb-ds5                
-#FORMAT:                     ;NETZSCH5                                               
-#FTYPE:                      ;ANSI                                                   
-#IDENTITY:                   ;NH4CL_��                                               
-#DECIMAL:                    ;COMMA                                                  
-#SEPARATOR:                  ;SEMICOLON                                              
-#MTYPE:                      ;DSC                                                    
-#INSTRUMENT:                 ;NETZSCH STA 449F5                                      
-#PROJECT:                    ;                                                       
-#DATE/TIME:                  ;27.07.2023 11:48:33 (UTC+3)                            
+#EXPORTTYPE:                 ;DATA COMPARE
+#FILE:                       ;27.07.23_NH4Cl_��_5kmin_30-500�.ngb-ds5
+#FORMAT:                     ;NETZSCH5
+#FTYPE:                      ;ANSI
+#IDENTITY:                   ;NH4CL_��
+#DECIMAL:                    ;COMMA
+#SEPARATOR:                  ;SEMICOLON
+#MTYPE:                      ;DSC
+#INSTRUMENT:                 ;NETZSCH STA 449F5
+#PROJECT:                    ;
+#DATE/TIME:                  ;27.07.2023 11:48:33 (UTC+3)
 #CORR. FILE:                 ;10.05.23_correction for composite-5kmin_30-500�.ngb-bs5
-#TEMPCAL:                    ;5kmin-N2_washer+Al2O3+cover.ngb-ts5                    
-#SENSITIVITY:                ;5kmin-N2_washer+Al2O3+cover.ngb-es5                    
-#LABORATORY:                 ;                                                       
-#OPERATOR:                   ;                                                       
-#REMARK:                     ;                                                       
-#SAMPLE:                     ;1                                                      
-#SAMPLE MASS /mg:            ;22,8865                                                
-#MATERIAL:                   ;                                                       
-#REFERENCE:                  ;                                                       
-#REFERENCE MASS /mg:         ;0                                                      
-#TYPE OF CRUCIBLE:           ;DSC/TG pan Al2O3                                       
-#SAMPLE CRUCIBLE MASS /mg:   ;0                                                      
-#REFERENCE CRUCIBLE MASS /mg:;0                                                      
-#DSC RANGE /�V:              ;5000                                                   
-#TG RANGE /mg:               ;35000                                                  
-#TAU-R:                      ;---                                                    
-#CORR. CODE:                 ;020                                                    
-#EXO:                        ;+1                                                     
-#RANGE:                      ;30�C/5,0(K/min)/500�C                                  
-#SEGMENT:                    ;S1/1                                                   
-#SEG. 1:                     ;30�C/5,0(K/min)/500�C                                  
+#TEMPCAL:                    ;5kmin-N2_washer+Al2O3+cover.ngb-ts5
+#SENSITIVITY:                ;5kmin-N2_washer+Al2O3+cover.ngb-es5
+#LABORATORY:                 ;
+#OPERATOR:                   ;
+#REMARK:                     ;
+#SAMPLE:                     ;1
+#SAMPLE MASS /mg:            ;22,8865
+#MATERIAL:                   ;
+#REFERENCE:                  ;
+#REFERENCE MASS /mg:         ;0
+#TYPE OF CRUCIBLE:           ;DSC/TG pan Al2O3
+#SAMPLE CRUCIBLE MASS /mg:   ;0
+#REFERENCE CRUCIBLE MASS /mg:;0
+#DSC RANGE /�V:              ;5000
+#TG RANGE /mg:               ;35000
+#TAU-R:                      ;---
+#CORR. CODE:                 ;020
+#EXO:                        ;+1
+#RANGE:                      ;30�C/5,0(K/min)/500�C
+#SEGMENT:                    ;S1/1
+#SEG. 1:                     ;30�C/5,0(K/min)/500�C
 
 ##Temp./�C;DSC/(mW/mg)
 30,27800;-8,425385e-003

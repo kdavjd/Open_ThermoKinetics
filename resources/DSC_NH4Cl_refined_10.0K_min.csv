@@ -1,36 +1,36 @@
-#EXPORTTYPE:                 ;DATA COMPARE                                                  
-#FILE:                       ;26.07.23_NH4Cl_��_10kmin_30-500�.ngb-ds5                      
-#FORMAT:                     ;NETZSCH5                                                      
-#FTYPE:                      ;ANSI                                                          
-#IDENTITY:                   ;NH4Cl_��                                                      
-#DECIMAL:                    ;COMMA                                                         
-#SEPARATOR:                  ;SEMICOLON                                                     
-#MTYPE:                      ;DSC                                                           
-#INSTRUMENT:                 ;NETZSCH STA 449F5                                             
-#PROJECT:                    ;                                                              
-#DATE/TIME:                  ;26.07.2023 10:30:10 (UTC+3)                                   
+#EXPORTTYPE:                 ;DATA COMPARE
+#FILE:                       ;26.07.23_NH4Cl_��_10kmin_30-500�.ngb-ds5
+#FORMAT:                     ;NETZSCH5
+#FTYPE:                      ;ANSI
+#IDENTITY:                   ;NH4Cl_��
+#DECIMAL:                    ;COMMA
+#SEPARATOR:                  ;SEMICOLON
+#MTYPE:                      ;DSC
+#INSTRUMENT:                 ;NETZSCH STA 449F5
+#PROJECT:                    ;
+#DATE/TIME:                  ;26.07.2023 10:30:10 (UTC+3)
 #CORR. FILE:                 ;29.04.22_correction for composite-10kmin_30+500_N2-120.ngb-bs5
-#TEMPCAL:                    ;10kmin-N2_washer+Al2O3+cover.ngb-ts5                          
-#SENSITIVITY:                ;10kmin-N2_washer+Al2O3+cover.ngb-ts5.ngb-es5                  
-#LABORATORY:                 ;                                                              
-#OPERATOR:                   ;                                                              
-#REMARK:                     ;                                                              
-#SAMPLE:                     ;1                                                             
-#SAMPLE MASS /mg:            ;23,8825                                                       
-#MATERIAL:                   ;                                                              
-#REFERENCE:                  ;                                                              
-#REFERENCE MASS /mg:         ;0                                                             
-#TYPE OF CRUCIBLE:           ;DSC/TG pan Al2O3                                              
-#SAMPLE CRUCIBLE MASS /mg:   ;0                                                             
-#REFERENCE CRUCIBLE MASS /mg:;0                                                             
-#DSC RANGE /�V:              ;5000                                                          
-#TG RANGE /mg:               ;35000                                                         
-#TAU-R:                      ;---                                                           
-#CORR. CODE:                 ;020                                                           
-#EXO:                        ;+1                                                            
-#RANGE:                      ;30�C/10,0(K/min)/500�C                                        
-#SEGMENT:                    ;S1/1                                                          
-#SEG. 1:                     ;30�C/10,0(K/min)/500�C                                        
+#TEMPCAL:                    ;10kmin-N2_washer+Al2O3+cover.ngb-ts5
+#SENSITIVITY:                ;10kmin-N2_washer+Al2O3+cover.ngb-ts5.ngb-es5
+#LABORATORY:                 ;
+#OPERATOR:                   ;
+#REMARK:                     ;
+#SAMPLE:                     ;1
+#SAMPLE MASS /mg:            ;23,8825
+#MATERIAL:                   ;
+#REFERENCE:                  ;
+#REFERENCE MASS /mg:         ;0
+#TYPE OF CRUCIBLE:           ;DSC/TG pan Al2O3
+#SAMPLE CRUCIBLE MASS /mg:   ;0
+#REFERENCE CRUCIBLE MASS /mg:;0
+#DSC RANGE /�V:              ;5000
+#TG RANGE /mg:               ;35000
+#TAU-R:                      ;---
+#CORR. CODE:                 ;020
+#EXO:                        ;+1
+#RANGE:                      ;30�C/10,0(K/min)/500�C
+#SEGMENT:                    ;S1/1
+#SEG. 1:                     ;30�C/10,0(K/min)/500�C
 
 ##Temp./�C;DSC/(mW/mg)
 30,27800;-1,177243e-002

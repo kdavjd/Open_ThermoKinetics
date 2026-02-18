@@ -203,9 +203,7 @@ class LogAggregator:
         error_count = sum(1 for e in events if e.status == "error")
         error_events = [e for e in events if e.status == "error"]
 
-        logger.info(
-            f"{operation.title()} Summary: {len(events)} ops, " f"{success_count} success, {error_count} errors"
-        )
+        logger.info(f"{operation.title()} Summary: {len(events)} ops, {success_count} success, {error_count} errors")
 
         # Show detailed error information for non-rendering operations
         if error_events:

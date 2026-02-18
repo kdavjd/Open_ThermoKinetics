@@ -1,21 +1,45 @@
 # .pre-commit-config.yaml
+# Strict configuration - blocks commits with formatting/linting issues
 # https://pre-commit.com/#new-hooks
 
 default_language_version:
   python: python3.13
+
 repos:
+  # Built-in hooks for common issues
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      - id: debug-statements
+
+  # Ruff linter - auto-fix issues
   - repo: local
     hooks:
       - id: ruff
-        name: ruff
-        entry: uv run ruff check
-        language: python
+        name: ruff (lint + auto-fix)
+        entry: uv run ruff check --fix --exit-non-zero-on-fix
+        language: system
         types: [python]
-        args: ["--fix"]
         pass_filenames: false
+
+  # Ruff formatter - STRICT MODE (blocks commit if formatting needed)
+  - repo: local
+    hooks:
       - id: ruff-format
-        name: ruff-format
-        entry: uv run ruff format
-        language: python
+        name: ruff-format (strict)
+        entry: uv run ruff format --check --diff
+        language: system
         types: [python]
-        args: []
+        pass_filenames: false
