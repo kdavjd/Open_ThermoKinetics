@@ -5,6 +5,7 @@ Initializes PyQt6 application with all core modules and their signal
 communication system for solid-state reaction kinetics analysis.
 """
 
+import multiprocessing
 import os
 import sys
 
@@ -31,6 +32,9 @@ def main():
     Creates PyQt6 application, instantiates all core modules with signal
     communication, establishes module connections, and starts the main window.
     """
+    # Required for PyInstaller --onefile with multiprocessing (scipy.optimize)
+    multiprocessing.freeze_support()
+
     app = QApplication(sys.argv)
     signals = BaseSignals()
     window = MainWindow(signals=signals)
