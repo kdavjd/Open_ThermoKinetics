@@ -548,8 +548,7 @@ class MainWindow(QMainWindow):
             rate_col_name = str(heating_rate)
             if rate_col_name in df_with_rates:
                 logger.error(
-                    f"Duplicate heating rate '{heating_rate}' for file '{file_name}'. "
-                    "Each heating rate must be unique."
+                    f"Duplicate heating rate '{heating_rate}' for file '{file_name}'. Each heating rate must be unique."
                 )
                 continue
 

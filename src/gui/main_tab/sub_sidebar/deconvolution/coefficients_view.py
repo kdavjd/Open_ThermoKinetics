@@ -169,7 +169,7 @@ class CoefficientsView(QTableWidget):
             self.update_value.emit(data_change)
 
         except ValueError as e:
-            console.log(f"Invalid data for conversion to number: row {row+1}, column {column+1}")
+            console.log(f"Invalid data for conversion to number: row {row + 1}, column {column + 1}")
             logger.error(f"Invalid data for conversion to number: row {row}, column {column}: {e}")
 
     def column_to_bound(self, column_label: str) -> str:
