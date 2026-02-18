@@ -4,7 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.3.0] - 2026-02-18
+
+### Added - Release Stabilization
+- [README.md](../README.md): Полная документация проекта
+  - Features с эмодзи и badges (Python 3.13, MIT, uv)
+  - Installation: uv, pip, from source, Windows exe
+  - Quick Start с примером использования
+  - ASCII mockups интерфейса
+  - Таблица кинетических методов
+  - Contributing и License секции
+
+### Changed - Release Stabilization
+- [pyproject.toml](../pyproject.toml): Версия обновлена до 0.3.0
+- [.github/workflows/pre-commit.yml](../.github/workflows/pre-commit.yml): Миграция на uv + Python 3.13
+  - setup-uv action вместо Poetry
+  - uv sync && uv run для всех команд
+- [.github/workflows/release.yml](../.github/workflows/release.yml): Миграция на uv + Python 3.13
+  - Windows-only сборка (убран Linux из matrix)
+  - setup-uv action вместо pipx + Poetry
+  - Артефакт OTK.exe
+
+### Removed - Release Stabilization
+- `.ai/PARALLEL_OPTIMIZATION_FEASIBILITY.md`: Устаревший feasibility-документ
+- `docs/develop_plan/ts.md`: Устаревший план
+- `docs/ru/4_pygmo_optimization.ipynb`: Устаревший ноутбук
+- `docs/ru/pygmo_udp.py`: Устаревший модуль
+- 15 remote веток (cleanup origin)
+
+---
 
 ### Added - Optimized Model-Based Calculation
 - [src/core/kinetic_models_numba.py](../src/core/kinetic_models_numba.py): Numba-совместимые кинетические модели

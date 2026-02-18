@@ -12,54 +12,43 @@ permissions: write-all
 
 jobs:
   build:
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: linux
-          - os: windows-latest
-            artifact_name: windows
+    runs-on: windows-latest
 
-    name: Build ${{ matrix.artifact_name }}
+    name: Build Windows
 
-    runs-on: ${{ matrix.os }}
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Set up Python
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: 3.12
-          
-      - name: Installing Poetry via pip
-        run: |
-          python -m pip install --user pipx
-          pipx install poetry
-          poetry install
-            
-      - name: Build ${{ matrix.os }}
-        run: |
-          poetry run pyinstaller src/gui/__main__.py --collect-all scienceplots --onefile --name OTK.exe
+          python-version: "3.13"
 
-# UPLOADING ARTIFACTS
+      - name: Install dependencies
+        run: uv sync
 
-      - name: Upload artifacts ${{ matrix.artifact_name }}
+      - name: Build Windows executable
+        run: uv run pyinstaller src/gui/__main__.py --collect-all scienceplots --onefile --name OTK.exe
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact_name }}
+          name: windows
           path: dist/OTK.exe
-
-# RELEASE
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: |
-            dist/OTK.exe
-            dist/main
+          files: dist/OTK.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

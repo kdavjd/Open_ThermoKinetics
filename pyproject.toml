@@ -3,7 +3,7 @@
 
 [project]
 name = "solid-state-kinetics"
-version = "0.1.0"
+version = "0.3.0"
 description = "calculating kinetic models of chemical solid-state reactions"
 authors = [{ name = "kdavjd", email = "105581554+kdavjd@users.noreply.github.com" }]
 license = "MIT"
