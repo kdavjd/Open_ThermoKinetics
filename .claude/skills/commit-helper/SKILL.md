@@ -22,7 +22,7 @@ type: internal  # НЕ вызывается пользователем напр�
 called_by:
   - spec-implementer  # коммит после каждого этапа
   - merge-helper      # merge commit
-  
+
 responsibility:
   - Conventional Commits format
   - Лимит ≤250 строк (с исключениями)

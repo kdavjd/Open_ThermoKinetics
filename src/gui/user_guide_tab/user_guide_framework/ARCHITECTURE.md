@@ -34,20 +34,20 @@ User Guide Framework построен на **модульной управляе
 ```mermaid
 graph TB
     subgraph "UI Layer"
-        GF[GuideFramework<br/>Главный координатор] 
+        GF[GuideFramework<br/>Главный координатор]
         NS[NavigationSidebar<br/>Древовидная навигация]
         CW[ContentWidget<br/>Область контента]
         GT[GuideToolBar<br/>Инструменты]
         SW[StatusWidget<br/>Статус]
     end
-    
+
     subgraph "Core Managers"
         CM[ContentManager<br/>Управление контентом]
         NM[NavigationManager<br/>Иерархия навигации]
         TM[ThemeManager<br/>Темы и стили]
         LM[LocalizationManager<br/>Локализация]
     end
-    
+
     subgraph "Rendering System"
         RM[RendererManager<br/>Координатор рендеринга]
         TR[TextRenderer]
@@ -57,7 +57,7 @@ graph TB
         INR[InteractiveRenderer]
         WR[WorkflowRenderer]
     end
-    
+
     GF -->|Координация| CM
     GF -->|Координация| NM
     GF -->|Координация| TM
@@ -174,7 +174,7 @@ graph TB
     ],
     "ru": [
       {
-        "type": "heading", 
+        "type": "heading",
         "level": 1,
         "text": "Model-Fit анализ"
       }
@@ -260,7 +260,7 @@ class BaseRenderer(ABC):
     def render(self, content: Dict[str, Any]) -> QWidget:
         pass
 
-    @abstractmethod  
+    @abstractmethod
     def get_supported_types(self) -> List[str]:
         pass
 
@@ -269,7 +269,7 @@ class BaseRenderer(ABC):
 
     def apply_theme(self, widget: QWidget, style_key: str = None) -> None:
         # Применение темы к виджету
-        
+
     def get_theme_color(self, color_key: str) -> str:
         # Получение цвета из темы с fallback
 ```
@@ -307,7 +307,7 @@ class NavigationNode:
 
     def get_depth(self) -> int:
         # Определение глубины узла в дереве
-        
+
     def find_descendant(self, section_id: str) -> Optional["NavigationNode"]:
         # Рекурсивный поиск потомков
 ```
@@ -351,7 +351,7 @@ class NavigationNode:
   "description": "Default user guide theme",
   "colors": {
     "primary": "#2196F3",
-    "secondary": "#FFC107", 
+    "secondary": "#FFC107",
     "background": "#FFFFFF",
     "text": "#212121",
     "code_background": "#F5F5F5",
@@ -478,7 +478,7 @@ class NavigationNode:
 ```python
 # Минимальные ширины компонентов
 MIN_SIDEBAR_WIDTH = 300      # Навигационная панель
-MIN_CONTENT_WIDTH = 600      # Область контента  
+MIN_CONTENT_WIDTH = 600      # Область контента
 MIN_TOOLBAR_HEIGHT = 40      # Панель инструментов
 MIN_STATUS_HEIGHT = 25       # Строка состояния
 ```

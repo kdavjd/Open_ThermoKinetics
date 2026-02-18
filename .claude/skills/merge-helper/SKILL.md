@@ -23,13 +23,13 @@ entry:
     - все этапы ✅
     - тесты пройдены (pytest + pytest-qt)
     - нет uncommitted changes
-  
+
 exit:
   branch: main
   artifacts:
     - .ai/CHANGELOG.md  # обновлён
     - .ai/specs/archive/{branch-name}.md  # перемещён
-  
+
 next_skill: null  # КОНЕЦ WORKFLOW
 
 uses:

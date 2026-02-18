@@ -4,7 +4,7 @@
   "description": "Default light theme for Open ThermoKinetics User Guide",
   "colors": {
     "primary": "#2c3e50",
-    "secondary": "#34495e", 
+    "secondary": "#34495e",
     "accent": "#3498db",
     "background": "#ffffff",
     "surface": "#f8f9fa",
@@ -23,7 +23,7 @@
       "weight": "bold"
     },
     "subheading": {
-      "family": "Arial", 
+      "family": "Arial",
       "size": 14,
       "weight": "bold"
     },

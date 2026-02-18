@@ -21,11 +21,11 @@ entry:
   artifacts:
     - .ai/specs/{branch-name}.md  # должен существовать
   condition: есть этапы со статусом ⬜ или 🔄
-  
+
 exit:
   condition: все этапы ✅
   tests: pytest passed
-  
+
 next_skill: gui-testing  # ОБЯЗАТЕЛЬНО
 
 uses:
