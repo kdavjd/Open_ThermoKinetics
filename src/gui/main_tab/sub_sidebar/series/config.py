@@ -68,7 +68,7 @@ class SeriesDialogConfig:
 
     # Dialog button texts
     add_file_button_text: str = "add file"
-    heating_rate_placeholder: str = "heating rate"
+    heating_rate_placeholder: str = "β (°C/min)"
 
 
 @dataclass(frozen=True)

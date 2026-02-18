@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import scienceplots  # noqa pylint: disable=unused-import
-from core.logger_config import logger
+
+from src.core.logger_config import logger
 
 plt.style.use(["science", "no-latex", "nature", "grid"])
 
@@ -51,16 +52,22 @@ class AnchorGroup:
             x: New x-coordinate for the center anchor.
             y: New y-coordinate for the center anchor.
         """
-        dx = x - self.center.get_xdata()[0]
-        dy = y - self.center.get_ydata()[0]
+        current_x = self.center.get_xdata()[0]
+        current_y = self.center.get_ydata()[0]
+        if current_x is None or current_y is None:
+            logger.warning("Anchor position data is None, skipping update")
+            return
 
-        self.center.set_xdata(x)
-        self.center.set_ydata(y)
+        dx = x - current_x
+        dy = y - current_y
 
-        self.upper_bound.set_xdata(self.upper_bound.get_xdata()[0] + dx)
-        self.upper_bound.set_ydata(self.upper_bound.get_ydata()[0] + dy)
-        self.lower_bound.set_xdata(self.lower_bound.get_xdata()[0] + dx)
-        self.lower_bound.set_ydata(self.lower_bound.get_ydata()[0] + dy)
+        self.center.set_xdata([x])
+        self.center.set_ydata([y])
+
+        self.upper_bound.set_xdata([self.upper_bound.get_xdata()[0] + dx])
+        self.upper_bound.set_ydata([self.upper_bound.get_ydata()[0] + dy])
+        self.lower_bound.set_xdata([self.lower_bound.get_xdata()[0] + dx])
+        self.lower_bound.set_ydata([self.lower_bound.get_ydata()[0] + dy])
 
     def set_bound_position(self, bound, x, y):
         """
@@ -73,23 +80,28 @@ class AnchorGroup:
             x: New x-coordinate for the given bound anchor.
             y: New y-coordinate for the given bound anchor.
         """
-        if bound == self.upper_bound and y <= self.center.get_ydata()[0]:
-            y = self.center.get_ydata()[0] + 0.1
-        elif bound == self.lower_bound and y >= self.center.get_ydata()[0]:
-            y = self.center.get_ydata()[0] - 0.1
+        center_y = self.center.get_ydata()[0]
+        if center_y is None or y is None:
+            logger.warning("Anchor position data is None, skipping update")
+            return
 
-        bound.set_xdata(x)
-        bound.set_ydata(y)
+        if bound == self.upper_bound and y <= center_y:
+            y = center_y + 0.1
+        elif bound == self.lower_bound and y >= center_y:
+            y = center_y - 0.1
+
+        bound.set_xdata([x])
+        bound.set_ydata([y])
 
         if bound == self.upper_bound:
             opposite_bound = self.lower_bound
-            dy = y - self.center.get_ydata()[0]
+            dy = y - center_y
         else:
             opposite_bound = self.upper_bound
-            dy = self.center.get_ydata()[0] - y
+            dy = center_y - y
 
-        opposite_bound.set_xdata(x)
-        opposite_bound.set_ydata(self.center.get_ydata()[0] - dy)
+        opposite_bound.set_xdata([x])
+        opposite_bound.set_ydata([center_y - dy])
 
     def log_anchor_positions(self):
         """Log current positions of all three anchors for debugging."""
@@ -154,15 +166,20 @@ class PositionAnchorGroup(AnchorGroup):
         Args:
             x: New x-coordinate for the center anchor.
         """
-        dx = x - self.center.get_xdata()[0]
+        current_x = self.center.get_xdata()[0]
+        if current_x is None or x is None:
+            logger.warning("Anchor position data is None, skipping update")
+            return
 
-        self.center.set_xdata(x)
-        self.center.set_ydata(0)
+        dx = x - current_x
 
-        self.upper_bound.set_xdata(self.upper_bound.get_xdata()[0] + dx)
-        self.upper_bound.set_ydata(0)
-        self.lower_bound.set_xdata(self.lower_bound.get_xdata()[0] + dx)
-        self.lower_bound.set_ydata(0)
+        self.center.set_xdata([x])
+        self.center.set_ydata([0])
+
+        self.upper_bound.set_xdata([self.upper_bound.get_xdata()[0] + dx])
+        self.upper_bound.set_ydata([0])
+        self.lower_bound.set_xdata([self.lower_bound.get_xdata()[0] + dx])
+        self.lower_bound.set_ydata([0])
 
     def set_bound_position(self, bound, x):
         """
@@ -173,13 +190,18 @@ class PositionAnchorGroup(AnchorGroup):
             bound: Either self.upper_bound or self.lower_bound.
             x: New x-coordinate for the given bound anchor.
         """
-        if bound == self.upper_bound and x <= self.center.get_xdata()[0]:
-            x = self.center.get_xdata()[0] + 0.1
-        elif bound == self.lower_bound and x >= self.center.get_xdata()[0]:
-            x = self.center.get_xdata()[0] - 0.1
+        center_x = self.center.get_xdata()[0]
+        if center_x is None or x is None:
+            logger.warning("Anchor position data is None, skipping update")
+            return
 
-        bound.set_xdata(x)
-        bound.set_ydata(0)
+        if bound == self.upper_bound and x <= center_x:
+            x = center_x + 0.1
+        elif bound == self.lower_bound and x >= center_x:
+            x = center_x - 0.1
+
+        bound.set_xdata([x])
+        bound.set_ydata([0])
 
         if bound == self.upper_bound:
             opposite_bound = self.lower_bound
@@ -188,8 +210,8 @@ class PositionAnchorGroup(AnchorGroup):
             opposite_bound = self.upper_bound
             dx = self.center.get_xdata()[0] - x
 
-        opposite_bound.set_xdata(self.center.get_xdata()[0] - dx)
-        opposite_bound.set_ydata(0)
+        opposite_bound.set_xdata([self.center.get_xdata()[0] - dx])
+        opposite_bound.set_ydata([0])
 
 
 class HeightAnchorGroup(AnchorGroup):
@@ -219,7 +241,11 @@ class HeightAnchorGroup(AnchorGroup):
         Args:
             y: New y-coordinate for the center anchor.
         """
-        super().set_center_position(self.center.get_xdata()[0], y)
+        current_x = self.center.get_xdata()[0]
+        if current_x is None or y is None:
+            logger.warning("Anchor position data is None, skipping update")
+            return
+        super().set_center_position(current_x, y)
 
     def set_bound_position(self, bound, y):
         """
@@ -231,19 +257,24 @@ class HeightAnchorGroup(AnchorGroup):
             bound: Either self.upper_bound or self.lower_bound.
             y: New y-coordinate for the given bound anchor.
         """
-        if bound == self.upper_bound and y <= self.center.get_ydata()[0]:
-            y = self.center.get_ydata()[0] + 0.1
-        elif bound == self.lower_bound and y >= self.center.get_ydata()[0]:
-            y = self.center.get_ydata()[0] - 0.1
+        center_y = self.center.get_ydata()[0]
+        if center_y is None or y is None:
+            logger.warning("Anchor position data is None, skipping update")
+            return
 
-        bound.set_ydata(y)
+        if bound == self.upper_bound and y <= center_y:
+            y = center_y + 0.1
+        elif bound == self.lower_bound and y >= center_y:
+            y = center_y - 0.1
+
+        bound.set_ydata([y])
 
         # Update opposite bound symmetrically relative to the center
         if bound == self.upper_bound:
             opposite_bound = self.lower_bound
-            dy = y - self.center.get_ydata()[0]
-            opposite_bound.set_ydata(self.center.get_ydata()[0] - dy)
+            dy = y - center_y
+            opposite_bound.set_ydata([center_y - dy])
         else:
             opposite_bound = self.upper_bound
-            dy = self.center.get_ydata()[0] - y
-            opposite_bound.set_ydata(self.center.get_ydata()[0] + dy)
+            dy = center_y - y
+            opposite_bound.set_ydata([center_y + dy])

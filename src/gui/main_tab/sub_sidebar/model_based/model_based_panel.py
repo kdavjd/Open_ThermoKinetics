@@ -10,9 +10,10 @@ from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QMessageBox, QVBoxLa
 from scipy.integrate import solve_ivp
 
 from src.core.app_settings import NUC_MODELS_LIST, PARAMETER_BOUNDS, OperationType
-from src.core.calculation_scenarios import model_based_objective_function, ode_function
+from src.core.kinetic_models_numba import ode_function_numba
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
+from src.core.model_based_calculation import compute_ode_mse
 from src.gui.main_tab.sub_sidebar.model_based.adjustment_controls import AdjustingSettingsBox
 from src.gui.main_tab.sub_sidebar.model_based.calculation_controls import ModelCalcButtons, RangeAndCalculateWidget
 from src.gui.main_tab.sub_sidebar.model_based.calculation_settings_dialogs import CalculationSettingsDialog
@@ -173,7 +174,7 @@ class ModelBasedTab(QWidget):
         current_index = self.reactions_combo.currentIndex()
         if reaction_index == current_index:
             logger.debug(
-                f"ModelBasedTab.update_best_values: " f"Updating Value fields for current reaction {reaction_index}"
+                f"ModelBasedTab.update_best_values: Updating Value fields for current reaction {reaction_index}"
             )
 
             self.reaction_table.update_value_with_best(self._best_values_cache[reaction_index])
@@ -244,7 +245,7 @@ class ModelBasedTab(QWidget):
             # Apply cached best values if available
             if index in self._best_values_cache:
                 logger.debug(
-                    f"ModelBasedTab._on_reactions_combo_changed: " f"Applying cached best values for reaction {index}"
+                    f"ModelBasedTab._on_reactions_combo_changed: Applying cached best values for reaction {index}"
                 )
                 self.reaction_table.update_value_with_best(self._best_values_cache[index])
 
@@ -380,10 +381,10 @@ class ModelBasedTab(QWidget):
 
     def _simulate_reaction_model(self, experimental_data: pd.DataFrame, reaction_scheme: dict):
         """
-        Simulate reaction model using model_based_objective_function directly.
+        Simulate reaction model using optimized Numba-JIT functions.
 
-        This function uses the exact same function as ModelBasedTargetFunction.__call__
-        to ensure consistent MSE calculation and avoid code duplication.
+        Uses compute_ode_mse() and ode_function_numba() for fast simulation
+        with the same numerical accuracy as the optimization loop.
         """
         if not self._validate_simulation_inputs(experimental_data, reaction_scheme):
             return pd.DataFrame()
@@ -412,37 +413,48 @@ class ModelBasedTab(QWidget):
     def _calculate_mse_using_core_function(
         self, experimental_data: pd.DataFrame, sim_params: dict, core_params: np.ndarray
     ) -> float:
-        """Calculate MSE using the same logic as ModelBasedTargetFunction."""
+        """Calculate MSE using optimized compute_ode_mse function."""
         try:
-            # Extract data exactly as done in ModelBasedTargetFunction
-            species_list = sim_params["species_list"]
-            reactions = sim_params["reactions"]
-            num_species = sim_params["num_species"]
             num_reactions = sim_params["num_reactions"]
-            exp_temperature = sim_params["T_K"]  # Temperature in Kelvin
+            num_species = sim_params["num_species"]
+            exp_temperature = sim_params["T_K"]
+            reactions = sim_params["reactions"]
+            species_list = sim_params["species_list"]
 
-            # Extract betas and experimental masses exactly as in ModelBasedTargetFunction
+            # Extract betas and experimental masses
             betas = [float(col) for col in experimental_data.columns if col.lower() != "temperature"]
             all_exp_masses = self._extract_experimental_masses(experimental_data, betas)
 
-            # Create dummy stop_event for simulation (no stopping needed in UI)
-            from threading import Event
-
-            stop_event = Event()
-
-            # Call model_based_objective_function directly - same logic as ModelBasedTargetFunction.__call__
-            total_mse = model_based_objective_function(
-                core_params,
-                species_list,
-                reactions,
-                num_species,
-                num_reactions,
-                betas,
-                all_exp_masses,
-                exp_temperature,
-                R=8.314,
-                stop_event=stop_event,
+            # Convert reactions to src/tgt indices for Numba
+            src_indices = np.array(
+                [species_list.index(reactions[i]["from"]) for i in range(num_reactions)], dtype=np.int64
             )
+            tgt_indices = np.array(
+                [species_list.index(reactions[i]["to"]) for i in range(num_reactions)], dtype=np.int64
+            )
+
+            # Extract contributions
+            contributions = core_params[3 * num_reactions : 4 * num_reactions]
+
+            # Sum MSE across all heating rates using optimized function
+            total_mse = 0.0
+            for beta, exp_mass in zip(betas, all_exp_masses):
+                mse = compute_ode_mse(
+                    beta=beta,
+                    params=core_params,
+                    src_indices=src_indices,
+                    tgt_indices=tgt_indices,
+                    num_species=num_species,
+                    num_reactions=num_reactions,
+                    exp_temperature=exp_temperature,
+                    exp_mass=exp_mass,
+                    contributions=contributions,
+                    solver_method="LSODA",
+                    solver_rtol=1e-2,
+                    solver_atol=1e-4,
+                    timeout_ms=200.0,
+                )
+                total_mse += mse
 
             return total_mse
 
@@ -531,36 +543,42 @@ class ModelBasedTab(QWidget):
     def _get_mass_from_core_ode(
         self, beta_value: float, sim_params: dict, core_params: np.ndarray, exp_mass: np.ndarray
     ) -> np.ndarray:
+        """Generate model mass curve using optimized Numba ODE function."""
         try:
-            y0 = np.zeros(sim_params["num_species"] + sim_params["num_reactions"])
-            if sim_params["num_species"] > 0:
+            num_species = sim_params["num_species"]
+            num_reactions = sim_params["num_reactions"]
+            reactions = sim_params["reactions"]
+            species_list = sim_params["species_list"]
+
+            y0 = np.zeros(num_species + num_reactions)
+            if num_species > 0:
                 y0[0] = 1.0
 
+            # Convert reactions to src/tgt indices for Numba
+            src_indices = np.array(
+                [species_list.index(reactions[i]["from"]) for i in range(num_reactions)], dtype=np.int64
+            )
+            tgt_indices = np.array(
+                [species_list.index(reactions[i]["to"]) for i in range(num_reactions)], dtype=np.int64
+            )
+
             def ode_wrapper(T, y):
-                return ode_function(
-                    T,
-                    y,
-                    beta_value,  # Pass β directly (K/min)
-                    core_params,
-                    sim_params["species_list"],
-                    sim_params["reactions"],
-                    sim_params["num_species"],
-                    sim_params["num_reactions"],
-                    R=8.314,
+                return ode_function_numba(
+                    T, y, beta_value, core_params, src_indices, tgt_indices, num_species, num_reactions
                 )
 
             T_K = sim_params["T_K"]
-            sol = solve_ivp(ode_wrapper, [T_K[0], T_K[-1]], y0, t_eval=T_K, method="RK45")
+            sol = solve_ivp(ode_wrapper, [T_K[0], T_K[-1]], y0, t_eval=T_K, method="LSODA", rtol=1e-2, atol=1e-4)
 
             if not sol.success:
                 logger.error(f"Core ODE solution failed for β = {beta_value}")
                 console.log(
-                    f"\nODE integration failed for heating rate {beta_value} K/min. " f"Check reaction parameters.\n"
+                    f"\nODE integration failed for heating rate {beta_value} K/min. Check reaction parameters.\n"
                 )
                 return exp_mass
 
             # Extract rates and calculate mass
-            rates_int = sol.y[sim_params["num_species"] : sim_params["num_species"] + sim_params["num_reactions"], :]
+            rates_int = sol.y[num_species : num_species + num_reactions, :]
             int_sum = np.sum(sim_params["contributions"][:, np.newaxis] * rates_int, axis=0)
             M0 = exp_mass[0]
             Mfin = exp_mass[-1]

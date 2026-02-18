@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 
 import numpy as np
-from numba import njit
 
 
 @dataclass(frozen=True)
@@ -181,9 +180,9 @@ class DeconvolutionDifferentialEvolutionConfig(DifferentialEvolutionConfig):
 @dataclass(frozen=True)
 class ModelBasedDifferentialEvolutionConfig(DifferentialEvolutionConfig):
     workers: int = 6
-    maxiter: int = 1000              # Increased from 750 - more iterations for challenging optimization landscapes
+    maxiter: int = 1000  # Increased from 750 - more iterations for challenging optimization landscapes
     popsize: int = 50
-    mutation: tuple = (0.4, 1.2)     # Adjusted from (0.3, 1.5) - better balance for avoiding local minima
+    mutation: tuple = (0.4, 1.2)  # Adjusted from (0.3, 1.5) - better balance for avoiding local minima
     disp: bool = True
     polish: bool = False
     updating: str = "immediate"
@@ -268,14 +267,12 @@ def ensure_array(func):
     return wrapper
 
 
-@njit
 def clip_fraction(e, eps=1e-8):
     """Clip values to valid fraction range [eps, 1-eps]."""
     return np.clip(e, eps, 1 - eps)
 
 
 @ensure_array
-@njit
 def differential_F1_3(e):
     """F1/3 differential kinetic model."""
     e = clip_fraction(e)
@@ -283,7 +280,6 @@ def differential_F1_3(e):
 
 
 @ensure_array
-@njit
 def integral_F1_3(e):
     """F1/3 integral kinetic model."""
     e = clip_fraction(e)
@@ -291,7 +287,6 @@ def integral_F1_3(e):
 
 
 @ensure_array
-@njit
 def differential_F3_4(e):
     """F3/4 differential kinetic model."""
     e = clip_fraction(e)
@@ -299,7 +294,6 @@ def differential_F3_4(e):
 
 
 @ensure_array
-@njit
 def integral_F3_4(e):
     """F3/4 integral kinetic model."""
     e = clip_fraction(e)
@@ -307,7 +301,6 @@ def integral_F3_4(e):
 
 
 @ensure_array
-@njit
 def differential_F3_2(e):
     """F3/2 differential kinetic model."""
     e = clip_fraction(e)
@@ -315,7 +308,6 @@ def differential_F3_2(e):
 
 
 @ensure_array
-@njit
 def integral_F3_2(e):
     """F3/2 integral kinetic model."""
     e = clip_fraction(e)
@@ -323,7 +315,6 @@ def integral_F3_2(e):
 
 
 @ensure_array
-@njit
 def differential_F2(e):
     """F2 differential kinetic model."""
     e = clip_fraction(e)
@@ -331,7 +322,6 @@ def differential_F2(e):
 
 
 @ensure_array
-@njit
 def integral_F2(e):
     """F2 integral kinetic model."""
     e = clip_fraction(e)
@@ -339,7 +329,6 @@ def integral_F2(e):
 
 
 @ensure_array
-@njit
 def differential_F3(e):
     """F3 differential kinetic model."""
     e = clip_fraction(e)
@@ -347,7 +336,6 @@ def differential_F3(e):
 
 
 @ensure_array
-@njit
 def integral_F3(e):
     """F3 integral kinetic model."""
     e = clip_fraction(e)
@@ -355,7 +343,6 @@ def integral_F3(e):
 
 
 @ensure_array
-@njit
 def differential_F1_A1(e):
     """F1/A1 differential kinetic model."""
     e = clip_fraction(e)
@@ -363,469 +350,402 @@ def differential_F1_A1(e):
 
 
 @ensure_array
-@njit
 def integral_F1_A1(e):
     e = clip_fraction(e)
     return -np.log(e)
 
 
 @ensure_array
-@njit
 def differential_A2(e):
     e = clip_fraction(e)
     return 2.0 * e * (-np.log(e)) ** 0.5
 
 
 @ensure_array
-@njit
 def integral_A2(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** 0.5
 
 
 @ensure_array
-@njit
 def differential_A3(e):
     e = clip_fraction(e)
     return 3.0 * e * (-np.log(e)) ** (2.0 / 3.0)
 
 
 @ensure_array
-@njit
 def integral_A3(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** (1.0 / 3.0)
 
 
 @ensure_array
-@njit
 def differential_A4(e):
     e = clip_fraction(e)
     return 4.0 * e * (-np.log(e)) ** (3.0 / 4.0)
 
 
 @ensure_array
-@njit
 def integral_A4(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** (1.0 / 4.0)
 
 
 @ensure_array
-@njit
 def differential_A2_3(e):
     e = clip_fraction(e)
     return (2.0 / 3.0) * e * (-np.log(e)) ** (-0.5)
 
 
 @ensure_array
-@njit
 def integral_A2_3(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** (3.0 / 2.0)
 
 
 @ensure_array
-@njit
 def differential_A3_2(e):
     e = clip_fraction(e)
     return (3.0 / 2.0) * e * (-np.log(e)) ** (1.0 / 3.0)
 
 
 @ensure_array
-@njit
 def integral_A3_2(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** (2.0 / 3.0)
 
 
 @ensure_array
-@njit
 def differential_A3_4(e):
     e = clip_fraction(e)
     return (3.0 / 4.0) * e * (-np.log(e)) ** (-1.0 / 3.0)
 
 
 @ensure_array
-@njit
 def integral_A3_4(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** (4.0 / 3.0)
 
 
 @ensure_array
-@njit
 def differential_A5_2(e):
     e = clip_fraction(e)
     return (5.0 / 2.0) * e * (-np.log(e)) ** (3.0 / 5.0)
 
 
 @ensure_array
-@njit
 def integral_A5_2(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** (2.0 / 5.0)
 
 
 @ensure_array
-@njit
 def differential_F0_R1_P1(e):
     e = clip_fraction(e)
     return np.full_like(e, 1)
 
 
 @ensure_array
-@njit
 def integral_F0_R1_P1(e):
     e = clip_fraction(e)
     return 1 - e
 
 
 @ensure_array
-@njit
 def differential_R2(e):
     e = clip_fraction(e)
     return 2.0 * e**0.5
 
 
 @ensure_array
-@njit
 def integral_R2(e):
     e = clip_fraction(e)
     return 1 - e**0.5
 
 
 @ensure_array
-@njit
 def differential_R3(e):
     e = clip_fraction(e)
     return 3.0 * e ** (2.0 / 3.0)
 
 
 @ensure_array
-@njit
 def integral_R3(e):
     e = clip_fraction(e)
     return 1 - e ** (1.0 / 3.0)
 
 
 @ensure_array
-@njit
 def differential_P3_2(e):
     e = clip_fraction(e)
     return (2.0 / 3.0) / (1 - e) ** 0.5
 
 
 @ensure_array
-@njit
 def integral_P3_2(e):
     e = clip_fraction(e)
     return (1 - e) ** (3.0 / 2.0)
 
 
 @ensure_array
-@njit
 def differential_P2(e):
     e = clip_fraction(e)
     return 2.0 * (1 - e) ** 0.5
 
 
 @ensure_array
-@njit
 def integral_P2(e):
     e = clip_fraction(e)
     return (1 - e) ** 0.5
 
 
 @ensure_array
-@njit
 def differential_P3(e):
     e = clip_fraction(e)
     return 3.0 * (1 - e) ** (2.0 / 3.0)
 
 
 @ensure_array
-@njit
 def integral_P3(e):
     e = clip_fraction(e)
     return (1 - e) ** (1.0 / 3.0)
 
 
 @ensure_array
-@njit
 def differential_P4(e):
     e = clip_fraction(e)
     return 4.0 * (1 - e) ** (3.0 / 4.0)
 
 
 @ensure_array
-@njit
 def integral_P4(e):
     e = clip_fraction(e)
     return (1 - e) ** (1.0 / 4.0)
 
 
 @ensure_array
-@njit
 def differential_E1(e):
     e = clip_fraction(e)
     return 1 - e
 
 
 @ensure_array
-@njit
 def integral_E1(e):
     e = clip_fraction(e)
     return np.log(1 - e)
 
 
 @ensure_array
-@njit
 def differential_E2(e):
     e = clip_fraction(e)
     return (1 - e) / 2.0
 
 
 @ensure_array
-@njit
 def integral_E2(e):
     e = clip_fraction(e)
     return np.log((1 - e) ** 2)
 
 
 @ensure_array
-@njit
 def differential_D1(e):
     e = clip_fraction(e)
     return 1.0 / (2.0 * (1 - e))
 
 
 @ensure_array
-@njit
 def integral_D1(e):
     e = clip_fraction(e)
     return (1 - e) ** 2
 
 
 @ensure_array
-@njit
 def differential_D2(e):
     e = clip_fraction(e)
     return 1.0 / (-np.log(e))
 
 
 @ensure_array
-@njit
 def integral_D2(e):
     e = clip_fraction(e)
     return (1 - e) + e * np.log(e)
 
 
 @ensure_array
-@njit
 def differential_D3(e):
     e = clip_fraction(e)
     return ((3.0 / 2.0) * e ** (2.0 / 3.0)) / (1 - e ** (1.0 / 3.0))
 
 
 @ensure_array
-@njit
 def integral_D3(e):
     e = clip_fraction(e)
     return (1 - e ** (1.0 / 3.0)) ** 2
 
 
 @ensure_array
-@njit
 def differential_D4(e):
     e = clip_fraction(e)
     return (3.0 / 2.0) / (e ** (-1.0 / 3.0) - 1)
 
 
 @ensure_array
-@njit
 def integral_D4(e):
     e = clip_fraction(e)
     return 1 - (2 * (1 - e) / 3.0) - e ** (2.0 / 3.0)
 
 
 @ensure_array
-@njit
 def differential_D5(e):
     e = clip_fraction(e)
     return ((3.0 / 2.0) * e ** (4.0 / 3.0)) / (e ** (-1.0 / 3.0) - 1)
 
 
 @ensure_array
-@njit
 def integral_D5(e):
     e = clip_fraction(e)
     return (e ** (-1.0 / 3.0) - 1) ** 2
 
 
 @ensure_array
-@njit
 def differential_D6(e):
     e = clip_fraction(e)
     return ((3.0 / 2.0) * (1 + e) ** (2.0 / 3.0)) / ((1 + e) ** (1.0 / 3.0) - 1)
 
 
 @ensure_array
-@njit
 def integral_D6(e):
     e = clip_fraction(e)
     return ((1 + e) ** (1.0 / 3.0) - 1) ** 2
 
 
 @ensure_array
-@njit
 def differential_D7(e):
     e = clip_fraction(e)
     return (3.0 / 2.0) / (1 - (1 + e) ** (-1.0 / 3.0))
 
 
 @ensure_array
-@njit
 def integral_D7(e):
     e = clip_fraction(e)
     return 1 + (2 * (1 - e) / 3.0) - (1 + e) ** (2.0 / 3.0)
 
 
 @ensure_array
-@njit
 def differential_D8(e):
     e = clip_fraction(e)
     return ((3.0 / 2.0) * (1 + e) ** (4.0 / 3.0)) / (1 - (1 + e) ** (-1.0 / 3.0))
 
 
 @ensure_array
-@njit
 def integral_D8(e):
     e = clip_fraction(e)
     return ((1 + e) ** (-1.0 / 3.0) - 1) ** 2
 
 
 @ensure_array
-@njit
 def differential_G1(e):
     e = clip_fraction(e)
     return 1.0 / (2.0 * e)
 
 
 @ensure_array
-@njit
 def integral_G1(e):
     e = clip_fraction(e)
     return 1 - e**2
 
 
 @ensure_array
-@njit
 def differential_G2(e):
     e = clip_fraction(e)
     return 1.0 / (3.0 * e**2)
 
 
 @ensure_array
-@njit
 def integral_G2(e):
     e = clip_fraction(e)
     return 1 - e**3
 
 
 @ensure_array
-@njit
 def differential_G3(e):
     e = clip_fraction(e)
     return 1.0 / (4.0 * e**3)
 
 
 @ensure_array
-@njit
 def integral_G3(e):
     e = clip_fraction(e)
     return 1 - e**4
 
 
 @ensure_array
-@njit
 def differential_G4(e):
     e = clip_fraction(e)
     return (1.0 / 2.0) * e * (-np.log(e))
 
 
 @ensure_array
-@njit
 def integral_G4(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** 2
 
 
 @ensure_array
-@njit
 def differential_G5(e):
     e = clip_fraction(e)
     return (1.0 / 3.0) * e * (-np.log(e)) ** 2
 
 
 @ensure_array
-@njit
 def integral_G5(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** 3
 
 
 @ensure_array
-@njit
 def differential_G6(e):
     e = clip_fraction(e)
     return (1.0 / 4.0) * e * (-np.log(e)) ** 3
 
 
 @ensure_array
-@njit
 def integral_G6(e):
     e = clip_fraction(e)
     return (-np.log(e)) ** 4
 
 
 @ensure_array
-@njit
 def differential_G7(e):
     e = clip_fraction(e)
     return (1.0 / 4.0) * e**0.5 / (1 - e**0.5)
 
 
 @ensure_array
-@njit
 def integral_G7(e):
     e = clip_fraction(e)
     return (1 - e**0.5) ** 0.5
 
 
 @ensure_array
-@njit
 def differential_G8(e):
     e = clip_fraction(e)
     return (1.0 / 3.0) * e ** (2.0 / 3.0) / (1 - e ** (1.0 / 3.0))
 
 
 @ensure_array
-@njit
 def integral_G8(e):
     e = clip_fraction(e)
     return (1 - e ** (1.0 / 3.0)) ** 0.5
 
 
 @ensure_array
-@njit
 def differential_B1(e):
     e = clip_fraction(e)
     return 1.0 / ((1 - e) - e)
 
 
 @ensure_array
-@njit
 def integral_B1(e):
     e = clip_fraction(e)
     return np.log((1 - e) / e)

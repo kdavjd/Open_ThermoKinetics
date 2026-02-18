@@ -1,7 +1,7 @@
 import pandas as pd
-from core.base_signals import BaseSlots
 
 from src.core.app_settings import OperationType
+from src.core.base_signals import BaseSlots
 from src.core.logger_config import logger
 
 

@@ -3,16 +3,21 @@ from typing import Callable, Optional
 
 import numpy as np
 import optuna
-from core.base_signals import BaseSlots
-from core.calculation_results_strategies import BestResultStrategy, DeconvolutionStrategy, ModelBasedCalculationStrategy
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
 from scipy.optimize import OptimizeResult, differential_evolution
 
 from src.core.app_settings import OperationType
-from src.core.calculation_scenarios import SCENARIO_REGISTRY, make_de_callback
+from src.core.base_signals import BaseSlots
+from src.core.calculation_results_strategies import (
+    BestResultStrategy,
+    DeconvolutionStrategy,
+    ModelBasedCalculationStrategy,
+)
+from src.core.calculation_scenarios import SCENARIO_REGISTRY
 from src.core.calculation_thread import CalculationThread
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
+from src.core.model_based_calculation import make_de_callback
 
 
 class Calculations(BaseSlots):
@@ -125,7 +130,11 @@ class Calculations(BaseSlots):
 
                 if scenario_key == "model_based_calculation":
                     calc_params["constraints"] = scenario_instance.get_constraints()
-                    calc_params["callback"] = make_de_callback(target_function, self)
+                    # Use updating='deferred' for parallel optimization (workers != 1)
+                    workers = calc_params.get("workers", 1)
+                    if workers != 1:
+                        calc_params["updating"] = "deferred"
+                    calc_params["callback"] = make_de_callback(target_function, self, self.manager)
 
                 logger.debug("Differential evolution parameters before execution:")
                 for key, value in calc_params.items():
