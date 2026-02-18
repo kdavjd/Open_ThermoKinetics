@@ -21,6 +21,7 @@ entry:
     - .ai/specs/{branch-name}.md  # все этапы ✅
   condition:
     - все этапы ✅
+    - pre-commit пройден (`uv run pre-commit run --all-files`)
     - тесты пройдены (pytest + pytest-qt)
     - нет uncommitted changes
 
@@ -40,9 +41,10 @@ uses:
 
 Before merge:
 1. All spec stages must be ✅
-2. All tests must pass (pytest + pytest-qt)
-3. No uncommitted changes
-4. Branch is up to date with main
+2. Pre-commit checks must pass (`uv run pre-commit run --all-files`)
+3. All tests must pass (pytest + pytest-qt)
+4. No uncommitted changes
+5. Branch is up to date with main
 
 ## Workflow
 
@@ -76,7 +78,30 @@ If incomplete stages exist:
 ```
 **STOP** — do not proceed.
 
-### Step 2: Run Quality Checks
+### Step 2: Run Pre-commit Checks
+
+**CRITICAL:** Pre-commit must pass before merge. This ensures code quality standards.
+
+```bash
+# Run all pre-commit hooks on all files
+uv run pre-commit run --all-files
+```
+
+**If pre-commit fails:**
+```
+❌ Pre-commit проверки не пройдены
+
+Failed hooks:
+- ruff-format (strict): 2 files need formatting
+- trailing-whitespace: 5 files have trailing whitespace
+
+Исправьте ошибки и закоммитьте изменения:
+uv run pre-commit run --all-files
+git add -A && git commit -m "fix: pre-commit issues"
+```
+**STOP** — do not proceed until pre-commit passes.
+
+### Step 3: Run Quality Checks
 
 ```bash
 # Run all tests
@@ -124,7 +149,7 @@ git rebase origin/main
 git merge origin/main
 ```
 
-### Step 3: Update CHANGELOG
+### Step 4: Update CHANGELOG
 
 Read `.ai/CHANGELOG.md` and add release entry:
 
@@ -148,7 +173,7 @@ Read `.ai/CHANGELOG.md` and add release entry:
 git log main..HEAD --oneline
 ```
 
-### Step 4: Update ARCHITECTURE (if needed)
+### Step 5: Update ARCHITECTURE (if needed)
 
 Check if architectural changes were made:
 - New modules added?
@@ -161,7 +186,7 @@ If yes, update `.ai/ARCHITECTURE.md`:
 - Update module descriptions
 - Document new patterns
 
-### Step 5: Final Spec Update
+### Step 6: Final Spec Update
 
 Update spec file status:
 
@@ -179,7 +204,7 @@ Add final history entry:
 | 2026-01-07 | MERGE | abc1234 | Feature merged to main |
 ```
 
-### Step 6: Prepare Merge
+### Step 7: Prepare Merge
 
 **Option A: Squash Merge (recommended)**
 ```bash
@@ -202,7 +227,7 @@ git pull origin main
 git rebase feature/{name}
 ```
 
-### Step 7: Post-Merge Cleanup
+### Step 8: Post-Merge Cleanup
 
 After successful merge:
 
@@ -219,7 +244,7 @@ git push origin --delete feature/{name}
 mv .ai/specs/{branch}.md .ai/specs/archive/{branch}.md
 ```
 
-### Step 8: Report Completion
+### Step 9: Report Completion
 
 ```
 ✅ Merge завершён
@@ -245,6 +270,7 @@ mv .ai/specs/{branch}.md .ai/specs/archive/{branch}.md
 Before proceeding with merge, verify:
 
 - [ ] All spec stages ✅
+- [ ] Pre-commit checks pass (`uv run pre-commit run --all-files`)
 - [ ] All tests pass
 - [ ] No uncommitted changes
 - [ ] Branch up to date with main
