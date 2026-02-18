@@ -36,7 +36,7 @@ jobs:
         run: uv sync
 
       - name: Build Windows executable
-        run: uv run pyinstaller src/gui/__main__.py --collect-all scienceplots --onefile --name OTK.exe
+        run: uv run pyinstaller OTK.spec
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
