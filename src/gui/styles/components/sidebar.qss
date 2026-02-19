@@ -1,0 +1,55 @@
+/* =============================================================
+   Sidebar — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+QTreeView#sidebar_tree {
+    background-color: {{bg_surface}};
+    color: {{text_primary}};
+    border: none;
+    border-right: 1px solid {{border}};
+    outline: none;
+}
+
+QTreeView#sidebar_tree::item {
+    padding: 4px 8px;
+    border-left: 2px solid transparent;
+}
+
+QTreeView#sidebar_tree::item:hover {
+    background-color: {{bg_elevated}};
+}
+
+QTreeView#sidebar_tree::item:selected,
+QTreeView#sidebar_tree::item:selected:active,
+QTreeView#sidebar_tree::item:selected:!active {
+    background-color: {{accent_light}};
+    color: {{accent}};
+    border-left: 2px solid {{accent}};
+}
+
+QTreeView#sidebar_tree::branch {
+    background-color: {{bg_surface}};
+}
+
+QTreeView#sidebar_tree::branch:hover {
+    background-color: {{bg_elevated}};
+}
+
+QLabel#section_header {
+    background-color: {{bg_surface}};
+    color: {{text_secondary}};
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+}
+
+/* Navigation header above sidebar tree */
+QLabel#sidebar_header {
+    background-color: {{bg_surface}};
+    color: {{text_secondary}};
+    font-size: 10px;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-bottom: 1px solid {{border}};
+}

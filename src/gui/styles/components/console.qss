@@ -1,0 +1,14 @@
+/* =============================================================
+   Console — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+QTextEdit#console_output {
+    background-color: {{console_bg}};
+    color: {{text_primary}};
+    border: none;
+    border-top: 1px solid {{border}};
+    font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+    font-size: 10px;
+    padding: 4px;
+}

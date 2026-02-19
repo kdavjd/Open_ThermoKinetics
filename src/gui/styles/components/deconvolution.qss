@@ -1,0 +1,153 @@
+/* =============================================================
+   Deconvolution Panel — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+/* --- Section Header --- */
+QLabel#section_header {
+    font-size: 11px;
+    font-weight: 600;
+    color: {{text_secondary}};
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 0;
+    border-bottom: 1px solid {{border}};
+    margin-bottom: 4px;
+}
+
+/* --- Peak List --- */
+QListWidget#peak_list {
+    background-color: {{bg_surface}};
+    border: 1px solid {{border}};
+    border-radius: {{radius_sm}};
+    padding: 4px;
+    outline: none;
+}
+
+QListWidget#peak_list::item {
+    padding: 6px 8px;
+    border-radius: {{radius_sm}};
+    margin: 1px 0;
+    color: {{text_primary}};
+}
+
+QListWidget#peak_list::item:hover {
+    background-color: {{bg_elevated}};
+}
+
+QListWidget#peak_list::item:selected {
+    background-color: {{accent_light}};
+    color: {{accent}};
+}
+
+QListWidget#peak_list::item:selected:hover {
+    background-color: {{accent_light}};
+}
+
+/* --- Peak Parameters Inputs --- */
+QLineEdit[param="true"],
+QLineEdit#param_h,
+QLineEdit#param_z,
+QLineEdit#param_w,
+QLineEdit#param_fr {
+    background-color: {{bg_base}};
+    border: 1px solid {{border_strong}};
+    border-radius: {{radius_sm}};
+    padding: 4px 8px;
+    min-height: 24px;
+    color: {{text_primary}};
+}
+
+QLineEdit[param="true"]:focus,
+QLineEdit#param_h:focus,
+QLineEdit#param_z:focus,
+QLineEdit#param_w:focus,
+QLineEdit#param_fr:focus {
+    border-color: {{accent}};
+}
+
+QLineEdit[param="true"]:hover,
+QLineEdit#param_h:hover,
+QLineEdit#param_z:hover,
+QLineEdit#param_w:hover,
+QLineEdit#param_fr:hover {
+    border-color: {{accent}};
+}
+
+/* --- Model Type ComboBox --- */
+QComboBox#model_type_combo {
+    background-color: {{bg_base}};
+    border: 1px solid {{border_strong}};
+    border-radius: {{radius_sm}};
+    padding: 4px 8px;
+    min-height: 24px;
+    color: {{text_primary}};
+}
+
+QComboBox#model_type_combo:focus {
+    border-color: {{accent}};
+}
+
+QComboBox#model_type_combo:hover {
+    border-color: {{accent}};
+}
+
+QComboBox#model_type_combo::drop-down {
+    border: none;
+    width: 20px;
+}
+
+QComboBox#model_type_combo::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid {{text_secondary}};
+    margin-right: 6px;
+}
+
+QComboBox#model_type_combo QAbstractItemView {
+    background-color: {{bg_surface}};
+    border: 1px solid {{border}};
+    selection-background-color: {{accent_light}};
+    selection-color: {{accent}};
+}
+
+/* --- Fit Options Inputs --- */
+QSpinBox#fit_max_iter {
+    background-color: {{bg_base}};
+    border: 1px solid {{border_strong}};
+    border-radius: {{radius_sm}};
+    padding: 4px 8px;
+    min-height: 24px;
+    color: {{text_primary}};
+}
+
+QSpinBox#fit_max_iter:focus {
+    border-color: {{accent}};
+}
+
+QLineEdit#fit_tolerance {
+    background-color: {{bg_base}};
+    border: 1px solid {{border_strong}};
+    border-radius: {{radius_sm}};
+    padding: 4px 8px;
+    min-height: 24px;
+    color: {{text_primary}};
+}
+
+QLineEdit#fit_tolerance:focus {
+    border-color: {{accent}};
+}
+
+QComboBox#fit_algorithm {
+    background-color: {{bg_base}};
+    border: 1px solid {{border_strong}};
+    border-radius: {{radius_sm}};
+    padding: 4px 8px;
+    min-height: 24px;
+    color: {{text_primary}};
+}
+
+QComboBox#fit_algorithm:focus {
+    border-color: {{accent}};
+}

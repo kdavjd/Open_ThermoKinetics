@@ -1,0 +1,15 @@
+/* =============================================================
+   Plot Components — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+/* Plot Info Bar — context information above the plot canvas */
+QWidget#plot_info_bar {
+    background-color: {{bg_elevated}};
+    border-bottom: 1px solid {{border}};
+}
+
+QLabel#plot_info_label {
+    color: {{text_secondary}};
+    font-size: 12px;
+}
