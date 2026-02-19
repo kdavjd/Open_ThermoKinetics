@@ -1,6 +1,6 @@
 # Open ThermoKinetics — Design System Concept
 
-> **Версия:** 1.0  |  **Дата:** 2026-02-19  |  **Стиль:** Industrial/Technical
+> **Версия:** 1.1  |  **Дата:** 2026-02-19  |  **Стиль:** Industrial/Technical
 
 ---
 
@@ -170,3 +170,57 @@ def load_theme(app: QApplication, theme: str = "light") -> None:
 ```
 
 Конкатенация → единый `setStyleSheet` на `QApplication`. Компонентные файлы переопределяют базовую тему через более специфичные селекторы (object name > тип виджета).
+
+---
+
+## 9. Готовые наработки (src/gui/styles/)
+
+> **Статус:** ✅ реализовано, в main с `feature/design-system-base`
+
+Весь design system реализован в `src/gui/styles/` и не требует создания заново.
+
+### Структура файлов
+
+```
+src/gui/styles/
+├── __init__.py                  # Экспорт: load_theme, get_saved_theme, LIGHT, DARK
+├── tokens.py                    # Цветовые токены (LIGHT / DARK словари)
+├── theme_loader.py              # load_theme(app, theme) + get_saved_theme()
+├── light.qss                    # Базовая светлая тема (переменные через {{token}})
+├── dark.qss                     # Базовая тёмная тема
+└── components/
+    ├── buttons.qss              # QPushButton#btn_primary/secondary/danger/small
+    ├── forms.qss                # QLineEdit, QComboBox, QSpinBox, QCheckBox
+    ├── sidebar.qss              # QTreeWidget#sidebar_tree, section_header
+    ├── tabs.qss                 # QTabBar, QTabWidget
+    ├── console.qss              # QTextEdit#console_output
+    ├── menubar.qss              # QMenuBar, QMenu
+    ├── plot.qss                 # QWidget#plot_container, QToolBar
+    └── deconvolution.qss        # Специфичные стили панели деконволюции
+```
+
+### Механизм токенов
+
+QSS-файлы используют плейсхолдеры вида `{{token_name}}`, которые `theme_loader.py` заменяет значениями из `tokens.py` при загрузке:
+
+```qss
+/* В .qss файлах: */
+QPushButton#btn_primary {
+    background-color: {{accent}};
+    color: white;
+    border-radius: {{radius_sm}};
+}
+```
+
+```python
+# Подключение темы в __main__.py:
+from src.gui.styles import load_theme, get_saved_theme
+load_theme(app, get_saved_theme())
+```
+
+### Что НЕ реализовано (требует новой итерации)
+
+- Интеграция `theme_loader` в `__main__.py` — добавить вызов
+- Переключатель темы в UI (кнопка/меню)
+- Назначение `objectName` компонентам приложения согласно таблице §2
+- Тесты применения стилей (pytest-qt)

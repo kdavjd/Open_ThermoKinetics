@@ -1,0 +1,52 @@
+/* =============================================================
+   Menu Bar — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+QMenuBar {
+    background-color: {{bg_surface}};
+    color: {{text_primary}};
+    border-bottom: 1px solid {{border}};
+    min-height: 28px;
+    padding: 0 4px;
+}
+
+QMenuBar::item {
+    background-color: transparent;
+    padding: 4px 10px;
+}
+
+QMenuBar::item:selected {
+    background-color: {{bg_elevated}};
+    border-radius: {{radius_sm}};
+}
+
+QMenuBar::item:pressed {
+    background-color: {{border}};
+}
+
+QMenu {
+    background-color: {{bg_surface}};
+    color: {{text_primary}};
+    border: 1px solid {{border}};
+    padding: 4px 0;
+}
+
+QMenu::item {
+    padding: 6px 20px;
+}
+
+QMenu::item:selected {
+    background-color: {{accent_light}};
+    color: {{accent}};
+}
+
+QMenu::item:disabled {
+    color: {{text_muted}};
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: {{border}};
+    margin: 4px 0;
+}
