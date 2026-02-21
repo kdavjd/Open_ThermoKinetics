@@ -1,0 +1,94 @@
+/* =============================================================
+   Buttons — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+/* --- Primary Button --- */
+QPushButton#btn_primary {
+    background-color: {{accent}};
+    color: #FFFFFF;
+    border: none;
+    border-radius: {{radius_sm}};
+    min-height: 28px;
+    padding: 4px 12px;
+    font-weight: 600;
+}
+
+QPushButton#btn_primary:hover {
+    background-color: {{accent_hover}};
+}
+
+QPushButton#btn_primary:pressed {
+    background-color: #1E40AF;
+}
+
+QPushButton#btn_primary:disabled {
+    background-color: {{border_strong}};
+    color: {{text_muted}};
+}
+
+/* --- Secondary Button --- */
+QPushButton#btn_secondary {
+    background-color: {{bg_elevated}};
+    color: {{text_primary}};
+    border: 1px solid {{border_strong}};
+    border-radius: {{radius_sm}};
+    min-height: 28px;
+    padding: 4px 12px;
+}
+
+QPushButton#btn_secondary:hover {
+    background-color: {{border}};
+}
+
+QPushButton#btn_secondary:pressed {
+    background-color: {{border_strong}};
+}
+
+QPushButton#btn_secondary:disabled {
+    background-color: {{bg_surface}};
+    color: {{text_muted}};
+}
+
+/* --- Danger Button --- */
+QPushButton#btn_danger {
+    background-color: #FEE2E2;
+    color: {{error}};
+    border: 1px solid #FECACA;
+    border-radius: {{radius_sm}};
+    min-height: 28px;
+    padding: 4px 12px;
+}
+
+QPushButton#btn_danger:hover {
+    background-color: #FECACA;
+}
+
+QPushButton#btn_danger:pressed {
+    background-color: #FCA5A5;
+}
+
+QPushButton#btn_danger:disabled {
+    background-color: {{bg_surface}};
+    color: {{text_muted}};
+}
+
+/* --- Small Button --- */
+QPushButton#btn_small {
+    background-color: {{bg_elevated}};
+    color: {{text_secondary}};
+    border: 1px solid {{border}};
+    border-radius: {{radius_sm}};
+    min-height: 22px;
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+QPushButton#btn_small:hover {
+    background-color: {{border}};
+    color: {{text_primary}};
+}
+
+QPushButton#btn_small:disabled {
+    color: {{text_muted}};
+}

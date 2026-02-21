@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed - Move Calculations to Series
+- [src/gui/main_tab/sidebar.py](../src/gui/main_tab/sidebar.py): Удалён раздел "calculation" из навигационного дерева
+  - Убран calculation_root и дочерние элементы (model fit, model free, model based)
+  - Упрощена обработка кликов в on_item_clicked()
+
+- [src/gui/main_tab/sub_sidebar/series/series_sub_bar.py](../src/gui/main_tab/sub_sidebar/series/series_sub_bar.py): Добавлен CalculationButtonsBlock
+  - 3 кнопки перехода к расчётам: Model Fit, Model Free, Model Based
+  - Сигнал calculation_clicked для переключения панелей
+  - Валидация выбора серии перед переходом к расчёту
+  - Сообщение в console при отсутствии выбранной серии
+
+- [src/gui/main_tab/main_tab.py](../src/gui/main_tab/main_tab.py): Подключены сигналы расчётов
+  - Связь calculation_buttons_block.calculation_clicked с toggle_sub_sidebar
+
+---
+
 ## [0.3.0] - 2026-02-18
 
 ### Added - Release Stabilization

@@ -9,13 +9,14 @@ import json
 
 import numpy as np
 import pandas as pd
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
     QHBoxLayout,
+    QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
@@ -26,7 +27,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from src.core.app_settings import MODEL_FIT_METHODS, OperationType
+from src.core.app_settings import MODEL_FIT_METHODS, OperationType, SideBarNames
 from src.core.curve_fitting import CurveFitting as cft
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
@@ -136,6 +137,49 @@ class DeconvolutionResultsLoadDialog(QDialog):
         self.accept()
 
 
+class CalculationButtonsBlock(QWidget):
+    """
+    Widget providing calculation action buttons for series analysis.
+
+    Emits signals for switching to model-fit, model-free, and model-based panels.
+    """
+
+    calculation_clicked = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        """Initialize calculation buttons with signal connections."""
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        label = QLabel("calculations:")
+        layout.addWidget(label)
+
+        self.model_fit_button = QPushButton("model fit")
+        self.model_free_button = QPushButton("model free")
+        self.model_based_button = QPushButton("model based")
+
+        self.model_fit_button.clicked.connect(self.emit_model_fit)
+        self.model_free_button.clicked.connect(self.emit_model_free)
+        self.model_based_button.clicked.connect(self.emit_model_based)
+
+        layout.addWidget(self.model_fit_button)
+        layout.addWidget(self.model_free_button)
+        layout.addWidget(self.model_based_button)
+
+    def emit_model_fit(self):
+        """Emit signal to switch to model-fit panel."""
+        self.calculation_clicked.emit(SideBarNames.MODEL_FIT.value)
+
+    def emit_model_free(self):
+        """Emit signal to switch to model-free panel."""
+        self.calculation_clicked.emit(SideBarNames.MODEL_FREE.value)
+
+    def emit_model_based(self):
+        """Emit signal to switch to model-based panel."""
+        self.calculation_clicked.emit(SideBarNames.MODEL_BASED.value)
+
+
 class SeriesSubBar(QWidget):
     """
     Series analysis panel for multi-heating-rate kinetic studies.
@@ -153,6 +197,7 @@ class SeriesSubBar(QWidget):
         super().__init__(parent)
 
         self.layout = QVBoxLayout(self)
+        self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.load_button_deconvolution_results_button = QPushButton("load deconvolution results", self)
         self.layout.addWidget(self.load_button_deconvolution_results_button)
@@ -172,6 +217,9 @@ class SeriesSubBar(QWidget):
 
         self.export_button = QPushButton("Export Results", self)
         self.layout.addWidget(self.export_button)
+
+        self.calculation_buttons_block = CalculationButtonsBlock(self)
+        self.layout.addWidget(self.calculation_buttons_block)
 
         self.load_button_deconvolution_results_button.clicked.connect(self.load_deconvolution_results_dialog)
         self.results_combobox.currentTextChanged.connect(self.emit_combobox_text)

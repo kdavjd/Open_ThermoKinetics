@@ -1,0 +1,58 @@
+/* =============================================================
+   Tabs — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+/* Sub-sidebar tab widget (compact, 10px) */
+QTabWidget#sub_sidebar_tabs::pane {
+    border: 1px solid {{border}};
+    border-top: none;
+    background-color: {{bg_base}};
+}
+
+QTabWidget#sub_sidebar_tabs > QTabBar::tab {
+    background-color: {{bg_surface}};
+    color: {{text_muted}};
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 4px 6px;
+    font-size: 10px;
+    min-width: 50px;
+}
+
+QTabWidget#sub_sidebar_tabs > QTabBar::tab:hover {
+    background-color: {{bg_elevated}};
+    color: {{text_primary}};
+}
+
+QTabWidget#sub_sidebar_tabs > QTabBar::tab:selected {
+    color: {{accent}};
+    border-bottom: 2px solid {{accent}};
+    background-color: {{bg_base}};
+}
+
+QTabWidget#sub_sidebar_tabs > QTabBar::tab:disabled {
+    color: {{text_muted}};
+    background-color: {{bg_surface}};
+}
+
+/* Main window tabs (main analysis, user guide) */
+QTabBar::tab {
+    background-color: {{bg_surface}};
+    color: {{text_secondary}};
+    border: none;
+    border-bottom: 2px solid {{border}};
+    padding: 0 16px;
+    min-height: 32px;
+}
+
+QTabBar::tab:hover {
+    background-color: {{bg_elevated}};
+    color: {{text_primary}};
+}
+
+QTabBar::tab:selected {
+    background-color: {{bg_base}};
+    color: {{text_primary}};
+    border-bottom: 2px solid {{accent}};
+}

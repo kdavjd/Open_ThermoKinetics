@@ -1,0 +1,90 @@
+/* =============================================================
+   Base Theme — Open ThermoKinetics Design System
+   Token placeholders {{name}} are replaced by theme_loader.py
+   ============================================================= */
+
+QWidget {
+    background-color: {{bg_base}};
+    color: {{text_primary}};
+    font-size: 12px;
+}
+
+QMainWindow {
+    background-color: {{bg_base}};
+}
+
+/* Splitter handle */
+QSplitter::handle {
+    background-color: {{border}};
+    width: 1px;
+    height: 1px;
+}
+
+QSplitter::handle:hover {
+    background-color: {{border_strong}};
+}
+
+/* Status bar */
+QStatusBar {
+    background-color: {{statusbar_bg}};
+    color: #FFFFFF;
+    border-top: none;
+    font-size: 11px;
+    min-height: 22px;
+}
+
+QStatusBar QLabel {
+    background-color: transparent;
+    color: #FFFFFF;
+    padding: 0 6px;
+}
+
+QStatusBar::item {
+    border: none;
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Scroll bars */
+QScrollBar:vertical {
+    background-color: {{bg_surface}};
+    width: 8px;
+    border: none;
+}
+
+QScrollBar::handle:vertical {
+    background-color: {{border_strong}};
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: {{text_muted}};
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0;
+    border: none;
+}
+
+QScrollBar:horizontal {
+    background-color: {{bg_surface}};
+    height: 8px;
+    border: none;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: {{border_strong}};
+    border-radius: 4px;
+    min-width: 20px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: {{text_muted}};
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0;
+    border: none;
+}

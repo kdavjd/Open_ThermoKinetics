@@ -65,13 +65,6 @@ class SideBar(QWidget):
         self.series_root.appendRow(self.import_series_item)
         self.series_root.appendRow(self.delete_series_item)
 
-        # Initialize calculation section
-        self.calculation_root = QStandardItem("calculation")
-        self.model.appendRow(self.calculation_root)
-        self.calculation_root.appendRow(QStandardItem("model fit"))
-        self.calculation_root.appendRow(QStandardItem("model free"))
-        self.calculation_root.appendRow(QStandardItem("model based"))
-
         # Initialize settings section
         self.settings_root = QStandardItem("settings")
         self.console_subroot = QStandardItem("console")
@@ -151,7 +144,7 @@ class SideBar(QWidget):
         """
         Handle tree item clicks and route to appropriate actions.
 
-        Manages navigation between experiments, series, calculations, and settings.
+        Manages navigation between experiments, series, and settings.
         Updates active file/series selection and emits relevant signals.
         """
         item = self.model.itemFromIndex(index)
@@ -178,9 +171,6 @@ class SideBar(QWidget):
             if item.checkState() == Qt.CheckState.Checked:
                 self.console_show_signal.emit(False)
                 self.console_show_state.setCheckState(Qt.CheckState.Unchecked)
-        elif item.parent() == self.calculation_root:
-            self.sub_side_bar_needed.emit(item.text())
-
         elif item.parent() == self.series_root:
             action_items = {"add new series", "import series", "delete series"}
             if item.text() in action_items:

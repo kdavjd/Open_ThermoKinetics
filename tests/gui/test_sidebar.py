@@ -27,13 +27,12 @@ class TestSideBarCreation:
         assert sidebar.model is not None
 
     def test_sidebar_has_root_items(self, qtbot):
-        """SideBar should have experiments, series, calculation, settings roots."""
+        """SideBar should have experiments, series, settings roots."""
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
         assert sidebar.experiments_data_root is not None
         assert sidebar.series_root is not None
-        assert sidebar.calculation_root is not None
         assert sidebar.settings_root is not None
 
     def test_sidebar_active_items_initialized_as_none(self, qtbot):
