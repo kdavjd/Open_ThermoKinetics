@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QSplitter, QVBoxLayout, QWidget
 
 from src.core.app_settings import OperationType, SideBarNames
 from src.core.logger_config import logger
+from src.core.logger_console import LoggerConsole as console
 from src.gui.console_widget import ConsoleWidget
 from src.gui.main_tab.plot_canvas.plot_canvas import PlotCanvas
 from src.gui.main_tab.sidebar import SideBar
@@ -91,6 +92,9 @@ class MainTab(QWidget):
         self.sub_sidebar.model_free_sub_bar.model_free_calculation_signal.connect(self.to_main_window)
         self.sub_sidebar.model_free_sub_bar.table_combobox_text_changed_signal.connect(self.to_main_window)
         self.sub_sidebar.model_free_sub_bar.plot_model_free_signal.connect(self.to_main_window)
+        self.sub_sidebar.series_sub_bar.calculation_buttons_block.calculation_clicked.connect(
+            self.handle_calculation_clicked
+        )
 
     def initialize_sizes(self):
         """Calculate and apply proportional panel sizes based on total width."""
@@ -131,6 +135,23 @@ class MainTab(QWidget):
         else:
             self.sub_sidebar.setVisible(False)
         self.initialize_sizes()
+
+    @pyqtSlot(str)
+    def handle_calculation_clicked(self, content_type):
+        """
+        Handle calculation button clicks with series selection validation.
+
+        Switches to calculation panel only if a series is selected.
+        Logs error to console if no series is active.
+
+        Args:
+            content_type: Calculation panel type (model fit, model free, model based)
+        """
+        if not self.sidebar.active_series_item:
+            console.log("Please select a series before starting a calculation.")
+            logger.warning("Calculation button clicked without active series")
+            return
+        self.toggle_sub_sidebar(content_type)
 
     def toggle_console_visibility(self, visible):
         """Toggle console widget visibility and recalculate layout sizes."""
