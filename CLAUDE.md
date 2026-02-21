@@ -3,10 +3,10 @@
 **ВАЖНО:** За сессию выполняется только один шаг workflow. Перед началом работы определить текущий шаг.
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌────────────────┐     ┌──────────────┐
-│  spec-creation  │────►│ spec-implementer │────►│  gui-testing   │────►│ merge-helper │
-│  ① ТЗ + Ветка   │     │  ② Реализация    │     │ ③ Тестирование │     │   ④ Мерж     │
-└─────────────────┘     └──────────────────┘     └────────────────┘     └──────────────┘
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐     ┌────────────────┐     ┌──────────────┐
+│  spec-creation  │────►│ spec-implementer │────►│  test-writer    │────►│  gui-testing   │────►│ merge-helper │
+│  ① ТЗ + Ветка   │     │  ② Реализация    │     │ ③ Пишем тесты   │     │ ④ Запуск тестов│     │   ⑤ Мерж     │
+└─────────────────┘     └──────────────────┘     └─────────────────┘     └────────────────┘     └──────────────┘
 ```
 
 ### 1. Новая фича workflow
@@ -15,8 +15,9 @@
 | --- | ----------------------------------------------------------------------- | ----------------------------------- | ----------------------------- | --------------------------------- |
 | ①   | [spec-creation](.claude/skills/spec-creation/SKILL.md)                  | ТЗ + Ветка + Коммит                 | branch: `main`                | `.ai/specs/{branch}.md` создан    |
 | ②   | [spec-implementer](.claude/skills/spec-implementer/SKILL.md)            | Реализация этапов ТЗ                | spec существует, есть ⬜ этапы | все этапы ✅                       |
-| ③   | [gui-testing](.claude/skills/gui-testing/SKILL.md)                      | pytest + pytest-qt тесты            | все этапы ✅                   | тесты пройдены                    |
-| ④   | [merge-helper](.claude/skills/merge-helper/SKILL.md)                    | CHANGELOG + архив spec + merge main | тесты пройдены                | branch: `main`, spec в `archive/` |
+| ③   | [test-writer](.claude/skills/test-writer/SKILL.md)                      | Написание тестов для нового кода    | все этапы ✅                   | тесты написаны и GREEN            |
+| ④   | [gui-testing](.claude/skills/gui-testing/SKILL.md)                      | pytest + pytest-qt тесты            | тесты GREEN                   | тесты пройдены                    |
+| ⑤   | [merge-helper](.claude/skills/merge-helper/SKILL.md)                    | CHANGELOG + архив spec + merge main | тесты пройдены                | branch: `main`, spec в `archive/` |
 
 ### 2. Исправление бага workflow
 
@@ -178,8 +179,9 @@ UI Update (pyqtSlot)
 | ------------------ | ---------------------------------------------------------------------------------------- | --- | ----------------------------------------------- |
 | spec-creation      | [.claude/skills/spec-creation/SKILL.md](.claude/skills/spec-creation/SKILL.md)           | ①   | ТЗ по IEEE 29148 + ветка + коммит               |
 | spec-implementer   | [.claude/skills/spec-implementer/SKILL.md](.claude/skills/spec-implementer/SKILL.md)     | ②   | Реализация этапов ТЗ с учётом архитектуры       |
-| gui-testing        | [.claude/skills/gui-testing/SKILL.md](.claude/skills/gui-testing/SKILL.md)               | ③   | pytest + pytest-qt тесты для PyQt6              |
-| merge-helper       | [.claude/skills/merge-helper/SKILL.md](.claude/skills/merge-helper/SKILL.md)             | ④   | CHANGELOG + архив spec + merge в main           |
+| test-writer        | [.claude/skills/test-writer/SKILL.md](.claude/skills/test-writer/SKILL.md)               | ③   | Написание pytest-тестов для нового функционала  |
+| gui-testing        | [.claude/skills/gui-testing/SKILL.md](.claude/skills/gui-testing/SKILL.md)               | ④   | pytest + pytest-qt тесты для PyQt6              |
+| merge-helper       | [.claude/skills/merge-helper/SKILL.md](.claude/skills/merge-helper/SKILL.md)             | ⑤   | CHANGELOG + архив spec + merge в main           |
 
 ### Служебные навыки (внутренние)
 

@@ -1,58 +1,87 @@
 # Architecture Patterns Reference
 
-Детальные паттерны реализации для web_portal проекта.
+Паттерны реализации для **Open ThermoKinetics** (PyQt6 desktop GUI).
+
+## TOC
+1. [Слои приложения](#слои-приложения)
+2. [Правила создания файлов](#правила-создания-файлов)
+3. [Signal-Slot паттерны](#signal-slot-паттерны)
+4. [Data Flow](#data-flow)
+5. [Лимиты](#лимиты)
 
 ## Слои приложения
 
 ```
-Web Layer        → api/, web/, templates/
-Business Layer   → services/, auth/, modules/
-Infrastructure   → infrastructure/ (Message Bus, email)
-Data Layer       → database/, models/
+GUI Layer     → src/gui/          (PyQt6 виджеты, signal emission, UI update)
+Core Layer    → src/core/         (бизнес-логика, вычисления, данные)
+Signal Bus    → src/core/base_signals.py  (BaseSignals — центральный диспетчер)
 ```
 
 ## Правила создания файлов
 
-| Тип файла    | Расположение                         | Паттерн                   |
-| ------------ | ------------------------------------ | ------------------------- |
-| API endpoint | `src/web_portal/api/`                | REST, Pydantic schemas    |
-| Web route    | `src/web_portal/web/routes.py`       | Jinja2 templates          |
-| Service      | `src/web_portal/modules/{name}/`     | BaseService interface     |
-| Model        | `src/web_portal/models/`             | SQLAlchemy ORM            |
-| Template     | `src/web_portal/templates/`          | Jinja2, extends base.html |
-| Command      | `src/web_portal/infrastructure/bus/` | dataclass, MessageBus     |
-| Tests        | `tests/`                             | pytest, async             |
+| Тип файла           | Расположение                               | Паттерн                          |
+| ------------------- | ------------------------------------------ | -------------------------------- |
+| Sub-sidebar panel   | `src/gui/main_tab/sub_sidebar/{name}/`     | QWidget + регистрация в Hub      |
+| Plot component      | `src/gui/main_tab/plot_canvas/`            | Matplotlib + QWidget             |
+| Sidebar / Nav       | `src/gui/main_tab/sidebar.py`              | QTreeWidget + signal emit        |
+| Core module         | `src/core/{name}.py`                       | dataclass/class + operations     |
+| Core operations     | `src/core/{name}_operations.py`            | Высокоуровневые операции над data|
+| Signal handler      | регистрация в `base_signals.py`            | `request_signal` / `response_signal` |
+| Tests               | `tests/`                                   | pytest + pytest-qt               |
 
-## Message Bus паттерны
+## Signal-Slot паттерны
+
+### Эмиссия запроса (GUI → Core)
 
 ```python
-# Command — императивный запрос (1 handler)
-@dataclass
-class SendEmailCommand(Command):
-    to: str
-    subject: str
-    body: str
-
-# Event — уведомление (N subscribers)
-@dataclass
-class BookingCreatedEvent(Event):
-    booking_id: int
-    guest_email: str
-
-# Query — запрос данных (1 handler, returns result)
-@dataclass
-class GetUserQuery(Query):
-    user_id: int
+self.base_signals.request_signal.emit({
+    "action": "action_name",
+    "data": {...}
+})
 ```
 
-## UI паттерны
+### Обработчик запроса (Core)
+
+```python
+def process_request(self, payload: dict):
+    if payload.get("action") == "action_name":
+        result = self._do_work(payload["data"])
+        self.base_signals.response_signal.emit({
+            "action": "action_name",
+            "data": result
+        })
+```
+
+### Обработчик ответа (GUI)
+
+```python
+@pyqtSlot(dict)
+def on_response(self, payload: dict):
+    if payload.get("action") == "action_name":
+        self._update_ui(payload["data"])
+```
+
+### Регистрация в диспетчере
+
+```python
+# В __init__ компонента
+self.base_signals.request_signal.connect(self.process_request)
+self.base_signals.response_signal.connect(self.on_response)
+```
+
+## Data Flow
 
 ```
-templates/
-├── base.html              # Наследование: {% extends "base.html" %}
-├── components/            # Включение: {% include "components/header.html" %}
-├── pages/                 # {% block content %}
-└── services/              # Страницы сервисов
+User Action (GUI widget)
+    ↓ emit request_signal(dict)
+BaseSignals.dispatch_request()
+    ↓
+Core Module.process_request(dict)
+    ↓ Business Logic
+emit response_signal(dict)
+    ↓
+GUI widget.on_response(dict)
+    ↓ UI Update
 ```
 
 ## Лимиты
@@ -61,6 +90,5 @@ templates/
 
 **Исключения (не считаются):**
 - `*.lock` — lock-файлы
-- `alembic/versions/*.py` — миграции
-- `*.generated.*` — автогенерируемые
 - `.ai/*.md` — документация фреймворка
+- `tests/` — тесты учитываются отдельно
