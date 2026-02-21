@@ -1,16 +1,16 @@
 ---
 name: gui-testing
 description: >
-  Шаг ③ workflow: pytest + pytest-qt тестирование GUI.
+  Шаг ④ workflow: pytest + pytest-qt тестирование GUI.
   Triggers: "протестируй UI", "test GUI", "run gui tests", "verify UI".
-  Запускает pytest тесты после завершения всех этапов реализации.
+  Запускает pytest тесты после написания тестов через test-writer.
 type: workflow
-step: 3
+step: 4
 ---
 
 # GUI Testing
 
-**Шаг ③ workflow** — автоматизированное тестирование PyQt6 GUI через pytest + pytest-qt.
+**Шаг ④ workflow** — автоматизированное тестирование PyQt6 GUI через pytest + pytest-qt.
 
 ## Workflow Contract
 

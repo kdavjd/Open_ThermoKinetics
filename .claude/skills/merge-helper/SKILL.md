@@ -1,16 +1,16 @@
 ---
 name: merge-helper
 description: >
-  Шаг ④ workflow: Merge в main с обновлением CHANGELOG.
+  Шаг ⑤ workflow: Merge в main с обновлением CHANGELOG.
   Triggers: "merge в main", "мерж", "готово к релизу".
   Проверяет качество, обновляет CHANGELOG, архивирует spec, выполняет merge.
 type: workflow
-step: 4
+step: 5
 ---
 
 # Merge Helper Skill
 
-**Шаг ④ workflow** — финальный merge в main с обновлением документации.
+**Шаг ⑤ workflow** — финальный merge в main с обновлением документации.
 
 ## Workflow Contract
 

@@ -313,8 +313,9 @@ After successful branch creation and commit, update the spec file's workflow sta
 | --- | ------------------- | -------------------------------------- | ---------- |
 | а   | Создание ТЗ + Ветка | —                                      | ✅ Завершён |
 | б   | Реализация          | `spec-implementer`                     | ❌ Не начат |
-| в   | Тестирование        | `gui-testing`                          | ❌ Не начат |
-| г   | Мерж                | `merge-helper`                         | ❌ Не начат |
+| в   | Написание тестов    | `test-writer`                          | ❌ Не начат |
+| г   | GUI тестирование    | `gui-testing`                          | ❌ Не начат |
+| д   | Мерж                | `merge-helper`                         | ❌ Не начат |
 
 ### Generated Spec Format
 
@@ -352,8 +353,9 @@ After successful branch creation and commit, update the spec file's workflow sta
 | --- | ------------------- | -------------------------------------- | ---------- |
 | а   | Создание ТЗ + Ветка | —                                      | ✅ Завершён |
 | б   | Реализация          | `spec-implementer`                     | ❌ Не начат |
-| в   | Тестирование        | `gui-testing`                          | ❌ Не начат |
-| г   | Мерж                | `merge-helper`                         | ❌ Не начат |
+| в   | Написание тестов    | `test-writer`                          | ❌ Не начат |
+| г   | GUI тестирование    | `gui-testing`                          | ❌ Не начат |
+| д   | Мерж                | `merge-helper`                         | ❌ Не начат |
 
 ### Текущий статус и следующий шаг
 
@@ -632,7 +634,7 @@ Commit: {commit-hash}
 Next steps:
 1. Implementation: /spec-implementer
 2. Commit in small chunks (<=250 lines)
-3. Update CHANGELOG.md before each commit
+3. Write tests: /test-writer
 4. Testing: /gui-testing
 5. Merge: /merge-helper when all stages complete
 ```
