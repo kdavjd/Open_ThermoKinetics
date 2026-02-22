@@ -51,7 +51,9 @@ class FileTransferButtons(QWidget):
 
         # Create buttons
         self.load_reactions_button = QPushButton(self.config.labels.import_button)
+        self.load_reactions_button.setObjectName("btn_small")
         self.export_reactions_button = QPushButton(self.config.labels.export_button)
+        self.export_reactions_button.setObjectName("btn_small")
 
         # Setup layout
         self.buttons_layout = QHBoxLayout()

@@ -26,8 +26,11 @@ class ModelCalcButtons(QWidget):
 
         # Create buttons
         self.settings_button = QPushButton("Settings")
+        self.settings_button.setObjectName("btn_secondary")
         self.start_button = QPushButton("Start")
+        self.start_button.setObjectName("btn_primary")
         self.stop_button = QPushButton("Stop")
+        self.stop_button.setObjectName("btn_danger")
 
         layout.addWidget(self.settings_button)
         layout.addWidget(self.start_button)

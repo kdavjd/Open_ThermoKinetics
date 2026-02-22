@@ -5,7 +5,16 @@ Contains the ReactionTable widget for editing kinetic parameters.
 
 from dataclasses import dataclass
 
-from PyQt6.QtWidgets import QLineEdit, QTableWidget, QTableWidgetItem
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QHeaderView,
+    QLineEdit,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 from src.core.app_settings import PARAMETER_BOUNDS
 
@@ -36,6 +45,23 @@ class ReactionTable(QTableWidget):
 
         self.setHorizontalHeaderLabels(config.COLUMN_HEADERS)
 
+        # Hide vertical header (row numbers 1, 2, 3)
+        self.verticalHeader().hide()
+
+        # Set consistent row height for embedded QLineEdit widgets
+        self.verticalHeader().setDefaultSectionSize(30)
+
+        # Disable mouse tracking — prevents hover from triggering selection/cell signals
+        self.setMouseTracking(False)
+
+        # Prevent accidental editing of label cells (editing is via embedded QLineEdits only)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+
+        # Column resize modes: Parameter label fixed, Value stretches to fill available width
+        header = self.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+
         # Hide min/max columns by default
         for col in config.HIDDEN_COLUMNS:
             self.setColumnHidden(col, True)
@@ -47,38 +73,48 @@ class ReactionTable(QTableWidget):
 
         self.defaults = ReactionDefaults()
 
+    def _create_centered_widget(self, widget: QLineEdit) -> QWidget:
+        """Wrap widget in a container for vertical centering in cell."""
+        widget.setFixedHeight(26)  # Fixed height prevents vertical stretching
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        layout.addWidget(widget)
+        return container
+
     def _setup_ea_row(self, config):
         """Setup activation energy parameter row."""
         self.setItem(0, 0, QTableWidgetItem(config.EA_LABEL))
         self.activation_energy_edit = QLineEdit()
-        self.setCellWidget(0, 1, self.activation_energy_edit)
+        self.setCellWidget(0, 1, self._create_centered_widget(self.activation_energy_edit))
 
         self.ea_min_item = QLineEdit()
-        self.setCellWidget(0, 2, self.ea_min_item)
+        self.setCellWidget(0, 2, self._create_centered_widget(self.ea_min_item))
         self.ea_max_item = QLineEdit()
-        self.setCellWidget(0, 3, self.ea_max_item)
+        self.setCellWidget(0, 3, self._create_centered_widget(self.ea_max_item))
 
     def _setup_log_a_row(self, config):
         """Setup log(A) parameter row."""
         self.setItem(1, 0, QTableWidgetItem(config.LOG_A_LABEL))
         self.log_a_edit = QLineEdit()
-        self.setCellWidget(1, 1, self.log_a_edit)
+        self.setCellWidget(1, 1, self._create_centered_widget(self.log_a_edit))
 
         self.log_a_min_item = QLineEdit()
-        self.setCellWidget(1, 2, self.log_a_min_item)
+        self.setCellWidget(1, 2, self._create_centered_widget(self.log_a_min_item))
         self.log_a_max_item = QLineEdit()
-        self.setCellWidget(1, 3, self.log_a_max_item)
+        self.setCellWidget(1, 3, self._create_centered_widget(self.log_a_max_item))
 
     def _setup_contribution_row(self, config):
         """Setup contribution parameter row."""
         self.setItem(2, 0, QTableWidgetItem(config.CONTRIBUTION_LABEL))
         self.contribution_edit = QLineEdit()
-        self.setCellWidget(2, 1, self.contribution_edit)
+        self.setCellWidget(2, 1, self._create_centered_widget(self.contribution_edit))
 
         self.contribution_min_item = QLineEdit()
-        self.setCellWidget(2, 2, self.contribution_min_item)
+        self.setCellWidget(2, 2, self._create_centered_widget(self.contribution_min_item))
         self.contribution_max_item = QLineEdit()
-        self.setCellWidget(2, 3, self.contribution_max_item)
+        self.setCellWidget(2, 3, self._create_centered_widget(self.contribution_max_item))
 
     def set_ranges_visible(self, visible: bool):
         """Show or hide the min/max range columns."""

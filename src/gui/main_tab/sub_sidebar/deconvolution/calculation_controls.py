@@ -33,7 +33,9 @@ class CalculationControls(QWidget):
 
         # Create control buttons
         self.start_button = QPushButton("calculate")
+        self.start_button.setObjectName("btn_primary")
         self.stop_button = QPushButton("stop calculating")
+        self.stop_button.setObjectName("btn_danger")
 
         # Add start button to layout (stop button added dynamically)
         self.layout.addWidget(self.start_button)

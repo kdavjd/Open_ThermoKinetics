@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.app_settings import OperationType
 from src.core.logger_config import logger
+from src.gui.styles.tokens import DARK
 
 
 class DiagramConfig:
@@ -28,9 +29,10 @@ class DiagramConfig:
     HORIZONTAL_GAP = 45
     VERTICAL_STEP = 22
     ARROW_SIZE = 3
-    PEN_COLOR = QColor("black")
-    NODE_BRUSH_COLOR = QColor("white")
-    ARROW_COLOR = QColor("black")
+    PEN_COLOR = QColor(DARK["border"])
+    NODE_BRUSH_COLOR = QColor(DARK["bg_elevated"])
+    ARROW_COLOR = QColor(DARK["accent"])
+    TEXT_COLOR = QColor(DARK["text_primary"])
 
 
 class ReactionGraphicsRect(QGraphicsRectItem):
@@ -89,8 +91,11 @@ class ReactionNode:
         rect = QRectF(0, 0, DiagramConfig.NODE_WIDTH, DiagramConfig.NODE_HEIGHT)
         self.rect_item = ReactionGraphicsRect(self, rect)
         self.rect_item.setPos(self.x, self.y)
+        self.rect_item.setPen(QPen(DiagramConfig.PEN_COLOR))
+        self.rect_item.setBrush(QBrush(DiagramConfig.NODE_BRUSH_COLOR))
         self.scene.addItem(self.rect_item)
         self.text_item = QGraphicsTextItem(self.letter, self.rect_item)
+        self.text_item.setDefaultTextColor(DiagramConfig.TEXT_COLOR)
         text_rect = self.text_item.boundingRect()
         self.text_item.setPos(
             (DiagramConfig.NODE_WIDTH - text_rect.width()) / 2, (DiagramConfig.NODE_HEIGHT - text_rect.height()) / 2
@@ -310,6 +315,7 @@ class ModelsScheme(QWidget):
         self.layout = QVBoxLayout(self)
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
+        self.view.setObjectName("scheme_view")
         self.layout.addWidget(self.view)
         self.reactions = {}
         self.children_map = {}

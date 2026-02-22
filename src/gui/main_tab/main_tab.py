@@ -34,6 +34,7 @@ class MainTab(QWidget):
     def __init__(self, parent=None):
         """Initialize main tab with 4-panel splitter layout and signal connections."""
         QWidget.__init__(self, parent)
+        self.setObjectName("main_tab")
 
         self.layout = QVBoxLayout(self)
         self.setMinimumHeight(MIN_HEIGHT_MAINTAB)
@@ -60,7 +61,6 @@ class MainTab(QWidget):
         self.splitter.addWidget(self.console_widget)
 
         self.sidebar.sub_side_bar_needed.connect(self.toggle_sub_sidebar)
-        self.sidebar.console_show_signal.connect(self.toggle_console_visibility)
         self.sub_sidebar.experiment_sub_bar.action_buttons_block.cancel_changes_clicked.connect(self.to_main_window)
         self.sub_sidebar.experiment_sub_bar.action_buttons_block.DTG_clicked.connect(self.to_main_window)
         self.sub_sidebar.experiment_sub_bar.action_buttons_block.conversion_clicked.connect(self.to_main_window)

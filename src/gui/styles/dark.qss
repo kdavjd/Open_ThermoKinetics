@@ -6,6 +6,7 @@
 QWidget {
     background-color: {{bg_base}};
     color: {{text_primary}};
+    font-family: "Source Sans 3", "Source Sans Pro", "Segoe UI", sans-serif;
     font-size: 12px;
 }
 
@@ -87,4 +88,105 @@ QScrollBar::add-line:horizontal,
 QScrollBar::sub-line:horizontal {
     width: 0;
     border: none;
+}
+
+/* Tables */
+QTableWidget {
+    background-color: {{bg_surface}};
+    border: 1px solid {{border}};
+    border-radius: {{radius_sm}};
+    gridline-color: {{border}};
+}
+
+QTableWidget::item {
+    padding: 4px 8px;
+    color: {{text_primary}};
+}
+
+QTableWidget::item:selected {
+    background-color: {{accent_light}};
+    color: {{accent}};
+}
+
+QTableWidget::item:hover {
+    background-color: {{bg_elevated}};
+}
+
+QHeaderView::section {
+    background-color: {{bg_elevated}};
+    color: {{text_secondary}};
+    padding: 6px 8px;
+    border: none;
+    border-bottom: 1px solid {{border}};
+    font-weight: 500;
+}
+
+/* Sliders */
+QSlider::groove:horizontal {
+    background-color: {{bg_elevated}};
+    height: 4px;
+    border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+    background-color: {{accent}};
+    width: 14px;
+    height: 14px;
+    margin: -5px 0;
+    border-radius: 7px;
+}
+
+QSlider::handle:horizontal:hover {
+    background-color: {{accent_hover}};
+}
+
+QSlider::sub-page:horizontal {
+    background-color: {{accent_light}};
+    border-radius: 2px;
+}
+
+/* ComboBox arrow — dark theme (#CBD5E1) */
+QComboBox::down-arrow {
+    image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1L5 5L9 1' fill='none' stroke='%23CBD5E1' stroke-width='1.5' stroke-linecap='round'/></svg>");
+    width: 10px;
+    height: 6px;
+}
+
+/* Context menu */
+QMenu {
+    background-color: {{bg_surface}};
+    border: 1px solid {{border}};
+    color: {{text_primary}};
+    padding: 4px 0;
+    border-radius: {{radius_sm}};
+}
+
+QMenu::item {
+    padding: 6px 20px;
+    background-color: transparent;
+}
+
+QMenu::item:selected {
+    background-color: {{bg_elevated}};
+    color: {{text_primary}};
+}
+
+QMenu::separator {
+    height: 1px;
+    background-color: {{border}};
+    margin: 4px 8px;
+}
+
+/* Reaction scheme diagram */
+QGraphicsView {
+    background-color: {{bg_surface}};
+    border: 1px solid {{border}};
+    border-radius: {{radius_sm}};
+}
+
+/* Section divider */
+QFrame#section_divider {
+    border: none;
+    border-top: 1px solid {{border}};
+    margin: 8px 0;
 }

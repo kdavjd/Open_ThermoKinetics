@@ -212,7 +212,10 @@ class CalculationsDataOperations(BaseSlots):
                     if x is None:
                         x_min, x_max = params[0]
                         x = np.linspace(x_min, x_max, 250)
-                    cumulative_y[bound_label] = cumulative_y[bound_label] + y if cumulative_y[bound_label].size else y
+                    if y.size:
+                        cumulative_y[bound_label] = (
+                            cumulative_y[bound_label] + y if cumulative_y[bound_label].size else y
+                        )
 
             if reaction_name in path_keys:
                 self.reaction_params_to_gui.emit(reaction_params)

@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - Visual Redesign Full
+- [src/gui/main_tab/sidebar.py](../src/gui/main_tab/sidebar.py): Переработан в flat-список (QListWidget) с разделами FILES / SERIES
+  - Убрано дерево QTreeView, добавлены кнопки Load File / Import Series
+  - Раздельный рендеринг файлов и серий
+- [src/core/style_manager.py](../src/core/style_manager.py): Загрузка и применение бандловых шрифтов Source Sans 3 и JetBrains Mono
+- [src/gui/main_tab/sub_sidebar/sub_side_hub.py](../src/gui/main_tab/sub_sidebar/sub_side_hub.py): QTabWidget с вкладками Experiment / Deconvolution / Model Fit
+
+### Changed - Visual Redesign Full
+- [src/gui/styles/](../src/gui/styles/): Активирована тема + глобальные элементы (QFrame, QScrollBar, QSplitter, статус-бар)
+- [src/gui/main_tab/sub_sidebar/deconvolution/](../src/gui/main_tab/sub_sidebar/deconvolution/): Стилизация кнопок, таблиц, QComboBox; столбец name только для чтения; mono-шрифт в коэффициентах; скрыт заголовок ANALYSIS
+- [src/gui/main_tab/sub_sidebar/experiment/](../src/gui/main_tab/sub_sidebar/experiment/): Uppercase кнопки, красный RESET, плейсхолдеры, dropdown poly, разделитель секций
+- [src/gui/main_tab/sub_sidebar/series/](../src/gui/main_tab/sub_sidebar/series/): Uppercase кнопки, удалена метка "calculations"
+- [src/gui/main_tab/sub_sidebar/model_based/](../src/gui/main_tab/sub_sidebar/model_based/): Отключены hover-сигналы, фикс ширины столбца Value
+- [src/gui/main_tab/sub_sidebar/model_fit/](../src/gui/main_tab/sub_sidebar/model_fit/) и [model_free/](../src/gui/main_tab/sub_sidebar/model_free/): objectName-стилизация кнопок и таблиц
+
+### Fixed - Visual Redesign Full
+- [src/gui/main_tab/sub_sidebar/deconvolution/reaction_table.py](../src/gui/main_tab/sub_sidebar/deconvolution/reaction_table.py): Фикс позиционирования ячеек — скрыт verticalHeader, высота строки 28px, padding
+- [src/core/style_manager.py](../src/core/style_manager.py): Заменён Source Sans Pro на Source Sans 3 (variable font TTF) для корректной загрузки на Windows
+- [src/core/calculation_data_operations.py](../src/core/calculation_data_operations.py): Защита от пустого y-массива в аккумуляции кумулятивной кривой (ValueError shapes mismatch)
+
 ### Changed - Move Calculations to Series
 - [src/gui/main_tab/sidebar.py](../src/gui/main_tab/sidebar.py): Удалён раздел "calculation" из навигационного дерева
   - Убран calculation_root и дочерние элементы (model fit, model free, model based)

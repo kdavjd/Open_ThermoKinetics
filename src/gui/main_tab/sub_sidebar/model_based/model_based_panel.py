@@ -41,6 +41,7 @@ class ModelBasedTab(QWidget):
 
     def _setup_ui(self):
         """Setup the user interface components."""
+        self.setObjectName("sub_sidebar_panel")
         main_layout = QVBoxLayout(self)
         self.setLayout(main_layout)
 
@@ -93,6 +94,7 @@ class ModelBasedTab(QWidget):
         config = MODEL_BASED_CONFIG.layout_settings
 
         self.reaction_table = ReactionTable()
+        self.reaction_table.setObjectName("reaction_table")
         self.reaction_table.setMinimumHeight(config.reaction_table_min_height)
         main_layout.addWidget(self.reaction_table)
 
@@ -103,12 +105,13 @@ class ModelBasedTab(QWidget):
             self.reaction_table.setRowHeight(row, height)
 
     def _setup_adjustment_controls(self, main_layout):
-        """Setup parameter adjustment controls."""
+        """Setup parameter adjustment controls (hidden: param table provides direct editing)."""
         config = MODEL_BASED_CONFIG.layout_settings
 
         self.adjusting_settings_box = AdjustingSettingsBox()
         self.adjusting_settings_box.setMinimumHeight(config.adjusting_settings_box_min_height)
         main_layout.addWidget(self.adjusting_settings_box)
+        self.adjusting_settings_box.hide()
 
     def _setup_bottom_section(self, main_layout):
         """Setup models scheme and calculation buttons."""

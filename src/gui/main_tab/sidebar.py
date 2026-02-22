@@ -1,17 +1,18 @@
 from os import path
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QPushButton,
     QScrollArea,
-    QTreeView,
     QVBoxLayout,
     QWidget,
 )
@@ -23,67 +24,79 @@ from src.gui.main_tab.load_file_button import LoadButton
 
 class SideBar(QWidget):
     """
-    A sidebar widget that provides a tree view for navigating through project data,
-    experiments, and settings. It includes actions for adding, deleting, and selecting files
-    for experiments, as well as controlling the display of a console.
+    A sidebar widget that provides flat lists for navigating through project data,
+    experiments, and series. It includes actions for adding, deleting, and selecting files
+    for experiments, as well as managing series.
     """
 
     file_selected = pyqtSignal(tuple)
     sub_side_bar_needed = pyqtSignal(str)
     chosen_experiment_signal = pyqtSignal(str)
-    console_show_signal = pyqtSignal(bool)
     active_file_selected = pyqtSignal(str)
     active_series_selected = pyqtSignal(str)
     to_main_window_signal = pyqtSignal(dict)
 
     def __init__(self, parent=None):
-        """Initialize sidebar with tree view, navigation sections, and load button."""
+        """Initialize sidebar with FILES and SERIES sections as flat lists."""
         super().__init__(parent)
-        self.layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        self.tree_view = QTreeView()
-        self.tree_view.clicked.connect(self.on_item_clicked)
-        self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["app tree"])
-        self.tree_view.setModel(self.model)
+        # FILES section
+        files_label = QLabel("FILES")
+        files_label.setObjectName("section_header")
+        main_layout.addWidget(files_label)
 
-        # Initialize experiment data section
-        self.experiments_data_root = QStandardItem("experiments")
-        self.add_data_item = QStandardItem("add file data")
-        self.delete_data_item = QStandardItem("delete selected")
-        self.experiments_data_root.appendRow(self.add_data_item)
-        self.experiments_data_root.appendRow(self.delete_data_item)
-        self.model.appendRow(self.experiments_data_root)
+        self.files_list = QListWidget()
+        self.files_list.setObjectName("sidebar_tree")
+        self.files_list.currentItemChanged.connect(self._on_files_item_changed)
+        main_layout.addWidget(self.files_list, stretch=1)
 
-        # Initialize series section
-        self.series_root = QStandardItem("series")
-        self.model.appendRow(self.series_root)
-        self.add_new_series_item = QStandardItem("add new series")
-        self.import_series_item = QStandardItem("import series")
-        self.delete_series_item = QStandardItem("delete series")
-        self.series_root.appendRow(self.add_new_series_item)
-        self.series_root.appendRow(self.import_series_item)
-        self.series_root.appendRow(self.delete_series_item)
+        files_btns = QHBoxLayout()
+        files_btns.setContentsMargins(8, 4, 8, 4)
+        load_file_btn = QPushButton("Load File")
+        load_file_btn.setObjectName("btn_small")
+        import_file_btn = QPushButton("Import File")
+        import_file_btn.setObjectName("btn_ghost")
+        files_btns.addWidget(load_file_btn)
+        files_btns.addWidget(import_file_btn)
+        main_layout.addLayout(files_btns)
 
-        # Initialize settings section
-        self.settings_root = QStandardItem("settings")
-        self.console_subroot = QStandardItem("console")
-        self.console_show_state = QStandardItem("show")
-        self.console_show_state.setCheckable(True)
-        self.console_show_state.setCheckState(Qt.CheckState.Checked)
-        self.console_hide_state = QStandardItem("hide")
-        self.console_hide_state.setCheckable(True)
-        self.model.appendRow(self.settings_root)
-        self.settings_root.appendRow(self.console_subroot)
-        self.console_subroot.appendRow(self.console_show_state)
-        self.console_subroot.appendRow(self.console_hide_state)
+        # Separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setObjectName("sidebar_separator")
+        main_layout.addWidget(separator)
 
-        self.layout.addWidget(self.tree_view)
-        self.setLayout(self.layout)
+        # SERIES section
+        series_label = QLabel("SERIES")
+        series_label.setObjectName("section_header")
+        main_layout.addWidget(series_label)
 
-        # Load button setup
+        self.series_list = QListWidget()
+        self.series_list.setObjectName("sidebar_tree")
+        self.series_list.currentItemChanged.connect(self._on_series_item_changed)
+        main_layout.addWidget(self.series_list, stretch=1)
+
+        series_btns = QHBoxLayout()
+        series_btns.setContentsMargins(8, 4, 8, 4)
+        load_series_btn = QPushButton("Load Series")
+        load_series_btn.setObjectName("btn_small")
+        import_series_btn = QPushButton("Import Series")
+        import_series_btn.setObjectName("btn_ghost")
+        series_btns.addWidget(load_series_btn)
+        series_btns.addWidget(import_series_btn)
+        main_layout.addLayout(series_btns)
+
+        self.setLayout(main_layout)
+
         self.load_button = LoadButton(self)
         self.load_button.file_selected.connect(self.add_experiment_file)
+        load_file_btn.clicked.connect(self.load_button.open_file_dialog)
+        import_file_btn.clicked.connect(self._import_file_stub)
+        load_series_btn.clicked.connect(self.add_new_series)
+        import_series_btn.clicked.connect(self.import_series)
 
         self.active_file_item = None
         self.active_series_item = None
@@ -94,7 +107,7 @@ class SideBar(QWidget):
         Differentiates between experiments and series.
 
         Args:
-            item: The item to mark as active.
+            item: The QListWidgetItem to mark as active.
             is_series (bool): Whether the item is a series.
         """
         if is_series:
@@ -119,74 +132,33 @@ class SideBar(QWidget):
             logger.debug(f"Active file: {item.text()}")
 
     def mark_active_state(self, item):
-        """
-        Applies bold font style to the given item to indicate it's active.
-
-        Args:
-            item: The item to apply bold font to.
-        """
+        """Applies bold font style to the given item to indicate it's active."""
         font = item.font()
         font.setBold(True)
         item.setFont(font)
 
     def unmark_active_state(self, item):
-        """
-        Removes bold font style from the given item to indicate it's not active anymore.
-
-        Args:
-            item: The item to remove bold font from.
-        """
+        """Removes bold font style from the given item to indicate it's not active anymore."""
         font = item.font()
         font.setBold(False)
         item.setFont(font)
 
-    def on_item_clicked(self, index):  # noqa: C901
-        """
-        Handle tree item clicks and route to appropriate actions.
-
-        Manages navigation between experiments, series, and settings.
-        Updates active file/series selection and emits relevant signals.
-        """
-        item = self.model.itemFromIndex(index)
-
-        if item == self.add_data_item:
-            self.load_button.open_file_dialog()
-        elif item == self.delete_data_item:
-            self.delete_active_file()
-        elif item == self.add_new_series_item:
-            self.add_new_series()
-        elif item == self.import_series_item:
-            self.import_series()
-        elif item == self.delete_series_item:
-            self.delete_series()
-        elif item.parent() == self.experiments_data_root:
+    def _on_files_item_changed(self, current, previous):
+        """Handle selection change in the FILES list."""
+        if current is not None:
             self.sub_side_bar_needed.emit(SideBarNames.EXPERIMENTS.value)
-            self.chosen_experiment_signal.emit(item.text())
-            self.mark_as_active(item)
-        elif item == self.console_show_state:
-            if item.checkState() == Qt.CheckState.Checked:
-                self.console_show_signal.emit(True)
-                self.console_hide_state.setCheckState(Qt.CheckState.Unchecked)
-        elif item == self.console_hide_state:
-            if item.checkState() == Qt.CheckState.Checked:
-                self.console_show_signal.emit(False)
-                self.console_show_state.setCheckState(Qt.CheckState.Unchecked)
-        elif item.parent() == self.series_root:
-            action_items = {"add new series", "import series", "delete series"}
-            if item.text() in action_items:
-                pass
-            else:
-                self.sub_side_bar_needed.emit(SideBarNames.SERIES.value)
-                self.mark_as_active(item, is_series=True)
-                logger.debug(f"Selected series: {item.text()}")
-        else:
-            self.sub_side_bar_needed.emit("")
+            self.chosen_experiment_signal.emit(current.text())
+            self.mark_as_active(current)
+
+    def _on_series_item_changed(self, current, previous):
+        """Handle selection change in the SERIES list."""
+        if current is not None:
+            self.sub_side_bar_needed.emit(SideBarNames.SERIES.value)
+            self.mark_as_active(current, is_series=True)
+            logger.debug(f"Selected series: {current.text()}")
 
     def add_new_series(self):
-        """
-        Handles the 'add new series' action:
-        - Sends a request to get all data keys.
-        """
+        """Sends a request to get all data keys for series creation."""
         logger.debug("Add New Series clicked.")
         request = {"operation": OperationType.ADD_NEW_SERIES}
         self.to_main_window_signal.emit(request)
@@ -210,18 +182,17 @@ class SideBar(QWidget):
             if series_name and selected_files:
                 return series_name, selected_files
 
+    def _import_file_stub(self):
+        """Placeholder for Import File — not yet implemented."""
+        QMessageBox.information(self, "Import File", "Import File functionality is not yet implemented.")
+
     def import_series(self):
-        """
-        Handles the 'import series' action.
-        This method should be implemented based on specific requirements.
-        """
+        """Placeholder for Import Series — not yet implemented."""
         QMessageBox.information(self, "Import Series", "Import Series functionality is not yet implemented.")
         logger.debug("Import Series clicked. Functionality not implemented.")
 
     def delete_series(self):
-        """
-        Deletes the active series if it exists. If no active series is selected, notifies the user.
-        """
+        """Deletes the active series if it exists."""
         if self.active_series_item:
             series_name = self.active_series_item.text()
             reply = QMessageBox.question(
@@ -232,16 +203,13 @@ class SideBar(QWidget):
                 QMessageBox.StandardButton.No,
             )
             if reply == QMessageBox.StandardButton.Yes:
-                self.series_root.removeRow(self.active_series_item.row())
+                row = self.series_list.row(self.active_series_item)
+                self.series_list.takeItem(row)
                 self.to_main_window_signal.emit({"operation": OperationType.DELETE_SERIES, "series_name": series_name})
                 logger.info(f"Series deleted: {series_name}")
                 self.active_series_item = None
         else:
-            QMessageBox.warning(
-                self,
-                "Deletion Error",
-                "No active series selected to delete.",
-            )
+            QMessageBox.warning(self, "Deletion Error", "No active series selected to delete.")
             logger.warning("Delete Series clicked, but no active series is selected.")
 
     def add_experiment_file(self, file_info):
@@ -251,68 +219,41 @@ class SideBar(QWidget):
         Args:
             file_info: A tuple containing the file path and other relevant info.
         """
-        new_file_item = QStandardItem(path.basename(file_info[0]))
-        self.experiments_data_root.insertRow(self.experiments_data_root.rowCount() - 2, new_file_item)
-        self.tree_view.expandAll()
-        self.mark_as_active(new_file_item)
+        file_name = path.basename(file_info[0])
+        new_item = QListWidgetItem(file_name)
+        self.files_list.addItem(new_item)
+        self.mark_as_active(new_item)
         self.sub_side_bar_needed.emit(SideBarNames.EXPERIMENTS.value)
-        logger.debug(f"New file added and set as active: {new_file_item.text()}")
+        logger.debug(f"New file added and set as active: {file_name}")
 
     def delete_active_file(self):
-        """
-        Deletes the currently active file from the tree view.
-        If no file is selected, a warning message is shown.
-        """
+        """Deletes the currently active file from the list. Shows warning if nothing selected."""
         if not self.active_file_item:
             QMessageBox.warning(self, "Error", "Please select a file to delete.")
             return
 
-        parent = self.active_file_item.parent()
-        if parent:
-            file_name = self.active_file_item.text()
-            parent.removeRow(self.active_file_item.row())
-            logger.debug(f"File deleted: {file_name}")
-            self.active_file_item = None
-        else:
-            QMessageBox.critical(self, "Error", "Failed to delete the selected file.")
+        file_name = self.active_file_item.text()
+        row = self.files_list.row(self.active_file_item)
+        self.files_list.takeItem(row)
+        logger.debug(f"File deleted: {file_name}")
+        self.active_file_item = None
 
     def get_experiment_files_names(self) -> list[str]:
-        """
-        Returns a list of names of all experiment files currently listed in the sidebar.
-
-        Returns:
-            A list of strings representing the names of experiment files.
-        """
-        files_names = []
-        for row in range(self.experiments_data_root.rowCount() - 1):
-            item = self.experiments_data_root.child(row)
-            if item is not None:
-                files_names.append(item.text())
-        return files_names
+        """Returns a list of names of all experiment files currently listed in the sidebar."""
+        return [self.files_list.item(i).text() for i in range(self.files_list.count())]
 
     def get_series_names(self) -> list[str]:
-        """
-        Returns a list of names of all series currently listed in the sidebar.
-
-        Returns:
-            A list of strings representing the names of series.
-        """
-        series_names = []
-        for row in range(self.series_root.rowCount()):
-            item = self.series_root.child(row)
-            if item and item.text() not in {"add new series", "import series", "delete series"}:
-                series_names.append(item.text())
-        return series_names
+        """Returns a list of names of all series currently listed in the sidebar."""
+        return [self.series_list.item(i).text() for i in range(self.series_list.count())]
 
     def add_series(self, series_name: str):
-        """Add new series item to the tree view if name is valid."""
+        """Add new series item to the list if name is valid and unique."""
         if not series_name:
             logger.warning("An empty series name will not be added.")
             return
 
-        for row in range(self.series_root.rowCount()):
-            item = self.series_root.child(row)
-            if item.text() == series_name:
+        for i in range(self.series_list.count()):
+            if self.series_list.item(i).text() == series_name:
                 logger.warning(f"Series '{series_name}' already exists.")
                 QMessageBox.warning(
                     self,
@@ -321,11 +262,9 @@ class SideBar(QWidget):
                 )
                 return
 
-        new_series_item = QStandardItem(series_name)
-        new_series_item.setEditable(False)
-        self.series_root.insertRow(0, new_series_item)
-        self.tree_view.expandAll()
-        logger.info(f"New series added to model-based tree: {series_name}")
+        new_item = QListWidgetItem(series_name)
+        self.series_list.insertItem(0, new_item)
+        logger.info(f"New series added: {series_name}")
 
 
 class SelectFileDataDialog(QDialog):
