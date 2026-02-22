@@ -143,14 +143,14 @@ class CurveFitting:
         """
         x_range, function_type, coeffs = reaction_params
         x = np.linspace(x_range[0], x_range[1], 250)
-        result = None
         if function_type == "gauss":
-            result = CurveFitting.gaussian(x, *coeffs)
+            return CurveFitting.gaussian(x, *coeffs)
         elif function_type == "fraser":
-            result = CurveFitting.fraser_suzuki(x, *coeffs)
+            return CurveFitting.fraser_suzuki(x, *coeffs)
         elif function_type == "ads":
-            result = CurveFitting.asymmetric_double_sigmoid(x, *coeffs)
-        return result
+            return CurveFitting.asymmetric_double_sigmoid(x, *coeffs)
+        # Unknown function type - return empty array
+        return np.array([])
 
     @staticmethod
     def gaussian(x: np.ndarray, h: float, z: float, w: float) -> np.ndarray:

@@ -100,6 +100,7 @@ class ModelFreeSubBar(QWidget):
 
         # Calculate button
         self.calculate_button = QPushButton("calculate", self)
+        self.calculate_button.setObjectName("btn_primary")
         self.calculate_button.clicked.connect(self.on_calculate_clicked)
         self.layout.addWidget(self.calculate_button)
 
@@ -122,8 +123,10 @@ class ModelFreeSubBar(QWidget):
 
         self.plot_layout = QHBoxLayout()
         self.plot_button = QPushButton("plot", self)
+        self.plot_button.setObjectName("btn_secondary")
         self.plot_button.clicked.connect(self.on_plot_clicked)
         self.settings_button = QPushButton("settings", self)
+        self.settings_button.setObjectName("btn_secondary")
         self.settings_button.clicked.connect(self.on_settings_clicked)
 
         self.plot_layout.addWidget(self.plot_button)

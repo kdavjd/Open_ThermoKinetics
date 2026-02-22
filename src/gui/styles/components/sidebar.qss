@@ -53,3 +53,58 @@ QLabel#sidebar_header {
     padding: 6px 8px;
     border-bottom: 1px solid {{border}};
 }
+
+/* Ghost button — outline style, non-accented */
+QPushButton#btn_ghost {
+    background-color: transparent;
+    color: {{text_secondary}};
+    border: 1px solid {{border}};
+    border-radius: 4px;
+    height: 22px;
+    padding: 2px 8px;
+    font-size: 11px;
+}
+
+QPushButton#btn_ghost:hover {
+    background-color: {{bg_elevated}};
+    color: {{text_primary}};
+}
+
+QPushButton#btn_ghost:pressed {
+    background-color: {{bg_elevated}};
+}
+
+/* Flat list (QListWidget) — same visual style as sidebar_tree */
+QListWidget#sidebar_tree {
+    background-color: {{bg_surface}};
+    color: {{text_primary}};
+    border: none;
+    border-right: 1px solid {{border}};
+    outline: none;
+}
+
+QListWidget#sidebar_tree::item {
+    padding: 6px 10px;
+    border-left: 2px solid transparent;
+}
+
+QListWidget#sidebar_tree::item:hover {
+    background-color: {{bg_elevated}};
+}
+
+QListWidget#sidebar_tree::item:selected,
+QListWidget#sidebar_tree::item:selected:active,
+QListWidget#sidebar_tree::item:selected:!active {
+    background-color: {{accent_light}};
+    color: {{accent}};
+    border-left: 2px solid {{accent}};
+}
+
+/* Separator between FILES and SERIES sections */
+QFrame#sidebar_separator {
+    background-color: {{border}};
+    max-height: 1px;
+    min-height: 1px;
+    border: none;
+    margin: 4px 0px;
+}

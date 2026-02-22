@@ -27,6 +27,7 @@ class CoefficientsView(QTableWidget):
     def __init__(self, parent=None):
         """Initialize the coefficients table."""
         super().__init__(5, 2, parent)
+        self.setObjectName("input_numeric")
 
         self.header_labels = ["from", "to"]
         self.row_labels_dict = {
@@ -38,6 +39,9 @@ class CoefficientsView(QTableWidget):
 
         self.setHorizontalHeaderLabels(self.header_labels)
         self.setVerticalHeaderLabels(self.default_row_labels)
+
+        # Set consistent row height (matches reaction_table row height)
+        self.verticalHeader().setDefaultSectionSize(28)
 
         self.mock_table()
         self.calculate_fixed_height()

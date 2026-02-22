@@ -44,7 +44,7 @@ class TestSmoothingBlock:
         block = SmoothingBlock()
         qtbot.add_widget(block)
 
-        assert block.n_poly.text() == "0"
+        assert block.n_poly.currentText() == "0"
 
     def test_spec_settings_has_items(self, qtbot):
         """Spec settings combobox should have expected items."""
@@ -56,11 +56,11 @@ class TestSmoothingBlock:
         assert "Other" in items
 
     def test_apply_button_text(self, qtbot):
-        """Apply button should have 'apply' text."""
+        """Apply button should have 'APPLY' text."""
         block = SmoothingBlock()
         qtbot.add_widget(block)
 
-        assert block.apply_button.text() == "apply"
+        assert block.apply_button.text() == "APPLY"
 
 
 class TestBackgroundSubtractionBlock:
@@ -88,11 +88,11 @@ class TestBackgroundSubtractionBlock:
         assert "Bezier" in items
 
     def test_apply_button_text(self, qtbot):
-        """Apply button should have 'apply' text."""
+        """Apply button should have 'APPLY' text."""
         block = BackgroundSubtractionBlock()
         qtbot.add_widget(block)
 
-        assert block.apply_button.text() == "apply"
+        assert block.apply_button.text() == "APPLY"
 
     def test_range_inputs_empty_by_default(self, qtbot):
         """Range inputs should be empty by default."""
@@ -121,10 +121,10 @@ class TestActionButtonsBlock:
         block = ActionButtonsBlock()
         qtbot.add_widget(block)
 
-        assert block.cancel_changes_button.text() == "reset changes"
-        assert block.conversion_button.text() == "to α(t)"
-        assert block.DTG_button.text() == "to DTG"
-        assert block.deconvolution_button.text() == "deconvolution"
+        assert block.cancel_changes_button.text() == "RESET"
+        assert block.conversion_button.text() == "TO α(T)"
+        assert block.DTG_button.text() == "TO DTG"
+        assert block.deconvolution_button.text() == "DECONVOLUTION"
 
     def test_cancel_changes_emits_signal(self, qtbot):
         """Cancel changes button should emit signal with RESET_FILE_DATA operation."""

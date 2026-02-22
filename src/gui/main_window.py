@@ -2,13 +2,15 @@ from functools import reduce
 
 import pandas as pd
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QMainWindow, QTabWidget
+from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QTabWidget
 
 from src.core.app_settings import OperationType
 from src.core.base_signals import BaseSignals, BaseSlots
 from src.core.logger_config import logger
 from src.core.logger_console import LoggerConsole as console
 from src.gui.main_tab.main_tab import MainTab
+from src.gui.styles import get_saved_theme, load_theme
 from src.gui.user_guide_tab.user_guide_tab import UserGuideTab
 
 
@@ -48,6 +50,7 @@ class MainWindow(QMainWindow):
 
         self.signals = signals
         self.actor_name = "main_window"
+        self._current_theme = get_saved_theme()
 
         self.base_slots = BaseSlots(actor_name=self.actor_name, signals=self.signals)
 
@@ -57,7 +60,71 @@ class MainWindow(QMainWindow):
         self.main_tab.sidebar.to_main_window_signal.connect(self.handle_request_from_main_tab)
         self.to_main_tab_signal.connect(self.main_tab.response_slot)
 
+        self._setup_menubar()
+        self._setup_statusbar()
+
         logger.debug(f"{self.actor_name} init signals and slots.")
+
+    def _setup_menubar(self):
+        """Create menu bar with File, View, Analysis, Help menus and theme toggle."""
+        file_menu = self.menuBar().addMenu("File")
+        load_action = QAction("Load File", self)
+        load_action.triggered.connect(self.main_tab.sidebar.load_button.open_file_dialog)
+        file_menu.addAction(load_action)
+        delete_file_action = QAction("Delete File", self)
+        delete_file_action.triggered.connect(self.main_tab.sidebar.delete_active_file)
+        file_menu.addAction(delete_file_action)
+        file_menu.addSeparator()
+        exit_action = QAction("Exit", self)
+        exit_action.triggered.connect(QApplication.instance().quit)
+        file_menu.addAction(exit_action)
+
+        series_menu = self.menuBar().addMenu("Series")
+        add_series_action = QAction("Add New", self)
+        add_series_action.triggered.connect(self.main_tab.sidebar.add_new_series)
+        series_menu.addAction(add_series_action)
+        delete_series_action = QAction("Delete", self)
+        delete_series_action.triggered.connect(self.main_tab.sidebar.delete_series)
+        series_menu.addAction(delete_series_action)
+
+        view_menu = self.menuBar().addMenu("View")
+        self._console_action = QAction("Toggle Console", self)
+        self._console_action.setCheckable(True)
+        self._console_action.setChecked(True)
+        self._console_action.triggered.connect(self.main_tab.toggle_console_visibility)
+        view_menu.addAction(self._console_action)
+
+        self.menuBar().addMenu("Analysis")
+
+        help_menu = self.menuBar().addMenu("Help")
+        about_action = QAction("About", self)
+        help_menu.addAction(about_action)
+
+        self._theme_btn = QPushButton("Light" if self._current_theme == "dark" else "Dark")
+        self._theme_btn.setObjectName("btn_small")
+        self._theme_btn.clicked.connect(self._toggle_theme)
+        self.menuBar().setCornerWidget(self._theme_btn)
+
+    def _setup_statusbar(self):
+        """Create status bar with status indicator, file name, and metrics."""
+        self._status_label = QLabel("Ready")
+        self._filename_label = QLabel("")
+        self._metrics_label = QLabel("")
+        self.statusBar().addWidget(self._status_label)
+        self.statusBar().addWidget(self._filename_label, 1)
+        self.statusBar().addPermanentWidget(self._metrics_label)
+
+    def _toggle_theme(self):
+        """Toggle between dark and light themes."""
+        self._current_theme = "light" if self._current_theme == "dark" else "dark"
+        load_theme(QApplication.instance(), self._current_theme)
+        self._theme_btn.setText("Light" if self._current_theme == "dark" else "Dark")
+
+    def update_status(self, status: str = "Ready", filename: str = "", metrics: str = ""):
+        """Update status bar labels."""
+        self._status_label.setText(status)
+        self._filename_label.setText(filename)
+        self._metrics_label.setText(metrics)
 
     @pyqtSlot(dict)
     def process_request(self, params: dict):

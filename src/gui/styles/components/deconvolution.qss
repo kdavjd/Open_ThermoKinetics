@@ -110,6 +110,22 @@ QComboBox#model_type_combo QAbstractItemView {
     border: 1px solid {{border}};
     selection-background-color: {{accent_light}};
     selection-color: {{accent}};
+    outline: none;
+}
+
+QComboBox#model_type_combo QAbstractItemView::item {
+    min-height: 24px;
+    padding: 4px 8px;
+    color: {{text_primary}};
+}
+
+QComboBox#model_type_combo QAbstractItemView::item:hover {
+    background-color: {{bg_elevated}};
+}
+
+QComboBox#model_type_combo QAbstractItemView::item:selected {
+    background-color: {{accent_light}};
+    color: {{accent}};
 }
 
 /* --- Fit Options Inputs --- */
@@ -150,4 +166,52 @@ QComboBox#fit_algorithm {
 
 QComboBox#fit_algorithm:focus {
     border-color: {{accent}};
+}
+
+/* --- Dialog Button Box (Settings Dialog) --- */
+QDialogButtonBox QPushButton {
+    min-width: 80px;
+    min-height: 28px;
+}
+
+QDialogButtonBox QPushButton:default {
+    background-color: {{accent}};
+    color: white;
+    border: none;
+    border-radius: {{radius_sm}};
+}
+
+QDialogButtonBox QPushButton:default:hover {
+    background-color: {{accent_hover}};
+}
+
+/* --- Reaction Table --- */
+QTableWidget {
+    background-color: {{bg_surface}};
+    border: 1px solid {{border}};
+    border-radius: {{radius_sm}};
+    gridline-color: {{border}};
+}
+
+QTableWidget::item {
+    padding: 4px 8px;
+    color: {{text_primary}};
+}
+
+QTableWidget::item:selected {
+    background-color: {{accent_light}};
+    color: {{accent}};
+}
+
+QTableWidget::item:hover {
+    background-color: {{bg_elevated}};
+}
+
+QHeaderView::section {
+    background-color: {{bg_elevated}};
+    color: {{text_secondary}};
+    padding: 6px 8px;
+    border: none;
+    border-bottom: 1px solid {{border}};
+    font-weight: 500;
 }

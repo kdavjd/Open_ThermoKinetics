@@ -72,6 +72,7 @@ class ModelFitSubBar(QWidget):
 
         # Calculate button
         self.calculate_button = QPushButton(self.config.ui.calculate_button_text, self)
+        self.calculate_button.setObjectName("btn_primary")
         self.calculate_button.clicked.connect(self.on_calculate_clicked)
         self.layout.addWidget(self.calculate_button)
 
@@ -102,8 +103,10 @@ class ModelFitSubBar(QWidget):
         self.plot_model_combobox = QComboBox(self)
         self.plot_model_combobox.addItems(NUC_MODELS_LIST)
         self.plot_button = QPushButton(self.config.ui.plot_button_text, self)
+        self.plot_button.setObjectName("btn_secondary")
         self.plot_button.clicked.connect(self.on_plot_clicked)
         self.settings_button = QPushButton(self.config.ui.settings_button_text, self)
+        self.settings_button.setObjectName("btn_secondary")
         self.settings_button.clicked.connect(self.on_settings_clicked)
         self.plot_layout.addWidget(self.plot_model_combobox)
         self.plot_layout.addWidget(self.plot_button)

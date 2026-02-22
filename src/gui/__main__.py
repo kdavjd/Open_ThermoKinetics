@@ -23,6 +23,7 @@ from src.core.model_fit_calculation import ModelFitCalculation
 from src.core.model_free_calculation import ModelFreeCalculation
 from src.core.series_data import SeriesData
 from src.gui.main_window import MainWindow
+from src.gui.styles import get_saved_theme, load_fonts, load_theme
 
 
 def main():
@@ -58,6 +59,9 @@ def main():
     )
     window.model_based_calculation_signal.connect(calculations.run_calculation_scenario)
 
+    # Load bundled fonts BEFORE applying theme (QSS can use loaded fonts)
+    load_fonts()
+    load_theme(app, get_saved_theme())
     window.show()
     sys.exit(app.exec())
 

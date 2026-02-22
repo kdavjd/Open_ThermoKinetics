@@ -11,7 +11,7 @@ the errors described in SESSION_CHANGES.md
 from collections import defaultdict
 from typing import Dict, Optional
 
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
@@ -57,7 +57,9 @@ class ReactionTable(QWidget):
 
         # Create control buttons
         self.add_reaction_button = QPushButton(self.config.labels.add_reaction_button)
+        self.add_reaction_button.setObjectName("btn_secondary")
         self.del_reaction_button = QPushButton(self.config.labels.delete_reaction_button)
+        self.del_reaction_button.setObjectName("btn_danger")
 
         # Setup top buttons layout
         self.top_buttons_layout = QHBoxLayout()
@@ -75,6 +77,7 @@ class ReactionTable(QWidget):
 
         # Settings button
         self.settings_button = QPushButton("settings")
+        self.settings_button.setObjectName("btn_small")
         self.layout.addWidget(self.settings_button)
 
         # Connect signals
@@ -95,7 +98,11 @@ class ReactionTable(QWidget):
             table = QTableWidget()
             table.setColumnCount(self.config.table_layout.columns)
             table.setHorizontalHeaderLabels(self.config.table_layout.column_headers)
-            table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+            table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Fixed)
+            table.setColumnWidth(1, 85)
+            table.verticalHeader().hide()
+            table.verticalHeader().setDefaultSectionSize(30)
             table.itemClicked.connect(self.selected_reaction)
 
             self.reactions_tables[file_name] = table
@@ -174,6 +181,7 @@ class ReactionTable(QWidget):
         # Create function selection combo
         combo = QComboBox()
         combo.addItems(self.config.defaults.function_items)
+        combo.setFixedHeight(26)  # Fixed height prevents vertical stretching
 
         if function_name and function_name in self.config.defaults.function_items:
             combo.setCurrentText(function_name)
@@ -183,9 +191,18 @@ class ReactionTable(QWidget):
         # Connect function change signal
         combo.currentIndexChanged.connect(lambda: self.function_changed(reaction_name, combo))
 
-        # Add items to table
-        table.setItem(row_count, 0, QTableWidgetItem(reaction_name))
-        table.setCellWidget(row_count, 1, combo)
+        # Wrap combo in container for vertical centering in cell
+        combo_container = QWidget()
+        combo_layout = QVBoxLayout(combo_container)
+        combo_layout.setContentsMargins(0, 0, 0, 0)
+        combo_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        combo_layout.addWidget(combo)
+
+        # Add items to table — name column is read-only
+        name_item = QTableWidgetItem(reaction_name)
+        name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        table.setItem(row_count, 0, name_item)
+        table.setCellWidget(row_count, 1, combo_container)
 
         # Emit signal if requested
         if emit_signal:
@@ -250,8 +267,15 @@ class ReactionTable(QWidget):
         Args:
             item (QTableWidgetItem): The selected table item.
         """
+        if not self.active_file or self.active_file not in self.reactions_tables:
+            logger.warning("selected_reaction called without active file")
+            return
         row = item.row()
-        reaction_name = self.reactions_tables[self.active_file].item(row, 0).text()
+        name_item = self.reactions_tables[self.active_file].item(row, 0)
+        if name_item is None:
+            logger.warning(f"selected_reaction: no item at row {row}, col 0")
+            return
+        reaction_name = name_item.text()
         self.active_reaction = reaction_name
 
         logger.debug(f"Active reaction: {reaction_name}")

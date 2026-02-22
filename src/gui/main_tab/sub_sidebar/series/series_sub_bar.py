@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
     QDialogButtonBox,
     QFileDialog,
     QHBoxLayout,
-    QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
@@ -59,6 +58,7 @@ class DeconvolutionResultsLoadDialog(QDialog):
         self.file_count = 1
 
         self.add_button = QPushButton(self.config.dialog.add_file_button_text, self)
+        self.add_button.setObjectName("btn_secondary")
         self.add_button.clicked.connect(self.add_file_input)
 
         self.layout.addLayout(self.form_layout)
@@ -75,6 +75,7 @@ class DeconvolutionResultsLoadDialog(QDialog):
 
     def add_file_input(self):
         file_input = QPushButton(f"select file {self.file_count}", self)
+        file_input.setObjectName("btn_secondary")
         heating_rate_input = QLineEdit(self)
         heating_rate_input.setPlaceholderText(self.config.dialog.heating_rate_placeholder)
 
@@ -152,12 +153,12 @@ class CalculationButtonsBlock(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        label = QLabel("calculations:")
-        layout.addWidget(label)
-
-        self.model_fit_button = QPushButton("model fit")
-        self.model_free_button = QPushButton("model free")
-        self.model_based_button = QPushButton("model based")
+        self.model_fit_button = QPushButton("MODEL FIT")
+        self.model_fit_button.setObjectName("btn_secondary")
+        self.model_free_button = QPushButton("MODEL FREE")
+        self.model_free_button.setObjectName("btn_secondary")
+        self.model_based_button = QPushButton("MODEL BASED")
+        self.model_based_button.setObjectName("btn_secondary")
 
         self.model_fit_button.clicked.connect(self.emit_model_fit)
         self.model_free_button.clicked.connect(self.emit_model_free)
@@ -199,7 +200,8 @@ class SeriesSubBar(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self.load_button_deconvolution_results_button = QPushButton("load deconvolution results", self)
+        self.load_button_deconvolution_results_button = QPushButton("LOAD DECONVOLUTION RESULTS", self)
+        self.load_button_deconvolution_results_button.setObjectName("btn_secondary")
         self.layout.addWidget(self.load_button_deconvolution_results_button)
 
         self.results_combobox = QComboBox(self)
@@ -215,7 +217,8 @@ class SeriesSubBar(QWidget):
         self.table.setHorizontalHeaderLabels(["reactions", "Ea", "A"])
         self.layout.addWidget(self.table)
 
-        self.export_button = QPushButton("Export Results", self)
+        self.export_button = QPushButton("EXPORT RESULTS", self)
+        self.export_button.setObjectName("btn_small")
         self.layout.addWidget(self.export_button)
 
         self.calculation_buttons_block = CalculationButtonsBlock(self)

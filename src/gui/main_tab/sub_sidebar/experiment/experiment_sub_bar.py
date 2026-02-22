@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from src.core.app_settings import OperationType, SideBarNames
 from src.core.logger_config import logger
@@ -24,38 +24,30 @@ class SmoothingBlock(QWidget):
 
         # Initialize window size and polynomial order inputs
         self.n_window = QLineEdit(self.config.smoothing.window_size_default)
-        self.n_poly = QLineEdit(self.config.smoothing.polynomial_order_default)
+        self.n_window.setPlaceholderText("window size")
+        self.n_poly = QComboBox()
+        self.n_poly.addItems(["0", "1", "2", "3", "4", "5"])
+        self.n_poly.setCurrentText(self.config.smoothing.polynomial_order_default)
 
         # Initialize specific settings selection
         self.spec_settings = QComboBox()
         self.spec_settings.addItems(self.config.smoothing.spec_settings)
 
         # Initialize apply button
-        self.apply_button = QPushButton(self.config.labels.apply_button)
+        self.apply_button = QPushButton("APPLY")
+        self.apply_button.setObjectName("btn_small")
 
         # Layout for smoothing method
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("smoothing method:"))
+        layout.addWidget(QLabel("SMOOTHING METHOD:"))
         layout.addWidget(self.smoothing_method)
-
-        # Layout for window size
-        layout_n_window = QVBoxLayout()
-        layout_n_window.addWidget(QLabel("window size:"))
-        layout_n_window.addWidget(self.n_window)
-
-        # Layout for polynomial order
-        layout_n_poly = QVBoxLayout()
-        layout_n_poly.addWidget(QLabel("polynomial order:"))
-        layout_n_poly.addWidget(self.n_poly)
 
         # Horizontal layout to place window size and polynomial order side by side
         h_layout = QHBoxLayout()
-        h_layout.addLayout(layout_n_window)
-        h_layout.addLayout(layout_n_poly)
+        h_layout.addWidget(self.n_window)
+        h_layout.addWidget(self.n_poly)
         layout.addLayout(h_layout)
 
-        # Layout for specific settings
-        layout.addWidget(QLabel("specific settings:"))
         layout.addWidget(self.spec_settings)
         layout.addWidget(self.apply_button)
 
@@ -93,15 +85,16 @@ class BackgroundSubtractionBlock(QWidget):
         self.range_right = QLineEdit()
 
         # Initialize apply button
-        self.apply_button = QPushButton("apply")
+        self.apply_button = QPushButton("APPLY")
+        self.apply_button.setObjectName("btn_small")
 
         # Layout for background subtraction method
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("background subtraction method:"))
+        layout.addWidget(QLabel("BACKGROUND SUBTRACTION METHOD:"))
         layout.addWidget(self.background_method)
 
         # Layout for background subtraction range
-        layout.addWidget(QLabel("background subtraction range:"))
+        layout.addWidget(QLabel("BACKGROUND SUBTRACTION RANGE:"))
 
         layout_range_left = QVBoxLayout()
         layout_range_left.addWidget(QLabel("left:"))
@@ -138,10 +131,14 @@ class ActionButtonsBlock(QWidget):
         super().__init__(parent)
         self.setLayout(QVBoxLayout())
 
-        self.cancel_changes_button = QPushButton("reset changes")
-        self.conversion_button = QPushButton("to α(t)")
-        self.DTG_button = QPushButton("to DTG")
-        self.deconvolution_button = QPushButton("deconvolution")
+        self.cancel_changes_button = QPushButton("RESET")
+        self.cancel_changes_button.setObjectName("btn_danger")
+        self.conversion_button = QPushButton("TO α(T)")
+        self.conversion_button.setObjectName("btn_secondary")
+        self.DTG_button = QPushButton("TO DTG")
+        self.DTG_button.setObjectName("btn_secondary")
+        self.deconvolution_button = QPushButton("DECONVOLUTION")
+        self.deconvolution_button.setObjectName("btn_secondary")
 
         self.cancel_changes_button.clicked.connect(self.emit_cancel_changes_signal)
         self.conversion_button.clicked.connect(self.emit_conversion_signal)
@@ -193,8 +190,14 @@ class ExperimentSubBar(QWidget):
         self.background_subtraction_block = BackgroundSubtractionBlock(self)
         self.action_buttons_block = ActionButtonsBlock(self)
 
+        # Section divider between smoothing and background subtraction
+        divider = QFrame()
+        divider.setObjectName("section_divider")
+        divider.setFrameShape(QFrame.Shape.HLine)
+
         # Add sub-components to the main layout
         layout.addWidget(self.smoothing_block)
+        layout.addWidget(divider)
         layout.addWidget(self.background_subtraction_block)
         layout.addWidget(self.action_buttons_block)
 

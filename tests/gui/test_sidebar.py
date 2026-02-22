@@ -1,9 +1,9 @@
 """Tests for SideBar GUI component.
 
-Tests tree navigation, file/series management, and signal emission.
+Tests flat list navigation, file/series management, and signal emission.
 """
 
-from PyQt6.QtGui import QStandardItem
+from PyQt6.QtWidgets import QListWidgetItem
 
 from src.gui.main_tab.sidebar import SideBar
 
@@ -18,22 +18,21 @@ class TestSideBarCreation:
 
         assert sidebar is not None
 
-    def test_sidebar_has_tree_view(self, qtbot):
-        """SideBar should contain QTreeView."""
+    def test_sidebar_has_list_widgets(self, qtbot):
+        """SideBar should contain QListWidget for FILES and SERIES."""
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
-        assert sidebar.tree_view is not None
-        assert sidebar.model is not None
+        assert sidebar.files_list is not None
+        assert sidebar.series_list is not None
 
-    def test_sidebar_has_root_items(self, qtbot):
-        """SideBar should have experiments, series, settings roots."""
+    def test_sidebar_lists_start_empty(self, qtbot):
+        """FILES and SERIES lists should be empty initially."""
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
-        assert sidebar.experiments_data_root is not None
-        assert sidebar.series_root is not None
-        assert sidebar.settings_root is not None
+        assert sidebar.files_list.count() == 0
+        assert sidebar.series_list.count() == 0
 
     def test_sidebar_active_items_initialized_as_none(self, qtbot):
         """Active file and series items should be None initially."""
@@ -47,25 +46,25 @@ class TestSideBarCreation:
 class TestSideBarItemManagement:
     """Tests for SideBar item addition and removal."""
 
-    def test_add_series_adds_item_to_tree(self, qtbot):
-        """add_series should add new series item to tree."""
+    def test_add_series_adds_item_to_list(self, qtbot):
+        """add_series should add new series item to list."""
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
-        initial_count = sidebar.series_root.rowCount()
+        initial_count = sidebar.series_list.count()
         sidebar.add_series("Test Series")
 
-        assert sidebar.series_root.rowCount() == initial_count + 1
+        assert sidebar.series_list.count() == initial_count + 1
 
     def test_add_series_empty_name_does_not_add(self, qtbot):
         """add_series should not add item with empty name."""
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
-        initial_count = sidebar.series_root.rowCount()
+        initial_count = sidebar.series_list.count()
         sidebar.add_series("")
 
-        assert sidebar.series_root.rowCount() == initial_count
+        assert sidebar.series_list.count() == initial_count
 
     def test_get_experiment_files_names_returns_list(self, qtbot):
         """get_experiment_files_names should return a list."""
@@ -83,6 +82,14 @@ class TestSideBarItemManagement:
         series = sidebar.get_series_names()
         assert isinstance(series, list)
 
+    def test_add_series_name_appears_in_get_series_names(self, qtbot):
+        """Added series name should be returned by get_series_names."""
+        sidebar = SideBar()
+        qtbot.addWidget(sidebar)
+
+        sidebar.add_series("MySeries")
+        assert "MySeries" in sidebar.get_series_names()
+
 
 class TestSideBarActiveState:
     """Tests for SideBar active item marking."""
@@ -92,7 +99,7 @@ class TestSideBarActiveState:
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
-        item = QStandardItem("Test File")
+        item = QListWidgetItem("Test File")
         sidebar.mark_as_active(item, is_series=False)
 
         assert item.font().bold()
@@ -103,7 +110,7 @@ class TestSideBarActiveState:
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
-        item = QStandardItem("Test File")
+        item = QListWidgetItem("Test File")
 
         with qtbot.waitSignal(sidebar.active_file_selected) as blocker:
             sidebar.mark_as_active(item, is_series=False)
@@ -115,7 +122,7 @@ class TestSideBarActiveState:
         sidebar = SideBar()
         qtbot.addWidget(sidebar)
 
-        item = QStandardItem("Test File")
+        item = QListWidgetItem("Test File")
         sidebar.mark_active_state(item)
         sidebar.unmark_active_state(item)
 
@@ -131,13 +138,6 @@ class TestSideBarSignals:
         qtbot.addWidget(sidebar)
 
         assert hasattr(sidebar, "sub_side_bar_needed")
-
-    def test_console_show_signal_exists(self, qtbot):
-        """SideBar should have console_show_signal."""
-        sidebar = SideBar()
-        qtbot.addWidget(sidebar)
-
-        assert hasattr(sidebar, "console_show_signal")
 
     def test_to_main_window_signal_exists(self, qtbot):
         """SideBar should have to_main_window_signal."""

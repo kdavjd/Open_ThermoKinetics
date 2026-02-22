@@ -53,6 +53,7 @@ class AdjustmentRowWidget(QWidget):
 
         # Left button
         self.left_button = QPushButton("<")
+        self.left_button.setObjectName("btn_small")
         self.left_button.setFixedSize(config.BUTTON_SIZE, config.BUTTON_SIZE)
         self.left_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
@@ -66,6 +67,7 @@ class AdjustmentRowWidget(QWidget):
 
         # Right button
         self.right_button = QPushButton(">")
+        self.right_button.setObjectName("btn_small")
         self.right_button.setFixedSize(config.BUTTON_SIZE, config.BUTTON_SIZE)
         self.right_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
