@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added - Plot Canvas Design System
+- [src/gui/main_tab/plot_canvas/config.py](../src/gui/main_tab/plot_canvas/config.py): Расширен PlotCanvasConfig
+  - BASE_STYLE_PARAMS: базовые matplotlib rcParams (типографика, сетка, шипы, linewidth)
+  - NPG_PALETTE: 10 цветов адаптированной NPG палитры с улучшенной видимостью на dark bg
+  - THEME_PARAMS: цвета для light/dark тем (фон, текст, оси, сетка, легенда)
+  - ANNOTATION_THEME_PARAMS: тема-зависимые цвета для аннотаций
+- [src/gui/main_tab/plot_canvas/plot_styling.py](../src/gui/main_tab/plot_canvas/plot_styling.py): Реализован apply_theme()
+  - Полный обход matplotlib artists: figure, axes, spines, ticks, labels, title, grid, legend, patches, texts
+  - Обновление без потери данных
+- [src/gui/main_tab/plot_canvas/plot_canvas.py](../src/gui/main_tab/plot_canvas/plot_canvas.py): Интеграция дизайн-системы
+  - changeEvent() для реакции на QEvent.StyleChange
+  - Module-level prop_cycle с NPG_PALETTE
+  - _rebuild_toolbar_icons() для обновления иконок при смене темы
+- [src/gui/styles/components/plot.qss](../src/gui/styles/components/plot.qss): QSS стили для NavigationToolbar2QT
+  - Hover/pressed состояния кнопок
+  - Стилизация контейнера #plot_container
+- [tests/gui/test_plot_canvas_config.py](../tests/gui/test_plot_canvas_config.py): 23 теста для конфига дизайн-системы
+- [tests/gui/test_theme_loader.py](../tests/gui/test_theme_loader.py): 25 тестов для theme_loader
+
+### Changed - Plot Canvas Design System
+- [src/gui/styles/theme_loader.py](../src/gui/styles/theme_loader.py): settings.setValue() перемещён **перед** setStyleSheet()
+  - Фикс anti-phase бага при runtime-переключении темы
+- Удалена зависимость scienceplots из pyproject.toml
+  - Заменён на явные BASE_STYLE_PARAMS
+
+### Fixed - Plot Canvas Design System
+- [src/gui/styles/theme_loader.py](../src/gui/styles/theme_loader.py): Рассинхрон тем при runtime-переключении
+  - Qt доставляет StyleChange синхронно внутри setStyleSheet()
+  - Теперь get_saved_theme() возвращает правильную тему
+
 ### Added - Visual Redesign Full
 - [src/gui/main_tab/sidebar.py](../src/gui/main_tab/sidebar.py): Переработан в flat-список (QListWidget) с разделами FILES / SERIES
   - Убрано дерево QTreeView, добавлены кнопки Load File / Import Series
