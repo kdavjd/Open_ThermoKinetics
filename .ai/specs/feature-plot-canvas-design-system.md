@@ -14,11 +14,11 @@
 | --- | ------------------- | ------------------ | ----------- |
 | а   | Создание ТЗ + Ветка | —                  | ✅ Завершён  |
 | б   | Реализация          | `spec-implementer` | ✅ Завершён  |
-| в   | Написание тестов    | `test-writer`      | ❌ Не начат  |
+| в   | Написание тестов    | `test-writer`      | ✅ Завершён  |
 | г   | GUI тестирование    | `gui-testing`      | ❌ Не начат  |
 | д   | Мерж                | `merge-helper`     | ❌ Не начат  |
 
-**Следующий шаг:** в (Написание тестов) → `test-writer`
+**Следующий шаг:** г (GUI тестирование) → `gui-testing`
 
 ---
 
@@ -500,3 +500,4 @@ NavigationToolbar2QT QLabel {
 | 2026-02-23 | 3    | ec3fdd2 | apply_theme() реализован; аннотации используют ANNOTATION_THEME_PARAMS               |
 | 2026-02-23 | 4    | e8570eb | scienceplots удалён; rcParams.update(BASE_STYLE_PARAMS); changeEvent + тема при init |
 | 2026-02-23 | 5    | 95c281e | load_theme ДО MainWindow; plot.qss NavigationToolbar2QT; _rebuild_toolbar_icons      |
+| 2026-02-23 | тесты | f6a3c36 | 38 тестов: config, apply_theme, changeEvent, _rebuild_toolbar_icons; 981 passed      |
