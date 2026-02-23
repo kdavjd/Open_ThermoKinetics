@@ -18,7 +18,7 @@
 | г   | GUI тестирование    | `gui-testing`      | ✅ Завершён  |
 | д   | Мерж                | `merge-helper`     | 🔄 В работе  |
 
-**Следующий шаг:** д (Мерж) → `merge-helper`
+**Следующий шаг:** Ожидание review и merge PR #45
 
 ---
 
@@ -534,3 +534,4 @@ load_theme(app, "dark"):
 | 2026-02-23 | 5    | 95c281e | load_theme ДО MainWindow; plot.qss NavigationToolbar2QT; _rebuild_toolbar_icons      |
 | 2026-02-23 | тесты | f6a3c36 | 38 тестов: config, apply_theme, changeEvent, _rebuild_toolbar_icons; 981 passed      |
 | 2026-02-23 | 6     | —       | Bugfix: settings.setValue перед setStyleSheet; prop_cycle на module-level            |
+| 2026-02-23 | PR    | c11877b | Pull Request #45 создан                                                               |
