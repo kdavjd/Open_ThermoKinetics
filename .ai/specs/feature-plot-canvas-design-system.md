@@ -13,7 +13,7 @@
 | Шаг | Действие            | Навык              | Статус      |
 | --- | ------------------- | ------------------ | ----------- |
 | а   | Создание ТЗ + Ветка | —                  | ✅ Завершён  |
-| б   | Реализация          | `spec-implementer` | ⬜ Не начат  |
+| б   | Реализация          | `spec-implementer` | 🔄 В работе  |
 | в   | Написание тестов    | `test-writer`      | ❌ Не начат  |
 | г   | GUI тестирование    | `gui-testing`      | ❌ Не начат  |
 | д   | Мерж                | `merge-helper`     | ❌ Не начат  |
@@ -227,16 +227,16 @@ ANNOTATION_THEME_PARAMS = {
 
 ### Этап 2: PlotCanvasConfig — расширение конфига (~75 строк)
 
-**Статус:** 🔄 В работе
+**Статус:** ✅ Завершён (`b20a005`)
 
 **Цель:** Вынести все тема-зависимые, палитрные константы и базовые стилевые параметры в конфиг. Заменить `PLOT_STYLE: ["science", ...]` на `BASE_STYLE_PARAMS` + пустой `PLOT_STYLE`.
 
 **Задачи:**
-- [ ] Изменить `PLOT_STYLE` → пустой список `[]` (scienceplots не используется)
-- [ ] Добавить поле `BASE_STYLE_PARAMS: Dict[str, object]` — базовые matplotlib rcParams (font, grid, spines, linewidth, text.usetex)
-- [ ] Добавить поле `NPG_PALETTE: List[str]` — 10 цветов адаптированной NPG (с яркими заменами #4, #6, #8, #9, #10)
-- [ ] Добавить поле `THEME_PARAMS: Dict[str, dict]` — matplotlib rcParams для light/dark (10 ключей каждый)
-- [ ] Добавить поле `ANNOTATION_THEME_PARAMS: Dict[str, dict]` — facecolor/edgecolor/text_color для light/dark
+- [x] Изменить `PLOT_STYLE` → пустой список `[]` (scienceplots не используется)
+- [x] Добавить поле `BASE_STYLE_PARAMS: Dict[str, object]` — базовые matplotlib rcParams (font, grid, spines, linewidth, text.usetex)
+- [x] Добавить поле `NPG_PALETTE: List[str]` — 10 цветов адаптированной NPG (с яркими заменами #4, #6, #8, #9, #10)
+- [x] Добавить поле `THEME_PARAMS: Dict[str, dict]` — matplotlib rcParams для light/dark (10 ключей каждый)
+- [x] Добавить поле `ANNOTATION_THEME_PARAMS: Dict[str, dict]` — facecolor/edgecolor/text_color для light/dark
 
 **Файлы:**
 - `src/gui/main_tab/plot_canvas/config.py` (modify)
@@ -254,7 +254,7 @@ ANNOTATION_THEME_PARAMS = {
 
 ### Этап 3: PlotStylingMixin — apply_theme с полным обходом artists (~100 строк)
 
-**Статус:** ⬜ Не начат
+**Статус:** ✅ Завершён
 
 **Цель:** Полная стилизация текущего matplotlib-контента без потери данных.
 
@@ -290,10 +290,10 @@ ANNOTATION_THEME_PARAMS = {
 ```
 
 **Задачи:**
-- [ ] Реализовать `apply_theme(self, theme: str)` по алгоритму выше с импортом `cycler` из `cycler`
-- [ ] Обновить `add_model_fit_annotation()`: использовать `PLOT_CANVAS_CONFIG.ANNOTATION_THEME_PARAMS[self._current_theme]` вместо `MODEL_FIT_ANNOTATION_CONFIG["facecolor"]` / `["edgecolor"]`
-- [ ] Обновить `add_model_free_annotation()`: аналогично
-- [ ] Инициализировать `self._current_theme: str = "light"` через `getattr(self, '_current_theme', 'light')` fallback
+- [x] Реализовать `apply_theme(self, theme: str)` по алгоритму выше с импортом `cycler` из `cycler`
+- [x] Обновить `add_model_fit_annotation()`: использовать `PLOT_CANVAS_CONFIG.ANNOTATION_THEME_PARAMS[self._current_theme]` вместо `MODEL_FIT_ANNOTATION_CONFIG["facecolor"]` / `["edgecolor"]`
+- [x] Обновить `add_model_free_annotation()`: аналогично
+- [x] Инициализировать `self._current_theme: str = "light"` через `getattr(self, '_current_theme', 'light')` fallback
 
 **Файлы:**
 - `src/gui/main_tab/plot_canvas/plot_styling.py` (modify)
@@ -497,3 +497,4 @@ NavigationToolbar2QT QLabel {
 | 2026-02-23 | 1    | -       | Этап 1 отменён: theme_changed не нужен, используем changeEvent                        |
 | 2026-02-23 | -    | -       | ТЗ переработано: scienceplots, NavigationToolbar2QT, полный обход artists             |
 | 2026-02-23 | -    | b9baee5 | ТЗ финализировано: scienceplots **удалён**, BASE_STYLE_PARAMS, NPG_PALETTE улучшена   |
+| 2026-02-23 | 3    | —       | apply_theme() реализован; аннотации используют ANNOTATION_THEME_PARAMS               |
