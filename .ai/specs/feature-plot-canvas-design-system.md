@@ -13,12 +13,12 @@
 | Шаг | Действие            | Навык              | Статус      |
 | --- | ------------------- | ------------------ | ----------- |
 | а   | Создание ТЗ + Ветка | —                  | ✅ Завершён  |
-| б   | Реализация          | `spec-implementer` | 🔄 В работе  |
+| б   | Реализация          | `spec-implementer` | ✅ Завершён  |
 | в   | Написание тестов    | `test-writer`      | ❌ Не начат  |
 | г   | GUI тестирование    | `gui-testing`      | ❌ Не начат  |
 | д   | Мерж                | `merge-helper`     | ❌ Не начат  |
 
-**Следующий шаг:** б (Реализация) → `spec-implementer`
+**Следующий шаг:** в (Написание тестов) → `test-writer`
 
 ---
 
@@ -309,19 +309,19 @@ ANNOTATION_THEME_PARAMS = {
 
 ### Этап 4: PlotCanvas — удаление scienceplots + changeEvent + инициализация темы (~45 строк)
 
-**Статус:** ⬜ Не начат
+**Статус:** ✅ Завершён (`e8570eb`)
 
 **Цель:** Удалить scienceplots как зависимость из кода; PlotCanvas реагирует на смену темы через Qt-native механизм.
 
 **Задачи:**
-- [ ] Удалить строку `import scienceplots  # noqa pylint: disable=unused-import` из `plot_canvas.py`
-- [ ] Заменить `plt.style.use(PLOT_CANVAS_CONFIG.PLOT_STYLE)` на `plt.rcParams.update(PLOT_CANVAS_CONFIG.BASE_STYLE_PARAMS)` (module-level, после импортов)
-- [ ] Удалить `"scienceplots>=2.1.1"` из `pyproject.toml` (секция `dependencies`)
-- [ ] Добавить импорты: `from PyQt6.QtCore import QEvent` и `from src.gui.styles import get_saved_theme`
-- [ ] В `__init__` после `self.mock_plot()`:
+- [x] Удалить строку `import scienceplots  # noqa pylint: disable=unused-import` из `plot_canvas.py`
+- [x] Заменить `plt.style.use(PLOT_CANVAS_CONFIG.PLOT_STYLE)` на `plt.rcParams.update(PLOT_CANVAS_CONFIG.BASE_STYLE_PARAMS)` (module-level, после импортов)
+- [x] Удалить `"scienceplots>=2.1.1"` из `pyproject.toml` (секция `dependencies`)
+- [x] Добавить импорты: `from PyQt6.QtCore import QEvent` и `from src.gui.styles import get_saved_theme`
+- [x] В `__init__` после `self.mock_plot()`:
   - `self._current_theme = get_saved_theme()`
   - `self.apply_theme(self._current_theme)`
-- [ ] Переопределить `changeEvent(self, event: QEvent)`:
+- [x] Переопределить `changeEvent(self, event: QEvent)`:
   ```python
   def changeEvent(self, event):
       if event.type() == QEvent.Type.StyleChange:
@@ -345,7 +345,7 @@ ANNOTATION_THEME_PARAMS = {
 
 ### Этап 5: __main__.py + plot.qss — интеграция и NavigationToolbar (~50 строк)
 
-**Статус:** ⬜ Не начат
+**Статус:** ✅ Завершён (`95c281e`)
 
 **Цель:** Подключить `load_theme()` к запуску (уже частично есть); стилизовать toolbar и контейнер; добавить `_rebuild_toolbar_icons`.
 
@@ -354,8 +354,8 @@ ANNOTATION_THEME_PARAMS = {
 **Проверка:** `load_theme(app, get_saved_theme())` уже вызывается **после** `QApplication(sys.argv)` но **до** `window.show()`. Нужно убедиться, что он вызывается **до** `MainWindow(...)`.
 
 **Задачи:**
-- [ ] Переместить `load_theme(app, get_saved_theme())` **перед** `window = MainWindow(signals=signals)` (если ещё не так)
-- [ ] Убрать `load_fonts()` + `load_theme()` из после-MainWindow зоны, разместить оба ДО MainWindow
+- [x] Переместить `load_theme(app, get_saved_theme())` **перед** `window = MainWindow(signals=signals)` (если ещё не так)
+- [x] Убрать `load_fonts()` + `load_theme()` из после-MainWindow зоны, разместить оба ДО MainWindow
 
 #### plot.qss — NavigationToolbar2QT и контейнер
 
@@ -383,10 +383,10 @@ def _rebuild_toolbar_icons(self):
 ```
 
 **Задачи:**
-- [ ] Добавить в `plot.qss` стили для `#plot_container`, `NavigationToolbar2QT`, `NavigationToolbar2QT QToolButton` (hover, pressed/checked), `NavigationToolbar2QT QLabel`
-- [ ] Определить `_TOOLBAR_ICON_MAP` (module-level dict) в `plot_canvas.py`
-- [ ] Реализовать `_rebuild_toolbar_icons(self)` с `try/except AttributeError` защитой
-- [ ] Вызвать `self._rebuild_toolbar_icons()` в конце `apply_theme()`
+- [x] Добавить в `plot.qss` стили для `#plot_container`, `NavigationToolbar2QT`, `NavigationToolbar2QT QToolButton` (hover, pressed/checked), `NavigationToolbar2QT QLabel`
+- [x] Определить `_TOOLBAR_ICON_MAP` (module-level dict) в `plot_canvas.py`
+- [x] Реализовать `_rebuild_toolbar_icons(self)` с `try/except AttributeError` защитой
+- [x] Вызвать `self._rebuild_toolbar_icons()` в конце `apply_theme()`
 
 **Файлы:**
 - `src/gui/__main__.py` (verify/modify — `load_theme()` ДО `MainWindow()`)
@@ -498,3 +498,5 @@ NavigationToolbar2QT QLabel {
 | 2026-02-23 | -    | -       | ТЗ переработано: scienceplots, NavigationToolbar2QT, полный обход artists             |
 | 2026-02-23 | -    | b9baee5 | ТЗ финализировано: scienceplots **удалён**, BASE_STYLE_PARAMS, NPG_PALETTE улучшена   |
 | 2026-02-23 | 3    | ec3fdd2 | apply_theme() реализован; аннотации используют ANNOTATION_THEME_PARAMS               |
+| 2026-02-23 | 4    | e8570eb | scienceplots удалён; rcParams.update(BASE_STYLE_PARAMS); changeEvent + тема при init |
+| 2026-02-23 | 5    | 95c281e | load_theme ДО MainWindow; plot.qss NavigationToolbar2QT; _rebuild_toolbar_icons      |
