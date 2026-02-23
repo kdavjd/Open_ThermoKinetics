@@ -6,8 +6,10 @@ Handles annotations, line properties, fill areas, and visual formatting.
 import random
 from typing import Dict
 
+import matplotlib
 import matplotlib.patches as patches
 import numpy as np
+from cycler import cycler
 
 from src.core.app_settings import MODEL_FIT_ANNOTATION_CONFIG, MODEL_FREE_ANNOTATION_CONFIG, NUC_MODELS_TABLE
 from src.core.logger_config import logger
@@ -151,6 +153,47 @@ class PlotStylingMixin:
         self.axes.tick_params(axis="both", which="major", labelsize=8)
         self.canvas.draw_idle()
 
+    def apply_theme(self, theme: str):
+        """
+        Apply the given theme ('light' or 'dark') to all existing matplotlib artists.
+        Updates rcParams for future plot calls and explicitly re-colors current content.
+        Does NOT clear data — existing lines, annotations, and axes content are preserved.
+        """
+        params = PLOT_CANVAS_CONFIG.THEME_PARAMS[theme]
+
+        matplotlib.rcParams.update(params)
+        matplotlib.rcParams["axes.prop_cycle"] = cycler(color=PLOT_CANVAS_CONFIG.NPG_PALETTE)
+
+        self.figure.set_facecolor(params["figure.facecolor"])
+        self.axes.set_facecolor(params["axes.facecolor"])
+
+        for spine in self.axes.spines.values():
+            spine.set_edgecolor(params["axes.edgecolor"])
+
+        self.axes.tick_params(colors=params["xtick.color"], which="both")
+        self.axes.xaxis.label.set_color(params["axes.labelcolor"])
+        self.axes.yaxis.label.set_color(params["axes.labelcolor"])
+        self.axes.title.set_color(params["text.color"])
+        self.axes.grid(color=params["grid.color"])
+
+        legend = self.axes.get_legend()
+        if legend:
+            legend.get_frame().set_facecolor(params["legend.facecolor"])
+            legend.get_frame().set_edgecolor(params["legend.edgecolor"])
+            for text in legend.get_texts():
+                text.set_color(params["text.color"])
+
+        ann_params = PLOT_CANVAS_CONFIG.ANNOTATION_THEME_PARAMS[theme]
+        for patch in self.axes.patches:
+            patch.set_facecolor(ann_params["facecolor"])
+            patch.set_edgecolor(ann_params["edgecolor"])
+        for text in self.axes.texts:
+            text.set_color(ann_params["text_color"])
+
+        self._current_theme = theme
+        self._rebuild_toolbar_icons()
+        self.canvas.draw_idle()
+
     def add_model_fit_annotation(self, annotation: str):
         """
         Add a formatted annotation box for model fit results.
@@ -169,13 +212,14 @@ class PlotStylingMixin:
         block_right = MODEL_FIT_ANNOTATION_CONFIG["block_right"]
         rect_width = block_right - block_left
 
+        ann_params = PLOT_CANVAS_CONFIG.ANNOTATION_THEME_PARAMS[getattr(self, "_current_theme", "light")]
         rect = patches.Rectangle(
             (block_left, block_bottom),
             rect_width,
             block_top - block_bottom,
             transform=self.axes.transAxes,
-            facecolor=MODEL_FIT_ANNOTATION_CONFIG["facecolor"],
-            edgecolor=MODEL_FIT_ANNOTATION_CONFIG["edgecolor"],
+            facecolor=ann_params["facecolor"],
+            edgecolor=ann_params["edgecolor"],
             alpha=MODEL_FIT_ANNOTATION_CONFIG["alpha"],
             zorder=11,
         )
@@ -191,6 +235,7 @@ class PlotStylingMixin:
                 ha="center",
                 va="center",
                 fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
+                color=ann_params["text_color"],
                 zorder=11,
             )
 
@@ -243,13 +288,14 @@ class PlotStylingMixin:
         block_right = MODEL_FREE_ANNOTATION_CONFIG["block_right"]
         rect_width = block_right - block_left
 
+        ann_params = PLOT_CANVAS_CONFIG.ANNOTATION_THEME_PARAMS[getattr(self, "_current_theme", "light")]
         rect = patches.Rectangle(
             (block_left, block_bottom),
             rect_width,
             block_top - block_bottom,
             transform=self.axes.transAxes,
-            facecolor=MODEL_FREE_ANNOTATION_CONFIG["facecolor"],
-            edgecolor=MODEL_FREE_ANNOTATION_CONFIG["edgecolor"],
+            facecolor=ann_params["facecolor"],
+            edgecolor=ann_params["edgecolor"],
             alpha=MODEL_FREE_ANNOTATION_CONFIG["alpha"],
             zorder=11,
         )
@@ -264,7 +310,8 @@ class PlotStylingMixin:
                 transform=self.axes.transAxes,
                 ha="center",
                 va="center",
-                fontsize=MODEL_FIT_ANNOTATION_CONFIG["fontsize"],
+                fontsize=MODEL_FREE_ANNOTATION_CONFIG["fontsize"],
+                color=ann_params["text_color"],
                 zorder=11,
             )
 

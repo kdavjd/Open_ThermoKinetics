@@ -151,3 +151,52 @@ class TestLoadTheme:
 
         theme = get_saved_theme()
         assert theme in ("light", "dark"), f"Unexpected theme: {theme!r}"
+
+    def test_load_theme_persists_before_setStyleSheet(self, qtbot, mocker):
+        """QSettings must be saved BEFORE app.setStyleSheet() to prevent changeEvent desync.
+
+        Bug: setStyleSheet() delivers QEvent.StyleChange synchronously; if the theme is
+        saved AFTER setStyleSheet, PlotCanvas.changeEvent fires with get_saved_theme()
+        returning the OLD value (anti-phase bug).
+        """
+        from PyQt6.QtCore import QSettings
+        from PyQt6.QtWidgets import QApplication
+
+        from src.gui.styles.theme_loader import load_theme
+
+        app = QApplication.instance()
+
+        saved_at_stylesheet_time = []
+
+        original_set_stylesheet = app.setStyleSheet
+
+        def intercept_set_stylesheet(qss):
+            settings = QSettings("OpenThermoKinetics", "App")
+            saved_at_stylesheet_time.append(settings.value("theme", "unknown"))
+            original_set_stylesheet(qss)
+
+        mocker.patch.object(app, "setStyleSheet", side_effect=intercept_set_stylesheet)
+
+        load_theme(app, "dark")
+
+        assert saved_at_stylesheet_time == ["dark"], (
+            "Theme was not persisted to QSettings before app.setStyleSheet() was called. "
+            "This causes changeEvent to apply the wrong theme (anti-phase desync)."
+        )
+
+    def test_load_theme_switch_sequence_no_desync(self, qtbot):
+        """Repeated theme switches must always save the correct theme.
+
+        Verifies that after each load_theme() call, get_saved_theme() reflects
+        the requested theme — no off-by-one residue from the previous call.
+        """
+        from PyQt6.QtWidgets import QApplication
+
+        from src.gui.styles.theme_loader import get_saved_theme, load_theme
+
+        app = QApplication.instance()
+
+        for expected in ("dark", "light", "dark", "light"):
+            load_theme(app, expected)
+            actual = get_saved_theme()
+            assert actual == expected, f"After load_theme({expected!r}), get_saved_theme() returned {actual!r}"

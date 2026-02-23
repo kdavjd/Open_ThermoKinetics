@@ -38,6 +38,11 @@ def main():
 
     app = QApplication(sys.argv)
     signals = BaseSignals()
+
+    # Load fonts and apply theme BEFORE MainWindow so toolbar is created with correct QPalette
+    load_fonts()
+    load_theme(app, get_saved_theme())
+
     window = MainWindow(signals=signals)
     file_data = FileData(signals=signals)
     series_data = SeriesData(signals=signals)  # noqa: F841
@@ -59,9 +64,6 @@ def main():
     )
     window.model_based_calculation_signal.connect(calculations.run_calculation_scenario)
 
-    # Load bundled fonts BEFORE applying theme (QSS can use loaded fonts)
-    load_fonts()
-    load_theme(app, get_saved_theme())
     window.show()
     sys.exit(app.exec())
 

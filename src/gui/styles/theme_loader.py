@@ -108,12 +108,14 @@ def load_theme(app, theme: str) -> None:
         if component_qss:
             qss_parts.append(_substitute_tokens(component_qss, tokens))
 
-    combined = "\n".join(qss_parts)
-    app.setStyleSheet(combined)
-
-    # Persist theme choice
+    # Persist BEFORE applying stylesheet: setStyleSheet() delivers QEvent.StyleChange
+    # synchronously, so PlotCanvas.changeEvent() fires before this line if the order
+    # is reversed — causing get_saved_theme() to return the OLD theme (anti-phase bug).
     settings = QSettings("OpenThermoKinetics", "App")
     settings.setValue("theme", theme)
+
+    combined = "\n".join(qss_parts)
+    app.setStyleSheet(combined)
 
 
 def get_saved_theme() -> str:

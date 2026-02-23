@@ -202,6 +202,122 @@ class TestModelFreeAnnotation:
         assert "conversion" not in canvas.lines  # x-axis, not plotted
 
 
+class TestApplyTheme:
+    """Tests for apply_theme() — theme-aware artist recoloring."""
+
+    def test_apply_theme_dark_sets_figure_facecolor(self, qtbot):
+        """apply_theme('dark') must set figure facecolor to #0F172A."""
+        from matplotlib.colors import to_hex
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.apply_theme("dark")
+
+        assert to_hex(canvas.figure.get_facecolor()) == "#0f172a"
+
+    def test_apply_theme_light_sets_figure_facecolor(self, qtbot):
+        """apply_theme('light') must set figure facecolor to white."""
+        from matplotlib.colors import to_hex
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.apply_theme("light")
+
+        assert to_hex(canvas.figure.get_facecolor()) == "#ffffff"
+
+    def test_apply_theme_dark_sets_axes_facecolor(self, qtbot):
+        """apply_theme('dark') must set axes facecolor to #0F172A."""
+        from matplotlib.colors import to_hex
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.apply_theme("dark")
+
+        assert to_hex(canvas.axes.get_facecolor()) == "#0f172a"
+
+    def test_apply_theme_sets_current_theme_attribute(self, qtbot):
+        """apply_theme must update _current_theme to the applied theme."""
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.apply_theme("dark")
+        assert canvas._current_theme == "dark"
+
+        canvas.apply_theme("light")
+        assert canvas._current_theme == "light"
+
+    def test_apply_theme_does_not_remove_lines(self, qtbot):
+        """Existing lines must persist after apply_theme."""
+        import numpy as np
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.add_or_update_line("persistent", np.array([1, 2, 3]), np.array([1, 2, 3]))
+        count_before = len(canvas.lines)
+
+        canvas.apply_theme("dark")
+
+        assert len(canvas.lines) == count_before
+        assert "persistent" in canvas.lines
+
+    def test_apply_theme_updates_all_spine_colors(self, qtbot):
+        """All spines must be recolored after apply_theme('dark')."""
+        from matplotlib.colors import to_hex
+
+        from src.gui.main_tab.plot_canvas.config import PLOT_CANVAS_CONFIG
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.apply_theme("dark")
+
+        expected = PLOT_CANVAS_CONFIG.THEME_PARAMS["dark"]["axes.edgecolor"].lower()
+        for name, spine in canvas.axes.spines.items():
+            actual = to_hex(spine.get_edgecolor())
+            assert actual == expected, f"Spine '{name}' color {actual!r} != {expected!r}"
+
+    def test_apply_theme_updates_annotation_patches(self, qtbot):
+        """Annotation rectangle patches must receive dark facecolor after apply_theme."""
+        from matplotlib.colors import to_hex
+
+        from src.gui.main_tab.plot_canvas.config import PLOT_CANVAS_CONFIG
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.add_model_fit_annotation(r"$E_a = 150$\n$A = 10^{12}$")
+        assert len(canvas.axes.patches) > 0, "Precondition: annotation patch must exist"
+
+        canvas.apply_theme("dark")
+
+        expected = PLOT_CANVAS_CONFIG.ANNOTATION_THEME_PARAMS["dark"]["facecolor"].lower()
+        for patch in canvas.axes.patches:
+            assert to_hex(patch.get_facecolor()) == expected
+
+    def test_apply_theme_without_patches_does_not_crash(self, qtbot):
+        """apply_theme must not crash when axes.patches is empty."""
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        # mock_plot does not add Rectangle patches — patches should be empty
+        assert len(canvas.axes.patches) == 0, "Precondition: no patches after mock_plot"
+
+        canvas.apply_theme("dark")  # must not raise
+
+    def test_apply_theme_without_legend_does_not_crash(self, qtbot):
+        """apply_theme must not crash when no legend is present."""
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        assert canvas.axes.get_legend() is None, "Precondition: no legend initially"
+
+        canvas.apply_theme("dark")  # must not raise
+
+
 class TestNormalizeData:
     """Tests for data normalization."""
 
