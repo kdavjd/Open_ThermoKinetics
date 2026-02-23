@@ -254,7 +254,7 @@ ANNOTATION_THEME_PARAMS = {
 
 ### Этап 3: PlotStylingMixin — apply_theme с полным обходом artists (~100 строк)
 
-**Статус:** ✅ Завершён
+**Статус:** ✅ Завершён (`ec3fdd2`)
 
 **Цель:** Полная стилизация текущего matplotlib-контента без потери данных.
 
@@ -497,4 +497,4 @@ NavigationToolbar2QT QLabel {
 | 2026-02-23 | 1    | -       | Этап 1 отменён: theme_changed не нужен, используем changeEvent                        |
 | 2026-02-23 | -    | -       | ТЗ переработано: scienceplots, NavigationToolbar2QT, полный обход artists             |
 | 2026-02-23 | -    | b9baee5 | ТЗ финализировано: scienceplots **удалён**, BASE_STYLE_PARAMS, NPG_PALETTE улучшена   |
-| 2026-02-23 | 3    | —       | apply_theme() реализован; аннотации используют ANNOTATION_THEME_PARAMS               |
+| 2026-02-23 | 3    | ec3fdd2 | apply_theme() реализован; аннотации используют ANNOTATION_THEME_PARAMS               |
