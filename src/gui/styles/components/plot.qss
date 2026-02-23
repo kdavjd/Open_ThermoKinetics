@@ -13,3 +13,45 @@ QLabel#plot_info_label {
     color: {{text_secondary}};
     font-size: 12px;
 }
+
+/* Plot container */
+QWidget#plot_container {
+    background-color: {{bg_base}};
+    border: 1px solid {{border}};
+    border-radius: {{radius_md}};
+}
+
+/* NavigationToolbar2QT — matplotlib toolbar */
+NavigationToolbar2QT {
+    background-color: {{bg_surface}};
+    border-bottom: 1px solid {{border}};
+    padding: 2px 4px;
+    spacing: 2px;
+}
+
+NavigationToolbar2QT QToolButton {
+    background-color: transparent;
+    color: {{text_primary}};
+    border: 1px solid transparent;
+    border-radius: {{radius_sm}};
+    padding: 3px;
+    min-width: 22px;
+    min-height: 22px;
+}
+
+NavigationToolbar2QT QToolButton:hover {
+    background-color: {{bg_elevated}};
+    border-color: {{border}};
+}
+
+NavigationToolbar2QT QToolButton:pressed,
+NavigationToolbar2QT QToolButton:checked {
+    background-color: {{accent_light}};
+    border-color: {{accent}};
+}
+
+NavigationToolbar2QT QLabel {
+    color: {{text_secondary}};
+    font-size: 11px;
+    background-color: transparent;
+}

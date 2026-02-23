@@ -191,6 +191,7 @@ class PlotStylingMixin:
             text.set_color(ann_params["text_color"])
 
         self._current_theme = theme
+        self._rebuild_toolbar_icons()
         self.canvas.draw_idle()
 
     def add_model_fit_annotation(self, annotation: str):

@@ -25,6 +25,16 @@ from src.gui.styles import get_saved_theme
 
 plt.rcParams.update(PLOT_CANVAS_CONFIG.BASE_STYLE_PARAMS)
 
+_TOOLBAR_ICON_MAP = {
+    "Home": "home.png",
+    "Back": "back.png",
+    "Forward": "forward.png",
+    "Pan": "move.png",
+    "Zoom": "zoom_to_rect.png",
+    "Subplots": "subplots.png",
+    "Save": "filesave.png",
+}
+
 
 class PlotCanvas(QWidget, PlotInteractionMixin, PlotStylingMixin):
     """
@@ -92,6 +102,16 @@ class PlotCanvas(QWidget, PlotInteractionMixin, PlotStylingMixin):
         if event.type() == QEvent.Type.StyleChange:
             self.apply_theme(get_saved_theme())
         super().changeEvent(event)
+
+    def _rebuild_toolbar_icons(self):
+        """Rebuild toolbar icons to match the current Qt palette (light/dark)."""
+        try:
+            for action in self.toolbar.actions():
+                filename = _TOOLBAR_ICON_MAP.get(action.text())
+                if filename:
+                    action.setIcon(self.toolbar._icon(filename))
+        except AttributeError:
+            pass  # graceful degradation for older matplotlib versions
 
     def toggle_event_connections(self, enable: bool):
         """Toggle mouse event connections for interactive functionality."""
