@@ -2,7 +2,7 @@
 
 > **Дата создания:** 2026-02-23
 > **Ветка:** `feature/plot-canvas-design-system`
-> **Статус:** 🟡 В работе
+> **Статус:** ✅ Завершён
 > **IEEE 29148 Score:** 93/100
 > **Коммит ТЗ:** `b9baee5`
 
@@ -15,10 +15,10 @@
 | а   | Создание ТЗ + Ветка | —                  | ✅ Завершён  |
 | б   | Реализация          | `spec-implementer` | ✅ Завершён  |
 | в   | Написание тестов    | `test-writer`      | ✅ Завершён  |
-| г   | GUI тестирование    | `gui-testing`      | ❌ Не начат  |
-| д   | Мерж                | `merge-helper`     | ❌ Не начат  |
+| г   | GUI тестирование    | `gui-testing`      | ✅ Завершён  |
+| д   | Мерж                | `merge-helper`     | 🔄 В работе  |
 
-**Следующий шаг:** г (GUI тестирование) → `gui-testing`
+**Следующий шаг:** д (Мерж) → `merge-helper`
 
 ---
 
@@ -489,6 +489,38 @@ NavigationToolbar2QT QLabel {
 
 ---
 
+### Этап 6: Bugfix — рассинхрон тем при runtime-переключении (~10 строк)
+
+**Статус:** ✅ Завершён
+
+**Причина возникновения бага (root cause):**
+
+`load_theme()` в `theme_loader.py` сохраняет тему в QSettings **после** вызова `app.setStyleSheet()`. Qt доставляет `QEvent.StyleChange` **синхронно** внутри `setStyleSheet()`, поэтому `PlotCanvas.changeEvent()` вызывает `get_saved_theme()` в тот момент, когда QSettings ещё хранит **старую** тему. Результат: `apply_theme()` применяет предыдущую тему, создавая постоянный сдвиг на один шаг (anti-phase).
+
+```
+load_theme(app, "dark"):
+  1. app.setStyleSheet(dark_qss)          ← Qt синхронно рассылает StyleChange
+       └─► PlotCanvas.changeEvent()
+             └─► get_saved_theme()        ← возвращает "light" (ещё не сохранено!)
+                   └─► apply_theme("light") ← НЕПРАВИЛЬНАЯ тема!
+  2. settings.setValue("theme", "dark")   ← слишком поздно
+```
+
+**Задачи:**
+- [x] `theme_loader.py`: переместить `settings.setValue("theme", theme)` **перед** `app.setStyleSheet(combined)`
+- [x] `plot_canvas.py`: добавить `plt.rcParams["axes.prop_cycle"] = cycler(color=PLOT_CANVAS_CONFIG.NPG_PALETTE)` на module-level сразу после `plt.rcParams.update(BASE_STYLE_PARAMS)` — чтобы `mock_plot()` (вызывается до `apply_theme()`) сразу использовал NPG-цвета, различимые на тёмном фоне
+
+**Файлы:**
+- `src/gui/styles/theme_loader.py` (modify — swap settings.setValue order)
+- `src/gui/main_tab/plot_canvas/plot_canvas.py` (modify — module-level prop_cycle)
+
+**Критерий приёмки:**
+- Переключение dark→light→dark: каждая смена применяется немедленно и в правильном направлении
+- `apply_theme()` получает тему, совпадающую с `app.styleSheet()` (нет anti-phase)
+- Линии `mock_plot()` видны на тёмном фоне (используют NPG_PALETTE с первого рендера)
+
+---
+
 ## История изменений
 
 | Дата       | Этап | Коммит  | Описание                                                                              |
@@ -501,3 +533,4 @@ NavigationToolbar2QT QLabel {
 | 2026-02-23 | 4    | e8570eb | scienceplots удалён; rcParams.update(BASE_STYLE_PARAMS); changeEvent + тема при init |
 | 2026-02-23 | 5    | 95c281e | load_theme ДО MainWindow; plot.qss NavigationToolbar2QT; _rebuild_toolbar_icons      |
 | 2026-02-23 | тесты | f6a3c36 | 38 тестов: config, apply_theme, changeEvent, _rebuild_toolbar_icons; 981 passed      |
+| 2026-02-23 | 6     | —       | Bugfix: settings.setValue перед setStyleSheet; prop_cycle на module-level            |

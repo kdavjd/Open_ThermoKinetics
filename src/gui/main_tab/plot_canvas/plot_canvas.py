@@ -8,6 +8,7 @@ from typing import Dict, Optional
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
+from cycler import cycler
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -24,6 +25,9 @@ from src.gui.main_tab.plot_canvas.plot_styling import PlotStylingMixin
 from src.gui.styles import get_saved_theme
 
 plt.rcParams.update(PLOT_CANVAS_CONFIG.BASE_STYLE_PARAMS)
+# Set NPG palette as default color cycle so mock_plot() (called before apply_theme)
+# already uses colors that are visible on both light and dark backgrounds.
+plt.rcParams["axes.prop_cycle"] = cycler(color=PLOT_CANVAS_CONFIG.NPG_PALETTE)
 
 _TOOLBAR_ICON_MAP = {
     "Home": "home.png",

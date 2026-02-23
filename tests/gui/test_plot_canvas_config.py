@@ -99,6 +99,27 @@ class TestThemeParams:
                 assert key in PLOT_CANVAS_CONFIG.THEME_PARAMS[theme], f"THEME_PARAMS[{theme!r}] missing key {key!r}"
 
 
+class TestModuleLevelPropCycle:
+    """Tests that NPG_PALETTE is set as the default prop_cycle at import time.
+
+    This ensures mock_plot() (called before apply_theme()) already uses
+    NPG colors visible on dark backgrounds.
+    """
+
+    def test_prop_cycle_uses_npg_palette_after_import(self):
+        """axes.prop_cycle must equal NPG_PALETTE after plot_canvas is imported."""
+        import matplotlib
+
+        # Importing plot_canvas.py triggers module-level rcParams update
+        import src.gui.main_tab.plot_canvas.plot_canvas  # noqa: F401
+
+        cycle_colors = matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
+        assert cycle_colors == PLOT_CANVAS_CONFIG.NPG_PALETTE, (
+            "Module-level prop_cycle is not set to NPG_PALETTE. "
+            "mock_plot() will use matplotlib default colors instead of NPG palette."
+        )
+
+
 class TestAnnotationThemeParams:
     """Tests for ANNOTATION_THEME_PARAMS — annotation box styling."""
 
