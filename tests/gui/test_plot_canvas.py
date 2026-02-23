@@ -236,6 +236,78 @@ class TestPlotCanvasReaction:
         assert np.array_equal(line.get_ydata(), np.array([0.2, 0.6, 0.4]))
 
 
+class TestPlotCanvasThemeInit:
+    """Tests for theme initialization and _rebuild_toolbar_icons."""
+
+    def test_current_theme_initialized_to_valid_string(self, qtbot):
+        """_current_theme must be set to 'light' or 'dark' after __init__."""
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        assert hasattr(canvas, "_current_theme")
+        assert canvas._current_theme in ("light", "dark")
+
+    def test_rebuild_toolbar_icons_does_not_crash(self, qtbot):
+        """_rebuild_toolbar_icons must complete without raising."""
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas._rebuild_toolbar_icons()  # must not raise
+
+    def test_toolbar_icon_map_has_expected_keys(self):
+        """_TOOLBAR_ICON_MAP must contain standard navigation action names."""
+        from src.gui.main_tab.plot_canvas.plot_canvas import _TOOLBAR_ICON_MAP
+
+        for expected_action in ("Home", "Pan", "Zoom", "Save"):
+            assert expected_action in _TOOLBAR_ICON_MAP, f"_TOOLBAR_ICON_MAP missing action {expected_action!r}"
+
+    def test_toolbar_icon_map_values_are_png_filenames(self):
+        """_TOOLBAR_ICON_MAP values must be PNG filenames."""
+        from src.gui.main_tab.plot_canvas.plot_canvas import _TOOLBAR_ICON_MAP
+
+        for action, filename in _TOOLBAR_ICON_MAP.items():
+            assert filename.endswith(".png"), f"_TOOLBAR_ICON_MAP[{action!r}] = {filename!r} is not a .png file"
+
+
+class TestPlotCanvasChangeEvent:
+    """Tests for changeEvent — Qt-native theme switching."""
+
+    def test_change_event_style_change_calls_apply_theme(self, qtbot, mocker):
+        """StyleChange event must trigger apply_theme."""
+        from PyQt6.QtCore import QEvent
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        spy = mocker.patch.object(canvas, "apply_theme")
+
+        canvas.changeEvent(QEvent(QEvent.Type.StyleChange))
+
+        spy.assert_called_once()
+
+    def test_change_event_other_type_does_not_call_apply_theme(self, qtbot, mocker):
+        """Non-StyleChange events must not trigger apply_theme."""
+        from PyQt6.QtCore import QEvent
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        spy = mocker.patch.object(canvas, "apply_theme")
+
+        canvas.changeEvent(QEvent(QEvent.Type.Move))
+
+        spy.assert_not_called()
+
+    def test_change_event_style_change_does_not_crash(self, qtbot):
+        """StyleChange event must be handled without raising."""
+        from PyQt6.QtCore import QEvent
+
+        canvas = PlotCanvas()
+        qtbot.addWidget(canvas)
+
+        canvas.changeEvent(QEvent(QEvent.Type.StyleChange))  # must not raise
+
+
 class TestPlotCanvasAnchors:
     """Tests for anchor management."""
 
