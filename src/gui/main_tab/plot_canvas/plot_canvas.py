@@ -8,14 +8,11 @@ from typing import Dict, Optional
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
-
-# see: https://pypi.org/project/SciencePlots/
-import scienceplots  # noqa pylint: disable=unused-import
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from PyQt6.QtCore import pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QEvent, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import QVBoxLayout, QWidget
 
 from src.core.logger_config import logger
@@ -24,8 +21,9 @@ from src.gui.main_tab.plot_canvas.anchor_group import HeightAnchorGroup, Positio
 from src.gui.main_tab.plot_canvas.config import PLOT_CANVAS_CONFIG
 from src.gui.main_tab.plot_canvas.plot_interaction import PlotInteractionMixin
 from src.gui.main_tab.plot_canvas.plot_styling import PlotStylingMixin
+from src.gui.styles import get_saved_theme
 
-plt.style.use(PLOT_CANVAS_CONFIG.PLOT_STYLE)
+plt.rcParams.update(PLOT_CANVAS_CONFIG.BASE_STYLE_PARAMS)
 
 
 class PlotCanvas(QWidget, PlotInteractionMixin, PlotStylingMixin):
@@ -84,6 +82,16 @@ class PlotCanvas(QWidget, PlotInteractionMixin, PlotStylingMixin):
 
         # Create initial mock plot (delegated to PlotStylingMixin)
         self.mock_plot()
+
+        # Apply saved theme
+        self._current_theme = get_saved_theme()
+        self.apply_theme(self._current_theme)
+
+    def changeEvent(self, event):
+        """React to Qt style changes by re-applying the current theme."""
+        if event.type() == QEvent.Type.StyleChange:
+            self.apply_theme(get_saved_theme())
+        super().changeEvent(event)
 
     def toggle_event_connections(self, enable: bool):
         """Toggle mouse event connections for interactive functionality."""
